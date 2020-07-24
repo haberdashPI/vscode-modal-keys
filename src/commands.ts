@@ -320,6 +320,7 @@ export function enterNormal() {
     if (!typeSubscription)
         typeSubscription = vscode.commands.registerCommand("type", onType)
     setNormalMode(true)
+    actions.resetHandleKey()
     cancelSelection()
 }
 /**

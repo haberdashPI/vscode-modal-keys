@@ -564,6 +564,13 @@ export async function handleKey(key: string, selecting: boolean,
         keySequence = keySeqStack.pop()!
     return !currentKeymap
 }
+
+/**
+ * When normal mode is requested anew, we want to reset the keybindings;
+ * This allows the user to cancel, mid sequence, a mistyped key sequence.
+ */
+export function resetHandleKey(){ currentKeymap = null; }
+
 /**
  * ## Keymap Help
  * 
