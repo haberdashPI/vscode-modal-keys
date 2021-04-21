@@ -33,6 +33,12 @@ interface SearchArgs {
     typeBeforePreviousMatch?: string
     typeAfterPreviousMatch?: string
 }
+
+const Select = 'select'
+const Normal = 'normal'
+const Search = 'search'
+const Insert = 'insert'
+
 /**
  * ### Bookmark Arguments
  *
@@ -70,11 +76,12 @@ interface QuickSnippetArgs {
 /**
  * ### Type Normal Keys Arguments
  *
- * The [`typeNormalKeys` command](../README.html#invoking-key-bindings) gets the
+ * The [`typeKeys` command](../README.html#invoking-key-bindings) gets the
  * entered keys as a string.
  */
-interface TypeNormalKeysArgs {
-    keys: string
+interface TypeKeysArgs {
+    keys: string,
+    mode: string
 }
 /**
  * ### Select Between Arguments
@@ -122,19 +129,10 @@ let typeSubscription: vscode.Disposable | undefined
 let mainStatusBar: vscode.StatusBarItem
 let secondaryStatusBar: vscode.StatusBarItem
 /**
- * This is the main mode flag that tells if we are in normal mode or insert
- * mode.
+ * This is the main mode flag that tells if we are in normal mode, insert mode,
+ * select mode, searching mode or some user defined mode
  */
-let normalMode = true
-/**
- * The `selecting` flag indicates if we have initiated selection mode. Note that
- * it is not the only indicator that tells whether a selection is active.
- */
-let selecting = false
-/**
- * The `searching` flag tells if `modaledit.search` command is in operation.
- */
-let searching = false
+let keyMode = Normal
 /**
  * Search state variables.
  */
@@ -161,7 +159,7 @@ let searchTypeBeforeNextMatch: string | undefined
 let searchTypeAfterNextMatch: string | undefined
 let searchTypeBeforePreviousMatch: string | undefined
 let searchTypeAfterPreviousMatch: string | undefined
-let searchReturnToNormal = true
+let searchOldMode = Normal
 /**
  * Bookmarks are stored here.
  */
@@ -185,7 +183,7 @@ let lastChange: string[] = []
  * Since command names are easy to misspell, we define them as constants.
  */
 const toggleId = "modaledit.toggle"
-const enterNormalId = "modaledit.enterNormal"
+const enterModeId = "modaledit.enterMode"
 const enterInsertId = "modaledit.enterInsert"
 const toggleSelectionId = "modaledit.toggleSelection"
 const enableSelectionId = "modaledit.enableSelection"
@@ -202,7 +200,7 @@ const showBookmarksId = "modaledit.showBookmarks"
 const fillSnippetArgsId = "modaledit.fillSnippetArgs"
 const defineQuickSnippetId = "modaledit.defineQuickSnippet"
 const insertQuickSnippetId = "modaledit.insertQuickSnippet"
-const typeNormalKeysId = "modaledit.typeNormalKeys"
+const typeKeysId = "modaledit.typeKeys"
 const selectBetweenId = "modaledit.selectBetween"
 const repeatLastChangeId = "modaledit.repeatLastChange"
 const importPresetsId = "modaledit.importPresets"
@@ -216,12 +214,12 @@ const importPresetsId = "modaledit.importPresets"
 export function register(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand(toggleId, toggle),
-        vscode.commands.registerCommand(enterNormalId, enterNormal),
+        vscode.commands.registerCommand(enterModeId, enterMode),
         vscode.commands.registerCommand(enterInsertId, enterInsert),
         vscode.commands.registerCommand(toggleSelectionId, toggleSelection),
         vscode.commands.registerCommand(enableSelectionId, enableSelection),
         vscode.commands.registerCommand(cancelSelectionId, cancelSelection),
-        vscode.commands.registerCommand(cancelMultipleSelectionsId, 
+        vscode.commands.registerCommand(cancelMultipleSelectionsId,
             cancelMultipleSelections),
         vscode.commands.registerCommand(searchId, search),
         vscode.commands.registerCommand(cancelSearchId, cancelSearch),
@@ -235,7 +233,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(fillSnippetArgsId, fillSnippetArgs),
         vscode.commands.registerCommand(defineQuickSnippetId, defineQuickSnippet),
         vscode.commands.registerCommand(insertQuickSnippetId, insertQuickSnippet),
-        vscode.commands.registerCommand(typeNormalKeysId, typeNormalKeys),
+        vscode.commands.registerCommand(typeKeysId, typeKeys),
         vscode.commands.registerCommand(selectBetweenId, selectBetween),
         vscode.commands.registerCommand(repeatLastChangeId, repeatLastChange),
         vscode.commands.registerCommand(importPresetsId, importPresets)
@@ -294,69 +292,54 @@ export function onTextChanged() {
  * is needed to decide whether the `lastKeySequence` variable is updated.
  */
 async function runActionForKey(key: string): Promise<boolean> {
-    return await actions.handleKey(key, isSelecting(), searching)
+    return await actions.handleKey(key, isSelecting() ? Select : keyMode, keyMode === Search)
 }
-/**
- * ## Mode Switching  Commands
- *
- * `toggle` switches between normal and insert mode.
- */
-export function toggle() {
-    if (normalMode)
-        enterInsert()
-    else
-        enterNormal()
-}
-/**
- * When entering normal mode, we:
- *
- * 1. cancel the search, if it is on,
- * 2. subscribe to the `type` event,
- * 3. handle the rest of the mode setup with `setNormalMode` function, and
- * 4. clear the selection.
- */
-export function enterNormal() {
-    cancelSearch()
-    if (!typeSubscription)
-        typeSubscription = vscode.commands.registerCommand("type", onType)
-    setNormalMode(true)
-    actions.resetHandleKey()
-    cancelSelection()
-}
-/**
- * Conversely, when entering insert mode, we:
- *
- * 1. cancel the search, if it is on (yes, you can use it in insert mode, too),
- * 2. unsubscribe to the `type` event,
- * 3. handle the rest of the mode setup with `setNormalMode` function.
- *
- * Note that we specifically don't clear the selection. This allows the user
- * to easily surround selected text with hyphens `'`, parenthesis `(` and `)`,
- * brackets `[` and `]`, etc.
- */
-export function enterInsert() {
-    cancelSearch()
-    if (typeSubscription) {
-        typeSubscription.dispose()
-        typeSubscription = undefined
+
+function handleTypeSubscription(oldmode: string, newmode: string){
+    if(newmode !== Insert && oldmode === Insert){
+        if (!typeSubscription)
+            typeSubscription = vscode.commands.registerCommand("type", onType)
+    }else if(newmode === Insert && oldmode !== Insert){
+        if (typeSubscription) {
+            typeSubscription.dispose()
+            typeSubscription = undefined
+        }
     }
-    setNormalMode(false)
 }
-/**
- * The rest of the state handling is delegated to subroutines that do specific
- * things. `setNormalMode` sets or resets the VS Code `modaledit.normal` context.
- * This can be used in "standard" key bindings. Then it sets the `normalMode`
- * variable and calls the next subroutine which updates cursor and status bar.
- */
-async function setNormalMode(value: boolean): Promise<void> {
+
+let modeHooks: any = {
+    select: {
+        exit: async (n: string, o: string) =>
+            await vscode.commands.executeCommand("cancelSelection")
+    },
+    normal: {
+        enter: async (n: string, o: string) => await actions.resetHandleKey()
+    },
+    search: {
+        enter: async (newmode: string, oldmode: string) => {searchOldMode = oldmode}
+    }
+}
+
+export async function enterMode(newMode: string) {
+    handleTypeSubscription(newMode, keyMode)
+    const exitHook = modeHooks[keyMode]?.modeHooks?.exit
+    exitHook && await exitHook(newMode, keyMode)
+
     const editor = vscode.window.activeTextEditor
     if (editor) {
-        await vscode.commands.executeCommand("setContext", "modaledit.normal",
-            value)
-        normalMode = value
+        await vscode.commands.executeCommand("setContext", "modaledit.mode", newMode)
         updateCursorAndStatusBar(editor)
     }
+    const enterHook = modeHooks[keyMode]?.modeHooks?.enter
+    enterHook && await enterHook(newMode, keyMode)
 }
+
+function reviseSelectionMode(){
+    if(isSelecting() && keyMode !== Normal && keyMode !== Search){
+        keyMode = Select
+    }
+}
+
 /**
  * This function updates the cursor shape and status bar according to editor
  * state. It indicates when selection is active or search mode is on. If
@@ -367,11 +350,12 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
     help?: string) {
     if (editor) {
         // Get the style parameters
+        reviseSelectionMode()
         let [style, text, color] =
-            searching ? actions.getSearchStyles() :
-                isSelecting() && normalMode ? actions.getSelectStyles() :
-                    normalMode ? actions.getNormalStyles() :
-                        actions.getInsertStyles()
+            keyMode === Search ? actions.getSearchStyles() :
+            keyMode === Select ? actions.getSelectStyles() :
+            keyMode === Insert ? actions.getInsertStyles() :
+                actions.getNormalStyles(keyMode)
 
         /**
          * Update the cursor style.
@@ -380,7 +364,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
         /**
          * Update the main status bar.
          */
-        mainStatusBar.text = searching ?
+        mainStatusBar.text = keyMode === Search ?
             `${text} [${searchBackwards ? "B" : "F"
             }${searchCaseSensitive ? "S" : ""}]: ${searchString}` :
             text
@@ -418,44 +402,43 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
  * standard version to keep the state in sync.
  */
 async function cancelSelection(): Promise<void> {
-    if (selecting) {
+    if (keyMode === Select) {
         await vscode.commands.executeCommand("cancelSelection")
-        selecting = false
-        updateCursorAndStatusBar(vscode.window.activeTextEditor)
+        enterMode(Normal)
     }
 }
 /**
- * `modaledit.cancelMultipleSelections`, like `modaledit.cancelSelection` sets 
- * selecting to false and sets the anchor equal to active selection position. 
+ * `modaledit.cancelMultipleSelections`, like `modaledit.cancelSelection` sets
+ * selecting to false and sets the anchor equal to active selection position.
  * Unlike `modaledit.cancelSelection` it preserves multiple cursors.
  */
 function cancelMultipleSelections() {
-    if (selecting) {
+    if (keyMode === Select) {
         let editor = vscode.window.activeTextEditor
         if (editor)
             editor.selections = editor.selections.map(sel =>
                 new vscode.Selection(sel.active, sel.active))
-        selecting = false
-        updateCursorAndStatusBar(vscode.window.activeTextEditor)
+        enterMode(Normal)
     }
 }
+
 /**
  * `modaledit.toggleSelection` toggles the selection mode on and off. It sets
  * the selection mode flag and updates the status bar, but also clears the
  * selection.
  */
 async function toggleSelection(): Promise<void> {
-    let oldSelecting = selecting
-    if (oldSelecting)
-        await vscode.commands.executeCommand("cancelSelection")
-    selecting = !oldSelecting
-    updateCursorAndStatusBar(vscode.window.activeTextEditor)
+    if(keyMode !== Select){
+        enterMode(Select)
+    }else{
+        enterMode(Normal)
+    }
 }
 /**
  * `modaledit.enableSelection` sets the selecting to true.
  */
 function enableSelection() {
-    selecting = true;
+    enterMode(Select)
     updateCursorAndStatusBar(vscode.window.activeTextEditor)
 }
 /**
@@ -464,11 +447,9 @@ function enableSelection() {
  * selected in the active editor.
  */
 function isSelecting(): boolean {
-    if (normalMode && selecting)
-        return true
-    selecting = vscode.window.activeTextEditor!.selections.some(
-        selection => !selection.anchor.isEqual(selection.active))
-    return selecting
+    return keyMode === Select ||
+        vscode.window.activeTextEditor!.selections.some(
+            selection => !selection.anchor.isEqual(selection.active))
 }
 /**
  * Function that sets the selecting flag off. This function is called from one
@@ -476,28 +457,10 @@ function isSelecting(): boolean {
  * updates the status bar sets the flag on again, if there are any active
  * selections.
  */
-export function resetSelecting() {
-    selecting = false
+ export function resetSelecting() {
+    keyMode = Normal
 }
-/**
- * ## Search Commands
- *
- * Incremental search is by far the most complicated part of this extension.
- * Searching overrides both normal and insert modes, and captures the keyboard
- * until it is done. The following subroutine sets the associated state
- * variable, the VS Code `modaledit.searching` context, and the status bar.
- * Since search mode also puts the editor implicitly in the normal mode, we
- * need to check what was the state when we initiated the search. If we were in
- * insert mode, we return also there.
- */
-async function setSearching(value: boolean) {
-    searching = value
-    await vscode.commands.executeCommand("setContext",
-        "modaledit.searching", value)
-    updateCursorAndStatusBar(vscode.window.activeTextEditor)
-    if (!(value || searchReturnToNormal))
-        enterInsert()
-}
+
 /**
  * This is the main command that not only initiates the search, but also handles
  * the key presses when search is active. That is why its argument is defined
@@ -519,11 +482,8 @@ async function search(args: SearchArgs | string): Promise<void> {
          * works with multiple cursors. Finally we store the search arguments
          * in the module level variables.
          */
-        searchReturnToNormal = normalMode
         actions.setLastCommand(searchId)
-        if (!normalMode)
-            enterNormal()
-        setSearching(true)
+        enterMode(Search)
         searchString = ""
         searchStartSelections = editor.selections
         searchBackwards = args.backwards || false
@@ -666,12 +626,12 @@ function highlightMatches(editor: vscode.TextEditor,
          * Finally, we highlight all search matches to make them stand out
          * in the document.
          */
-        
+
         let searchOtherRanges: vscode.Range[] = [];
         function selectionMatchRange(x: vscode.Selection, range: vscode.Range){
             return x.start.isEqual(range.start) && x.end.isEqual(range.end);
         }
-        
+
         /**
          * To accomplish this, we look for any matches that are currently
          * visible and mark them; we want to mark those that aren't
@@ -687,7 +647,7 @@ function highlightMatches(editor: vscode.TextEditor,
             while(offset > 0){
                 let start = doc.positionAt(offset + baseOffset);
                 let range = new vscode.Range(start, start.translate(0,target.length));
-                if(!searchRanges.find(x => 
+                if(!searchRanges.find(x =>
                     x.start.isEqual(range.start) && x.end.isEqual(range.end))){
                     searchOtherRanges.push(range);
                 }
@@ -721,17 +681,17 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
         let highlightBorder = config.get<string>('searchOtherMatchesBorder');
 
         searchDecorator = vscode.window.createTextEditorDecorationType({
-            backgroundColor: matchBackground || 
+            backgroundColor: matchBackground ||
                 new vscode.ThemeColor('editor.findMatchBackground'),
-            borderColor: matchBorder || 
+            borderColor: matchBorder ||
                 new vscode.ThemeColor('editor.findMatchBorder'),
             borderStyle: "solid"
         });
 
         searchOtherDecorator = vscode.window.createTextEditorDecorationType({
-            backgroundColor: highlightBackground || 
+            backgroundColor: highlightBackground ||
                 new vscode.ThemeColor('editor.findMatchHighlightBackground'),
-            borderColor: highlightBorder || 
+            borderColor: highlightBorder ||
                 new vscode.ThemeColor('editor.findMatchHighlightBorder'),
             borderStyle: "solid"
         });
@@ -745,10 +705,12 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
  * `typeAfterAccept` argument is set we run the given normal mode commands.
  */
 async function acceptSearch() {
-    setSearching(false)
+    let mode = searchOldMode
+    await enterMode(mode)
     if (searchTypeAfterAccept)
-        await typeNormalKeys({ keys: searchTypeAfterAccept })
+        await typeKeys({ keys: searchTypeAfterAccept, mode: mode })
 }
+
 /**
  * ### Canceling Search
  *
@@ -756,8 +718,8 @@ async function acceptSearch() {
  * position.
  */
 async function cancelSearch(): Promise<void> {
-    if (searching) {
-        await setSearching(false)
+    if (keyMode == Search) {
+        await enterMode(searchOldMode)
         let editor = vscode.window.activeTextEditor
         if (editor) {
             editor.selections = searchStartSelections
@@ -787,7 +749,7 @@ async function cancelSearch(): Promise<void> {
  */
 function deleteCharFromSearch() {
     let editor = vscode.window.activeTextEditor
-    if (editor && searching && searchString.length > 0) {
+    if (editor && keyMode === Search && searchString.length > 0) {
         searchString = searchString.slice(0, searchString.length - 1)
         highlightMatches(editor, searchStartSelections)
         updateCursorAndStatusBar(editor)
@@ -918,7 +880,7 @@ async function insertQuickSnippet(args?: QuickSnippetArgs): Promise<void> {
     let i = args?.snippet || 0
     let snippet = quickSnippets[i]
     if (snippet) {
-        enterInsert()
+        enterMode(Insert)
         await vscode.commands.executeCommand("editor.action.insertSnippet",
             { snippet })
     }
@@ -929,9 +891,9 @@ async function insertQuickSnippet(args?: QuickSnippetArgs): Promise<void> {
  * The last command runs normal mode commands throught their key bindings.
  * Implementing that is as easy as calling the keyboard handler.
  */
-async function typeNormalKeys(args: TypeNormalKeysArgs): Promise<void> {
+async function typeKeys(args: TypeKeysArgs): Promise<void> {
     if (typeof args !== 'object' || typeof (args.keys) !== 'string')
-        throw Error(`${typeNormalKeysId}: Invalid args: ${JSON.stringify(args)}`)
+        throw Error(`${typeKeysId}: Invalid args: ${JSON.stringify(args)}`)
     for (let i = 0; i < args.keys.length; i++)
         await runActionForKey(args.keys[i])
 }
@@ -1073,12 +1035,12 @@ async function repeatLastChange(): Promise<void> {
  * Alternatively the user can browse for other file that he/she has anywhere
  * in the file system. If the user selects a file, its contents will replace
  * the key binding in the global `settings.json` file.
- * 
+ *
  * The presets can be defined as JSON or JavaScript. The code checks the file
- * extension and surrounds JSON with parenthesis. Then it can evaluate the 
- * contents of the file as JavaScript. This allows to use non-standard JSON 
- * files that include comments. Or, if the user likes to define the whole 
- * shebang in code, he/she just has to make sure that the code evaluates to an 
+ * extension and surrounds JSON with parenthesis. Then it can evaluate the
+ * contents of the file as JavaScript. This allows to use non-standard JSON
+ * files that include comments. Or, if the user likes to define the whole
+ * shebang in code, he/she just has to make sure that the code evaluates to an
  * object that has `keybindings` and/or `selectbindings` properties.
  */
 async function importPresets() {
