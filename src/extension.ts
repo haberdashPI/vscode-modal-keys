@@ -1,13 +1,13 @@
 /**
  * # Extension Entry Point
- * 
+ *
  * The module `vscode` contains the VS Code extensibility API. The other
  * modules are part of the extension.
  */
 import * as vscode from 'vscode'
 import * as actions from './actions'
 import * as commands from './commands'
-/** 
+/**
  * This method is called when the extension is activated. The activation events
  * are set in the `package.json` like this:
  * ```js
@@ -18,7 +18,7 @@ import * as commands from './commands'
 export function activate(context: vscode.ExtensionContext) {
 	/**
 	 * The commands are defined in the `package.json` file. We register them
-	 * with function defined in the `commands` module. 
+	 * with function defined in the `commands` module.
 	 */
 	commands.register(context)
 	/**
@@ -38,18 +38,18 @@ export function activate(context: vscode.ExtensionContext) {
 			commands.updateCursorAndStatusBar(e.textEditor)),
 		vscode.workspace.onDidChangeTextDocument(commands.onTextChanged))
 	/**
-	 * Next we update the active settings from the config file, and at last, 
+	 * Next we update the active settings from the config file, and at last,
 	 * we enter into normal or edit mode depending on the settings.
 	 */
 	actions.updateFromConfig()
 	if (actions.getStartInNormalMode())
-		commands.enterNormal()
+        commands.enterMode('normal')
 	else
-		commands.enterInsert()
+        commands.enterMode('insert')
 }
-/** 
+/**
  * This method is called when your extension is deactivated
  */
 export function deactivate() {
-	commands.enterInsert()
+    commands.enterMode('insert')
 }
