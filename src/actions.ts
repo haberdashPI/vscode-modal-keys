@@ -72,7 +72,7 @@ export interface Keymap {
 
 export interface Keymodes {
     normal: Keymap,
-    [mode: string]: Keymap
+    [mode: string]: Keymap | undefined
 }
 
 export interface ActionVars {
@@ -538,6 +538,8 @@ export async function handleKey(key: string, keyMode: string, capture: boolean):
         keySequence = []
     }
 
+    let newKeymap: undefined | Keymap = rootKeymodes[keyMode]
+
     if (capture && lastCommand)
         await executeVSCommand(lastCommand, key)
     else if (key.match('[0-9]+')) {
@@ -549,8 +551,8 @@ export async function handleKey(key: string, keyMode: string, capture: boolean):
             argumentCount = (<number>argumentCount)*10 + Number(key)
         }
     }
-    else if (keymap && rootKeymodes[keyMode][key]) {
-        const newKeymap = await execute(keymap[key], keyMode)
+    else if (newKeymap && newKeymap[key]) {
+        newKeymap = await execute(newKeymap[key], keyMode)
         if(newKeymap){
             currentKeymap = newKeymap
             if((<any>argumentCount).count === undefined && argumentCount !== undefined)
