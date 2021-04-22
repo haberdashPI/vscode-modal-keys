@@ -238,7 +238,6 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     keymapsById = {}
     let errors = 0
     const keybindings = config.get<Keymodes>("keybindings")
-    let validBindings = false
     if(keybindings){
         for(let sel of Object.values(keybindings)){
             if (isKeymap(sel)) {
@@ -364,8 +363,17 @@ function isObject(x: any): boolean {
  * This checks if a value is a command.
  */
 function isCommand(x: any): x is Action {
-    return isString(x) || isParameterized(x) || isCommandSequence(x)
+    return isString(x) || isParameterized(x) || isConditional(x) ||
+        isCommandSequence(x)
 }
+/**
+ * This recognizes a conditional action.
+ */
+ function isConditional(x: any): x is Conditional {
+    return isObject(x) && isString(x.condition) &&
+        Object.keys(x).every(key =>
+            key === "condition" || isCommand(x[key]))
+ }
 /**
  * This checks if a value is an array of commands.
  */
@@ -384,7 +392,7 @@ function isParameterized(x: any): x is Parameterized {
  * And finally this one checks if a value is a keymap.
  */
 function isKeymap(x: any): x is Keymap {
-    return isObject(x) && !isParameterized(x) && Object.values(x).every(isAction)
+    return isObject(x) && !isParameterized(x) && !isConditional(x) && Object.values(x).every(isAction)
 }
 /**
  * ## Executing Commands
@@ -408,7 +416,7 @@ async function executeVSCommand(command: string, ...rest: any[]): Promise<void> 
  * `evalString` function evaluates JavaScript expressions. Before doing so, it
  * defines some variables that can be used in the evaluated text.
  */
-function evalString(__str: string, __mode: string): any {
+function evalString(str: string, __mode: string): any {
     let __file = undefined
     let __line = undefined
     let __col = undefined
@@ -431,12 +439,23 @@ function evalString(__str: string, __mode: string): any {
         __selection = editor.document.getText(editor.selection)
     }
     try {
-        return eval(`(${__str})`)
+        return eval(`(${str})`)
     }
     catch (error) {
         vscode.window.showErrorMessage("Evaluation error: " + error.message)
         return undefined
     }
+}
+/**
+ * We need the evaluation function when executing conditional command. The
+ * condition is evaluated and if a key is found that matches the result, it is
+ * executed.
+ */
+async function executeConditional(cond: Conditional, mode: string): Promise<void> {
+    let res = evalString(cond.condition, mode)
+    let branch = isString(res) ? res : JSON.stringify(res)
+    if (branch && isAction(cond[branch]))
+        await execute(cond[branch], mode)
 }
 /**
  * Parameterized commands can get their arguments in two forms: as a string
@@ -503,6 +522,8 @@ async function execute(action: Action, mode: string): Promise<Keymap | undefined
     }else if (isCommandSequence(action)){
         for (const command of action) await execute(command, mode)
         return undefined
+    }else if (isConditional(action)){
+        await executeConditional(action, selecting)
     }else if (isParameterized(action)){
         await executeParameterized(action, mode)
         return undefined
