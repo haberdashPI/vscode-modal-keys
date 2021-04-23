@@ -14,6 +14,11 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
+			},
+			"options": {
+				"env": {
+					"PATH": "${env:HOME}/.asdf/bin:${env:HOME}/.asdf/shims:${env:PATH}"
+				}
 			}
 		},
 		{

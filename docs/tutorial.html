@@ -5,20 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>ModalEdit - Tutorial</title>
+    <title>ModalKeys - Tutorial</title>
     <link rel="icon" type="image/icon" href="images/favicon.png" />
     <link rel="stylesheet" href="css/main.css" />
-    
-    
+
+
 </head>
 <body>
-    
+
     <div class="navbar">
         <div class="navmenu">
-            
+
     <a class="title enabled" href="index.html">
         <img src="images/escape.svg" />
-        <span>ModalEdit</span>
+        <span>ModalKeys</span>
     </a>
     <a class="enabled" href="https://marketplace.visualstudio.com/items?itemName=johtela.vscode-modaledit">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M537.6 226.6c4.1-10.7 6.4-22.4 6.4-34.6 0-53-43-96-96-96-19.7 0-38.1 6-53.3 16.2C367 64.2 315.3 32 256 32c-88.4 0-160 71.6-160 160 0 2.7.1 5.4.2 8.1C40.2 219.8 0 273.2 0 336c0 79.5 64.5 144 144 144h368c70.7 0 128-57.3 128-128 0-61.9-44-113.6-102.4-125.4zm-132.9 88.7L299.3 420.7c-6.2 6.2-16.4 6.2-22.6 0L171.3 315.3c-10.1-10.1-2.9-27.3 11.3-27.3H248V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v112h65.4c14.2 0 21.4 17.2 11.3 27.3z"/></svg>
@@ -41,74 +41,74 @@
         <span>Next: Vim Presets</span>
     </a>
         </div>
-        
+
     <a class="hamburger">
         <div class="bar1"></div>
         <div class="bar2"></div>
         <div class="bar3"></div>
     </a>
     </div>
-    
+
     <div class="layout">
         <div class="sidepane collapsible">
-            
+
     <div class="tocmenu">
         <h3>Table of Contents</h3>
-        
+
     <ul>
-        
+
     <li>
-        
+
         <a href="README.html">Home</a>
-        
+
     </li>
     <li>
-        
+
         <a href="tutorial.html" class="highlight">Tutorial</a>
-        
+
     </li>
     <li>
-        
+
         <a href="presets/vim.html">Vim Presets</a>
-        
+
     </li>
     <li>
         <button class="accordion">
         Implementation
         </button>
-            
+
     <ul>
-        
+
     <li>
-        
+
         <a href="src/extension.html">Extension</a>
-        
+
     </li>
     <li>
-        
+
         <a href="src/actions.html">Actions</a>
-        
+
     </li>
     <li>
-        
+
         <a href="src/commands.html">Commands</a>
-        
+
     </li>
     </ul>
     </li>
     <li>
-        
+
         <a href="CHANGELOG.html">Change Log</a>
-        
+
     </li>
     <li>
-        
+
         <a href="LICENSE.html">License</a>
-        
+
     </li>
     </ul>
     </div>
-            
+
     <div class="footer">
         Copyright © 2020 Tommi Johtela
         <div class="ad">
@@ -118,7 +118,7 @@
 
         </div>
         <div class="sideicon collapsible">
-            
+
     <a class="hamburger">
         <div class="bar1"></div>
         <div class="bar2"></div>
@@ -126,7 +126,7 @@
     </a>
         </div>
         <div class="scrollingarea closepopups">
-            
+
     <div class="contentarea">
         <h1 id="build-your-own-vim-emulation-for-vs-code">Build Your Own Vim Emulation for VS Code</h1>
 <p><img src="../images/sharks.png" alt="Shark" width="256" height="206">
@@ -146,12 +146,12 @@ problem is that most emulators try to make VS Code behave exactly like Vim which
 quickly becomes an exercise in futility. Trying to mimick Vim's functionality
 too closely results in disjointed user experience as it has a lot of features
 that do not have counterparts in VS Code.</p>
-<p><a href="../README.html">ModalEdit's</a> approach is to utilize VS Code's existing features and
+<p><a href="../README.html">ModalKeys's</a> approach is to utilize VS Code's existing features and
 just add the concept of modal editing to the mix. Turns out implementing modal
 editing is extremely simple. We basically provide pair of commands that switch
 between normal mode and insert mode.</p>
 <p>To complete the feature set, we need an ability to bind normal mode key
-sequences to VS Code's commands. ModalEdit accomplishes this by defining the key
+sequences to VS Code's commands. ModalKeys accomplishes this by defining the key
 bindings in the VS Code's standard configuration file <code>settings.json</code>. It allows
 binding any key to any command, or a sequence of commands. It supports also
 conditional commands that do different things based on editor state. Refer to
@@ -160,7 +160,7 @@ the <a href="../README.html">README</a> page for the details of the configuratio
 to use Vim's standard key bindings, if we prefer not to. You can map any key
 (sequence) to any command. But to keep things familiar, we'll follow Vim's
 conventions in this tutorial.</p>
-<p>Let's start configuring our Vim emulator by adding the ModalEdit's configuration
+<p>Let's start configuring our Vim emulator by adding the ModalKeys's configuration
 block for key bindings. We'll use the <a href="https://vim.rtorr.com/">Vim Cheat Sheet</a> as our specification
 for key bindings to be added.</p>
 
@@ -194,7 +194,7 @@ though. If cursor is already at the last character of the line, it should not
 move. This is why we use a conditional command to move the cursor only, if the
 current character is not an empty string which marks the end of the line. A
 conditional command is an object that contains the <code>condition</code> property. The
-value of the property is a JS expression which ModalEdit evaluates. It selects
+value of the property is a JS expression which ModalKeys evaluates. It selects
 the command based on the result. In this case, the result <code>false</code> will execute
 the <code>cursorRight</code> command.</p>
 
@@ -237,7 +237,7 @@ about text selection.</p>
 select text. Visual mode can be characterwise or linewise. VS Code has no
 simillar concept. By contrast, to select text you move the cursor with
 <key>Shift</key> key depressed.</p>
-<p>ModalEdit bridges this gap by providing the special command
+<p>ModalKeys bridges this gap by providing the special command
 <code>modaledit.toggleSelection</code> which toggles selection mode on and off. Selection
 mode is not really a mode in the same sense as normal and insert mode are; you
 can select text both in normal mode and insert mode. Rather it is an additional
@@ -256,7 +256,7 @@ when you enter insert mode.</p>
 </code></pre>
 <p>Now we can add commands for cursor movement. These commands use the generic
 <a href="https://code.visualstudio.com/api/references/commands"><code>cursorMove</code> command</a> which takes arguments. The arguments we use
-are partly constant and partly dynamic. Therefore, we use ModalEdit's feature
+are partly constant and partly dynamic. Therefore, we use ModalKeys's feature
 which allows us to define parameters as a JS expression. The <code>__selecting</code> flag
 in the expression indicates whether selection mode is on. The same effect could
 be achieved also with a conditional command, but this way is a bit simpler.</p>
@@ -384,7 +384,7 @@ of the file.</p>
 <p>We have the basic movement commands covered, so let's move on to more
 sophisticated ones. Seasoned Vim users avoid hitting movement commands
 repeatedly by using <key>f</key> and <key>F</key> keys which move directly to a
-given character. VS Code provides no built-in command for this, but ModalEdit
+given character. VS Code provides no built-in command for this, but ModalKeys
 includes an incremental search command which can be customized to this purpose.</p>
 
 <pre class="syntaxhighlight"><code>        <span class="string">"f"</span>: {
@@ -476,7 +476,7 @@ without using arrow keys or <key>Home</key> and <key>End</key> keys.</p>
 <p>We skipped commands that move cursor up and down on page at the time. The
 reason for this is that these commands are bound to <key>Ctrl</key>+<key>b</key>
 and <key>Ctrl</key>+<key>f</key> in Vim. Since these are &quot;normal&quot; VS Code
-shortcuts we cannot remap them in ModalEdit. If you want to use these shortcuts,
+shortcuts we cannot remap them in ModalKeys. If you want to use these shortcuts,
 you need to add the bindings to the VS Code's <code>keybindings.json</code> file. Below is
 an example that uses the <code>modaledit.normal</code> context to make the shortcuts work
 only in normal mode. Most of the Vim's standard <key>Ctrl</key>+key combinations
@@ -500,7 +500,7 @@ commands first.</p>
 <h2 id="commands-with-counts">Commands with Counts</h2>
 <p>Some commands allow repeating them by typing first a number. For example,
 <key>3</key><key>j</key> moves the cursor down three lines. Implementing these
-kind of commands is possible starting from ModalEdit version 1.5 which
+kind of commands is possible starting from ModalKeys version 1.5 which
 introduced key ranges and <a href="https://johtela.github.io/vscode-modaledit/docs/README.html#defining-recursive-keymaps">recursive keymaps</a>.</p>
 <p>First of all, we define a keymap that is activated when pressing a number key
 <key>1</key>-<key>9</key>. We give the keymap an unique <code>id</code> which we can then
@@ -509,7 +509,7 @@ the keymap is active (after user has pressed a number key).</p>
 <p>Then we define the recursive part; we want to stay in the same keymap as long
 as user presses another number key. We implement this by defining inner key
 range <key>0</key>-<key>9</key> which maps to the <code>id</code> 1. Whenever you specify a
-number as the target for a mapping, ModalEdit treats it as an <code>id</code> that has to
+number as the target for a mapping, ModalKeys treats it as an <code>id</code> that has to
 be assigned to a previously defined keymap. In this case we map back to the same
 keymap, but you can also jump to other keymaps too.</p>
 <p>When the user presses some other than numeric key, we break out from the loop
@@ -791,7 +791,7 @@ Code commands based on the expression. The command is bound to the tilde
 <h2 id="marks">Marks</h2>
 <p>Marks or bookmarks, as they are more commonly known, provide a handy way to
 jump quickly inside documents. Surprisingly, VS Code does not contain this
-feature out-of-the-box. Since it is easy to implement, ModalEdit fills the gap
+feature out-of-the-box. Since it is easy to implement, ModalKeys fills the gap
 and adds two simple commands: <code>modaledit.defineBookmark</code> and
 <code>modaledit.goToBookmark</code>. Using these we can implement Vim's mark commands.</p>
 <p>We can support dozens of bookmarks with one mapping using a character range.
@@ -813,7 +813,7 @@ jump to that mark, type <key>`</key><key>a</key>.</p>
 </code></pre>
 <h2 id="searching">Searching</h2>
 <p>The last category of commands we implement is searching. We use the incremental
-search command provided by ModalEdit for this. As in Vim, typing <key>/</key>
+search command provided by ModalKeys for this. As in Vim, typing <key>/</key>
 starts an incremental search. <key>?</key> starts a search backwards.</p>
 
 <pre class="syntaxhighlight"><code>        <span class="string">"/"</span>: {
@@ -836,7 +836,7 @@ starts an incremental search. <key>?</key> starts a search backwards.</p>
         <span class="string">"N"</span>: <span class="string">"modaledit.previousMatch"</span>,
 </code></pre>
 <p>There are some subtle differences in the search functionality as well. Instead
-of just highlighting matches ModalEdit selects them. This is preferable
+of just highlighting matches ModalKeys selects them. This is preferable
 anyway, as replacing needs to be done manually with selection commands. Finally,
 <code>modaledit.search</code> does not support regexes. Use VS Code's built-in find
 command, if you need regex support.</p>
@@ -845,7 +845,7 @@ command, if you need regex support.</p>
 you can tweak in various ways to make it better. The point of this exercise was
 to show that you can significantly enhance VS Code's editing experience using
 just a simple extension and built-in commands.</p>
-<p>When writing ModalEdit my goal was not to provide a new Vim emulation. In fact,
+<p>When writing ModalKeys my goal was not to provide a new Vim emulation. In fact,
 I don't use Vim-style key bindings myself. I find the countless keyboard
 combinations in Vim superfuous and inconsistent. I doubt that anybody knows, let
 alone <em>uses</em> all the available commands. Using Vim is like working in a
@@ -867,21 +867,21 @@ laser beam. It requires some training to operate, but when properly configured
 will cut through text at the speed of light.</p>
 <p>Happy Editing! 🦈😎</p>
 
-        
+
     </div>
             <div class="stickypane">
-                
+
     <div class="pagemenu">
         <h3>On This Page</h3>
             <ul class="pagetree">
-                
+
             </ul>
     </div>
-                
+
             </div>
         </div>
     </div>
     <script src="js/main.js"></script>
-    
+
 </body>
 </html>

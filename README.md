@@ -51,7 +51,7 @@ the editor to the *insert mode*, which is the same as VS Code's default mode.
 ```
 When you save the `settings.json` file, keybindings take effect immediately.
 
-ModalEdit adds a regular VS Code keyboard shortcut for `Esc` to return back to
+ModalKeys adds a regular VS Code keyboard shortcut for `Esc` to return back to
 normal mode. If you wish, you can remap this command to another key by
 pressing `Ctrl+K Ctrl+S`.
 
@@ -71,7 +71,7 @@ The specify that the key does should only map for visual mode, you can prefix a 
 with `normal:`. If bindings overwrite one another (e.g. one command for `normal` and
 different one for `visual|normal`) the last specified binding always wins.
 
-ModalEdit defines a new command `modaledit.toggleSelection` which allows you
+ModalKeys defines a new command `modaledit.toggleSelection` which allows you
 to start selecting text in normal mode without holding down the shift key. This imitates
 Vim's visual mode.
 
@@ -90,10 +90,10 @@ For example, the following would map the typical directional keys of vim to a de
 ```js
 "modalkeys.keybinding": {
     "D": { command: "modalkeys.enterMode", args: { mode: "evil" } },
-    "evil:j": "edit.action.clipbaordCutAction",
-    "evil:k": "edit.action.clipbaordCutAction",
-    "evil:h": "edit.action.clipbaordCutAction",
-    "evil:l": "edit.action.clipbaordCutAction"
+    "evil::j": "edit.action.clipbaordCutAction",
+    "evil::k": "edit.action.clipbaordCutAction",
+    "evil::h": "edit.action.clipbaordCutAction",
+    "evil::l": "edit.action.clipbaordCutAction"
 }
 ```
 
@@ -134,7 +134,7 @@ executed by defining an object with prefined properties:
 ```
 The `<command>` is again a valid VS Code command. The `args` property contains
 whatever arguments the command takes. It can be specified as a JSON object
-or as a string. If the value of the `args` property is a string, ModalEdit
+or as a string. If the value of the `args` property is a string, ModalKeys
 treats it as a JavaScript expression. It evaluates the expression and passes the
 result to the command. The following variables can be used inside expression
 strings:
@@ -155,7 +155,7 @@ strings:
 
 The `repeat` property allows you to run the command multiple times. If the value
 of the property is a number, it directly determines the repetition count. If it
-is a string, ModalEdit evaluates it as JS expression and checks if the result is
+is a string, ModalKeys evaluates it as JS expression and checks if the result is
 a number. In that case the returned number is used as the repeat count. Note
 that numbers smaller than 1 will be ignored, and the command is always run at
 least once.
@@ -258,7 +258,7 @@ The example below defines two commands that are bound to key sequences `g - f`
 
 ### Defining Recursive Keymaps
 
-Version 1.5 of ModalEdit introduced the possibility to create recursive keymaps.
+Version 1.5 of ModalKeys introduced the possibility to create recursive keymaps.
 With this feature you can define arbitrarily long keyboard sequences. This is
 useful, for example, for creating commands that you can repeat by entering first
 a number followed by a command key. Keymaps got two new features to enable this
@@ -336,7 +336,7 @@ hint what keys you can press next.
 
 ### Keybindings in Selection/Visual Mode
 
-ModalEdit 2.0 adds a new configuration section called `selectbidings` that has
+ModalKeys 2.0 adds a new configuration section called `selectbidings` that has
 the same structure as the `keybindings` section. With it you can now map keys
 that act as the lead key of a normal mode sequence to run a commands when
 pressed in visual mode.
@@ -346,7 +346,7 @@ For example, you might want the `d` key to be the leader key for sequence
 without expecting any following keys. Previously it was not possible to define
 this behavior, but now you can do it with `selectbindings`.
 
-`selectbindings` section is always checked first when ModalEdit looks for a
+`selectbindings` section is always checked first when ModalKeys looks for a
 mapping for a keypress. If there is no binding defined in `selectbindings`
 then it checks the `keybindings` section. Note that you can still define normal
 mode commands that work differently when selection is active. You can use either
@@ -355,9 +355,9 @@ perform a different action based on that.
 
 ### Debugging Keybindings
 
-If you are not sure that your bindings are correct, check the ModalEdit's
+If you are not sure that your bindings are correct, check the ModalKeys's
 output log. You can find it by opening **View - Output** and then choosing the
-**ModalEdit** from the drop-down menu. Errors in configuration will be reported
+**ModalKeys** from the drop-down menu. Errors in configuration will be reported
 there. If your configuration is ok, you should see the following message.
 
 ![output log](images/output-log.png)
@@ -444,12 +444,12 @@ delete and then `w` for word. In VS Code you first select the word (with `W` or
 `e` key in my configuration) then you delete the selection with `d` key.
 
 To better understand the difference, check out [Kakoune editor's documentation][8].
-ModalEdit extends VS Code with normal mode editing, so you have more or less
+ModalKeys extends VS Code with normal mode editing, so you have more or less
 the same capabilities as in Kakoune.
 
 ## Additional VS Code Commands
 
-ModalEdit adds few useful commands to VS Code's repertoire. They help you
+ModalKeys adds few useful commands to VS Code's repertoire. They help you
 create more Vim-like workflow for searching and navigation.
 
 ### Switching between Modes
@@ -471,7 +471,7 @@ commands require any arguments.
 
 The standard search functionality in VS Code is quite clunky as it opens a
 dialog which takes you out of the editor. To achieve more fluid searching
-experience ModalEdit provides incremental search commands that mimic Vim's
+experience ModalKeys provides incremental search commands that mimic Vim's
 corresponding operations.
 
 > There are lot of new parameters in the `search` command that were added in
@@ -511,7 +511,7 @@ and switches back to normal mode.
 #### `modaledit.deleteCharFromSearch`
 
 Deletes the last character of the search string. By default the backspace key
-is bound to this command when ModalEdit is active and in search mode.
+is bound to this command when ModalKeys is active and in search mode.
 
 #### `modaledit.nextMatch`
 
@@ -525,7 +525,7 @@ search direction.
 
 ### Bookmarks
 
-To quickly jump inside documents ModalEdit provides two bookmark commands:
+To quickly jump inside documents ModalKeys provides two bookmark commands:
 
 - `modaledit.defineBookmark` stores the current position in a bookmark, and
 - `modaledit.goToBookmark` jumps to the given bookmark.
@@ -551,7 +551,7 @@ problem with snippets is that very seldom one bothers to create a new one. If a
 snippet is used only a couple of times in a specific situation, the effort of
 defining it nullifies the advantage.
 
-With ModalEdit, you can create snippets quickly by selecting a region of text
+With ModalKeys, you can create snippets quickly by selecting a region of text
 and invoking command `modaledit.defineQuickSnippet`. You can assign the snippet
 to a register by specifying its index as an argument.
 ```js

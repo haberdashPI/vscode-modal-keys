@@ -5,13 +5,15 @@
 {
 	"version": "0.2.0",
 	"configurations": [
+
 		{
 			"name": "Run Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--disable-extension johtela.vscode-modaledit"
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"

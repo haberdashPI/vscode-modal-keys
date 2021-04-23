@@ -1,7 +1,7 @@
 /**
  * # Commands and State
  *
- * This module implements the new commands provided by ModalEdit. It also stores
+ * This module implements the new commands provided by ModalKeys. It also stores
  * the extension state; which mode we are in, search parameters, bookmarks,
  * quick snippets, etc.
  */
@@ -13,7 +13,7 @@ import { TextDecoder } from 'util'
 /**
  * ## Command Arguments
  *
- * Most commands provided by ModalEdit take arguments. Since command arguments
+ * Most commands provided by ModalKeys take arguments. Since command arguments
  * are stored in objects by-design, we define them as interfaces.
  *
  * ### Search Arguments
@@ -195,29 +195,29 @@ let lastChange: string[] = []
  *
  * Since command names are easy to misspell, we define them as constants.
  */
-const toggleId = "modaledit.toggle"
-const enterModeId = "modaledit.enterMode"
-const enterInsertId = "modaledit.enterInsert"
-const enterNormalId = "modaledit.enterNormal"
-const toggleSelectionId = "modaledit.toggleSelection"
-const enableSelectionId = "modaledit.enableSelection"
-const cancelSelectionId = "modaledit.cancelSelection"
-const cancelMultipleSelectionsId = "modaledit.cancelMultipleSelections"
-const searchId = "modaledit.search"
-const cancelSearchId = "modaledit.cancelSearch"
-const deleteCharFromSearchId = "modaledit.deleteCharFromSearch"
-const nextMatchId = "modaledit.nextMatch"
-const previousMatchId = "modaledit.previousMatch"
-const defineBookmarkId = "modaledit.defineBookmark"
-const goToBookmarkId = "modaledit.goToBookmark"
-const showBookmarksId = "modaledit.showBookmarks"
-const fillSnippetArgsId = "modaledit.fillSnippetArgs"
-const defineQuickSnippetId = "modaledit.defineQuickSnippet"
-const insertQuickSnippetId = "modaledit.insertQuickSnippet"
-const typeKeysId = "modaledit.typeKeys"
-const selectBetweenId = "modaledit.selectBetween"
-const repeatLastChangeId = "modaledit.repeatLastChange"
-const importPresetsId = "modaledit.importPresets"
+const toggleId = "modalkeys.toggle"
+const enterModeId = "modalkeys.enterMode"
+const enterInsertId = "modalkeys.enterInsert"
+const enterNormalId = "modalkeys.enterNormal"
+const toggleSelectionId = "modalkeys.toggleSelection"
+const enableSelectionId = "modalkeys.enableSelection"
+const cancelSelectionId = "modalkeys.cancelSelection"
+const cancelMultipleSelectionsId = "modalkeys.cancelMultipleSelections"
+const searchId = "modalkeys.search"
+const cancelSearchId = "modalkeys.cancelSearch"
+const deleteCharFromSearchId = "modalkeys.deleteCharFromSearch"
+const nextMatchId = "modalkeys.nextMatch"
+const previousMatchId = "modalkeys.previousMatch"
+const defineBookmarkId = "modalkeys.defineBookmark"
+const goToBookmarkId = "modalkeys.goToBookmark"
+const showBookmarksId = "modalkeys.showBookmarks"
+const fillSnippetArgsId = "modalkeys.fillSnippetArgs"
+const defineQuickSnippetId = "modalkeys.defineQuickSnippet"
+const insertQuickSnippetId = "modalkeys.insertQuickSnippet"
+const typeKeysId = "modalkeys.typeKeys"
+const selectBetweenId = "modalkeys.selectBetween"
+const repeatLastChangeId = "modalkeys.repeatLastChange"
+const importPresetsId = "modalkeys.importPresets"
 /**
  * ## Registering Commands
  *
@@ -310,14 +310,11 @@ async function runActionForKey(key: string, mode: string = keyMode): Promise<boo
 }
 
 function handleTypeSubscription(oldmode: string, newmode: string){
-    if(newmode !== Insert && oldmode === Insert){
-        if (!typeSubscription)
-            typeSubscription = vscode.commands.registerCommand("type", onType)
-    }else if(newmode === Insert && oldmode !== Insert){
-        if (typeSubscription) {
-            typeSubscription.dispose()
-            typeSubscription = undefined
-        }
+    if(newmode !== Insert && !typeSubscription){
+        typeSubscription = vscode.commands.registerCommand("type", onType)
+    }else if(newmode === Insert && typeSubscription){
+        typeSubscription.dispose()
+        typeSubscription = undefined
     }
 }
 
@@ -345,7 +342,7 @@ export async function enterMode(args: string | EnterModeArgs) {
 
     const editor = vscode.window.activeTextEditor
     if (editor) {
-        await vscode.commands.executeCommand("setContext", "modaledit.mode", newMode)
+        await vscode.commands.executeCommand("setContext", "modalkeys.mode", newMode)
         updateCursorAndStatusBar(editor)
     }
     const enterHook = modeHooks[keyMode]?.modeHooks?.enter
@@ -414,7 +411,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
 /**
  * ## Selection Commands
  *
- * `modaledit.cancelSelection` command clears the selection using standard
+ * `modalkeys.cancelSelection` command clears the selection using standard
  * `cancelSelection` command, but also sets the `selecting` flag to false, and
  * updates the status bar. It is advisable to use this command instead of the
  * standard version to keep the state in sync.
@@ -426,12 +423,12 @@ async function cancelSelection(): Promise<void> {
     }
 }
 /**
- * `modaledit.cancelMultipleSelections`, like `modaledit.cancelSelection` sets
+ * `modalkeys.cancelMultipleSelections`, like `modalkeys.cancelSelection` sets
  * selecting to false and sets the anchor equal to active selection position.
- * Unlike `modaledit.cancelSelection` it preserves multiple cursors.
+ * Unlike `modalkeys.cancelSelection` it preserves multiple cursors.
  */
 function cancelMultipleSelections() {
-    if (keyMode === Visual) {
+    if (isSelecting()) {
         let editor = vscode.window.activeTextEditor
         if (editor)
             editor.selections = editor.selections.map(sel =>
@@ -441,7 +438,7 @@ function cancelMultipleSelections() {
 }
 
 /**
- * `modaledit.toggleSelection` toggles the selection mode on and off. It sets
+ * `modalkeys.toggleSelection` toggles the selection mode on and off. It sets
  * the selection mode flag and updates the status bar, but also clears the
  * selection.
  */
@@ -453,7 +450,7 @@ async function toggleSelection(): Promise<void> {
     }
 }
 /**
- * `modaledit.enableSelection` sets the selecting to true.
+ * `modalkeys.enableSelection` sets the selecting to true.
  */
 function enableSelection() {
     enterMode(Visual)
@@ -691,8 +688,8 @@ function highlightMatches(editor: vscode.TextEditor,
  * built-in search commands.
  */
 function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
-    if(!event || event.affectsConfiguration('modaledit')){
-        let config = vscode.workspace.getConfiguration('modaledit')
+    if(!event || event.affectsConfiguration('modalkeys')){
+        let config = vscode.workspace.getConfiguration('modalkeys')
         let matchBackground = config.get<string>('searchMatchBackground');
         let matchBorder = config.get<string>('searchMatchBorder');
         let highlightBackground = config.get<string>('searchOtherMatchesBackground');
@@ -749,16 +746,16 @@ async function cancelSearch(): Promise<void> {
  * ### Modifying Search String
  *
  * Since we cannot capture the backspace character in normal mode, we have to
- * hook it some other way. We define a command `modaledit.deleteCharFromSearch`
+ * hook it some other way. We define a command `modalkeys.deleteCharFromSearch`
  * which deletes the last character from the search string. This command can
  * then be bound to backspace using the standard keybindings. We only run the
- * command, if the `modaledit.searching` context is set. Below is an excerpt
+ * command, if the `modalkeys.searching` context is set. Below is an excerpt
  * of the default keybindings defined in `package.json`.
  * ```js
  * {
  *    "key": "Backspace",
- *    "command": "modaledit.deleteCharFromSearch",
- *    "when": "editorTextFocus && modaledit.searching"
+ *    "command": "modalkeys.deleteCharFromSearch",
+ *    "when": "editorTextFocus && modalkeys.searching"
  * }
  * ```
  * Note that we need to also update the status bar to show the modified search
@@ -868,7 +865,7 @@ function changeSelection(editor: vscode.TextEditor, anchor: vscode.Position,
  * ## Quick Snippets
  *
  * Supporting quick snippets is also a pleasantly simple job. First we implement
- * the `modaledit.fillSnippetArgs` command, which replaces (multi-)selection
+ * the `modalkeys.fillSnippetArgs` command, which replaces (multi-)selection
  * ranges with `$1`, `$2`, ...
  */
 async function fillSnippetArgs(): Promise<void> {
@@ -919,7 +916,7 @@ async function typeKeys(args: TypeKeysArgs): Promise<void> {
  * ## Advanced Selection Command
  *
  * For selecting ranges of text between two characters (inside parenthesis, for
- * example) we add the `modaledit.selectBetween` command. See the
+ * example) we add the `modalkeys.selectBetween` command. See the
  * [instructions](../README.html#selecting-text-between-delimiters) for the list
  * of parameters this command provides.
  */
@@ -1063,7 +1060,7 @@ async function repeatLastChange(): Promise<void> {
  */
 async function importPresets() {
     const browse = "Browse..."
-    let presetsPath = vscode.extensions.getExtension("johtela.vscode-modaledit")!
+    let presetsPath = vscode.extensions.getExtension("haberdashpi.vscode-modal-keys")!
         .extensionPath + "/presets"
     let fs = vscode.workspace.fs
     let presets = (await fs.readDirectory(vscode.Uri.file(presetsPath)))
@@ -1095,19 +1092,17 @@ async function importPresets() {
             if (uri.fsPath.match(/jsonc?$/))
                 js = `(${js})`
             let preset = eval(js)
-            let config = vscode.workspace.getConfiguration("modaledit")
-            if (!(preset.keybindings || preset.selectbindings))
+            let config = vscode.workspace.getConfiguration("modalkeys")
+            if (!preset.keybindings)
                 throw new Error(
                     `Could not find "keybindings" or "selectbindings" in ${uri}`)
             if (preset.keybindings)
                 config.update("keybindings", preset.keybindings, true)
-            if (preset.selectbindings)
-                config.update("selectbindings", preset.selectbindings, true)
             vscode.window.showInformationMessage(
-                "ModalEdit: Keybindings imported.")
+                "ModalKeys: Keybindings imported.")
         }
         catch (e) {
-            vscode.window.showWarningMessage("ModalEdit: Bindings not imported.",
+            vscode.window.showWarningMessage("ModalKeys: Bindings not imported.",
                 `${e}`)
         }
     }

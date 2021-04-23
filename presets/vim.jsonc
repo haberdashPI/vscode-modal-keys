@@ -1,52 +1,52 @@
 /**
-# New Vimproved ModalEdit 2.0
+# New Vimproved ModalKeys 2.0
 
 ![](../images/pooh.jpg =375x403)
-Providing full Vim emulation was not originally a goal of ModalEdit. The idea of 
-the extension is to provide an engine that allows the user to [map any key 
-combination to any command provided by VS Code](../README.html#configuration). 
-However, most users equate modal editing with Vim and are familiar with its 
-default keybindings. Vim users really love the powerful key sequences that 
+Providing full Vim emulation was not originally a goal of ModalKeys. The idea of
+the extension is to provide an engine that allows the user to [map any key
+combination to any command provided by VS Code](../README.html#configuration).
+However, most users equate modal editing with Vim and are familiar with its
+default keybindings. Vim users really love the powerful key sequences that
 combine editing operations with cursor motions or text ranges.
 
-ModalEdit has also evolved by taking inspiration from Vim. Many capabilities 
-were added with the motive to enable some Vim feature that was previously not 
-possible to implement. With version 2.0 ModalEdit's functionality is now 
+ModalKeys has also evolved by taking inspiration from Vim. Many capabilities
+were added with the motive to enable some Vim feature that was previously not
+possible to implement. With version 2.0 ModalKeys's functionality is now
 extensive enough to build a semi-complete Vim emulation. So, here we go...
 
 Adding Vim keybindings as optional presets serves two purposes: it lowers the
-barrier to entry for Vim users who don't want to spend the time defining 
+barrier to entry for Vim users who don't want to spend the time defining
 bindings from ground up. Secondly, Vim presets serve as an example to show
-how you can build sophisticated command sequences using the machinery provided 
-by ModalEdit. 
+how you can build sophisticated command sequences using the machinery provided
+by ModalKeys.
 
 ![importing presets](../images/import-preset.png =553x94)
-If you are not interested on how the Vim keybindings are implemented and just 
-want to use them, you can skip this discussion. Just import the presets by 
-pressing <key>Ctrl</key>+<key>Shift</key>+<key>P</key> and running command 
-**ModalEdit: Import preset keybindings**. You will be presented a choice to 
-import either Vim bindings or any presets that you have created yourself. If 
-you are planning to customize the bindings, or create Vim-style commands from 
+If you are not interested on how the Vim keybindings are implemented and just
+want to use them, you can skip this discussion. Just import the presets by
+pressing <key>Ctrl</key>+<key>Shift</key>+<key>P</key> and running command
+**ModalKeys: Import preset keybindings**. You will be presented a choice to
+import either Vim bindings or any presets that you have created yourself. If
+you are planning to customize the bindings, or create Vim-style commands from
 scratch, this document gives you pointers how to go about with that.
 
 ## Game Plan
 
-We start with basic motion commands which are mostly straightforward to 
-implement. Motions have two modes of operation: normal mode (moving cursor), and 
-visual mode (extending selection). We make sure all motions work correctly in 
-both modes. This allows us to reuse these keybindings when implementing more 
-advanced operations. Our goal is to avoid repetition by building complex 
+We start with basic motion commands which are mostly straightforward to
+implement. Motions have two modes of operation: normal mode (moving cursor), and
+visual mode (extending selection). We make sure all motions work correctly in
+both modes. This allows us to reuse these keybindings when implementing more
+advanced operations. Our goal is to avoid repetition by building complex
 sequences from primitive commands.
 
 In Vim, there are multiple key sequences for a same operation. For example,
-you can convert a paragraph upper case by typing 
-<key>g</key><key>U</key><key>i</key><key>p</key>. You can perform the same 
-operation using visual mode by typing <key>v</key><key>i</key><key>p</key><key>U</key>. 
-The trick we use is to convert key sequences that operate on character, word, 
-line, paragraph, etc. to analagous key sequences that use visual mode. We can 
-implement all the editing commands just to work on active selection and reuse 
-these commands with the other key combinations. Consequently, command definition 
-becomes a string mapping problem. Since we can use JavaScript to expressions to 
+you can convert a paragraph upper case by typing
+<key>g</key><key>U</key><key>i</key><key>p</key>. You can perform the same
+operation using visual mode by typing <key>v</key><key>i</key><key>p</key><key>U</key>.
+The trick we use is to convert key sequences that operate on character, word,
+line, paragraph, etc. to analagous key sequences that use visual mode. We can
+implement all the editing commands just to work on active selection and reuse
+these commands with the other key combinations. Consequently, command definition
+becomes a string mapping problem. Since we can use JavaScript to expressions to
 do string manipulation, these mappings are easy to formulate.
 
 ![](../images/vim-uppercase.gif)
@@ -86,8 +86,8 @@ Now, lets implement all the keybindings listed above.
 {
     "keybindings": {
         /**
-Cursor can be advanced in a file with with enter and space. These are not 
-technically motion commands but included for compatibility. 
+Cursor can be advanced in a file with with enter and space. These are not
+technically motion commands but included for compatibility.
         */
         "\n": [
             "cursorDown",
@@ -118,7 +118,7 @@ Move to first/last character on line. These work also in visual mode.
             "args": "{ to: 'wrappedLineEnd', select: __selecting }"
         },
         /**
-Move to first/last non-blank character on line. Also these ones use the 
+Move to first/last non-blank character on line. Also these ones use the
 `__selecting` flag to check whether we are in visual mode.
         */
         "^": {
@@ -142,22 +142,22 @@ it work in visual mode.
             /**
 ## Other Commands Starting with <key>g</key>
 
-Commands starting with <key>g</key> key are bit inconsistent in Vim. Some of 
-them are basic motion commands, such as <key>g</key><key>_</key> and 
+Commands starting with <key>g</key> key are bit inconsistent in Vim. Some of
+them are basic motion commands, such as <key>g</key><key>_</key> and
 <key>g</key><key>g</key>, some are editing commands like <key>g</key><key>J</key>
-and <key>g</key><key>U</key>, and some switch between tabs 🤷‍♂️. Since we have to 
-define all bindings with the same prefix in same place, we take a detour and add 
+and <key>g</key><key>U</key>, and some switch between tabs 🤷‍♂️. Since we have to
+define all bindings with the same prefix in same place, we take a detour and add
 these commands before continuing with rest of the motion commands.
 
 | Keys              | Command
 | ----------------- | --------------------------------------
 | `gJ`              | Join lines without space in between
 | `gu`<_motion_>    | Convert text specified by <_motion_> to lowercase
-| `gU`<_motion_>    | Convert text specified by <_motion_> to uppercase 
+| `gU`<_motion_>    | Convert text specified by <_motion_> to uppercase
 | `gt`              | Go to next tab
 | `gT`              | Go to previous tab
 
-Joining lines without space is done by deleting a character after the join 
+Joining lines without space is done by deleting a character after the join
 command.
             */
             "J": [
@@ -166,9 +166,9 @@ command.
             ],
             /**
 The lower/uppercase transition works with any motion, but since we have not
-defined all of them yet, we explain the command structure 
-[later in the document](#editing-with-motions). 
-The structure we use here is exactly the same as with <key>d</key> command, for 
+defined all of them yet, we explain the command structure
+[later in the document](#editing-with-motions).
+The structure we use here is exactly the same as with <key>d</key> command, for
 example.
             */
             "u,U": {
@@ -215,7 +215,7 @@ example.
                 }
             },
             /**
-<key>g</key><key>t</key> and <key>g</key><key>T</key> switch to next/previous 
+<key>g</key><key>t</key> and <key>g</key><key>T</key> switch to next/previous
 tab.
             */
             "t": "workbench.action.nextEditor",
@@ -224,7 +224,7 @@ tab.
         /**
 ## Rest of the Motion Commands
 
-Now we can complete the list of basic motion commands. This one movest the 
+Now we can complete the list of basic motion commands. This one movest the
 cursor at the end of the file and selects the range, if visual mode is on.
         */
         "G": {
@@ -236,7 +236,7 @@ cursor at the end of the file and selects the range, if visual mode is on.
 The logic of separating words is bit different in VS Code and Vim, so we will
 not try to imitate Vim behavior here. These keys are mapped to the most similar
 motion available. The <key>W</key> and <key>B</key> commands skip separator
-characters, and move to the start of the next/previous alphanumeric word. 
+characters, and move to the start of the next/previous alphanumeric word.
         */
         "w": "cursorWordStartRight",
         "e": "cursorWordEndRight",
@@ -250,8 +250,8 @@ characters, and move to the start of the next/previous alphanumeric word.
             "repeat": "__char.match(/\\W/)"
         },
         /**
-Moving cursor to the top, middle, and bottom of the screen is mapped to 
-<key>H</key> (high), <key>M</key> (middle), and <key>L</key> (low) keys. These 
+Moving cursor to the top, middle, and bottom of the screen is mapped to
+<key>H</key> (high), <key>M</key> (middle), and <key>L</key> (low) keys. These
 mappings also work in visual mode.
         */
         "H": {
@@ -267,12 +267,12 @@ mappings also work in visual mode.
             "args": "{ to: 'viewPortBottom', select: __selecting }"
         },
         /**
-Move to matching bracket command is somewhat challenging to implement 
-consistently in VS Code. This is due to the problem that there are no commands 
-that do exactly what Vim's motions do. In normal mode we call the 
+Move to matching bracket command is somewhat challenging to implement
+consistently in VS Code. This is due to the problem that there are no commands
+that do exactly what Vim's motions do. In normal mode we call the
 `jumpToBracket` command which works if the cursor is on top of a bracket, but
 does not allow for the selection to be extended. In visual mode we use the
-`smartSelect.expand` command instead to extend the selection to whatever 
+`smartSelect.expand` command instead to extend the selection to whatever
 syntactic scope is above the current selection. In many cases, it is more useful
 motion than jumping to a matching bracket, but using it means that we are
 diverging from Vim's functionality.
@@ -285,30 +285,30 @@ diverging from Vim's functionality.
         /**
 ## Jump to a Character
 
-Advanced cursor motions in Vim include jump to character, which is especially 
-powerful in connection with editing commands. With this motion, we can apply 
-edits upto or including a specified character. The same motions work also as 
-jump commands in normal mode. We have to provide separate implementations for 
-normal and visual mode, since we need to provide different parameters to the 
+Advanced cursor motions in Vim include jump to character, which is especially
+powerful in connection with editing commands. With this motion, we can apply
+edits upto or including a specified character. The same motions work also as
+jump commands in normal mode. We have to provide separate implementations for
+normal and visual mode, since we need to provide different parameters to the
 `modaledit.search` command we are utilizing.
 
 | Keys          | Cursor Motion
 | ------------- | ---------------------------------------------
-| `f`<_char_>   | Jump to next occurrence of <_char_> 
+| `f`<_char_>   | Jump to next occurrence of <_char_>
 | `F`<_char_>   | Jump to previous occurrence of <_char_>
 | `t`<_char_>   | Jump to character before the next occurrence of <_char_>
 | `T`<_char_>   | Jump to character after the previous occurrence of <_char_>
 | `;`           | Repeat previous f, t, F or T motion
 | `,`           | Repeat previous f, t, F or T motion in opposite direction
 
-All of these keybindings are implemented using the 
+All of these keybindings are implemented using the
 [incremental search](../README.html#incremental-search) command, just the
-parameters are different for each case. Basically we just perform either a 
+parameters are different for each case. Basically we just perform either a
 forward or backward search and adjust the cursor position after the character
 has been selected. We also need to adjust cursor position before repeating the
 search.
 
-The adjustment is done by invoking key bindings <key>h</key> (left) or 
+The adjustment is done by invoking key bindings <key>h</key> (left) or
 <key>l</key> (right), or sometimes by clearing the selection with <key>v</key>
 key.
         */
@@ -357,7 +357,7 @@ key.
             }
         },
         /**
-Repeating the motions can be done simply by calling `nextMatch` or 
+Repeating the motions can be done simply by calling `nextMatch` or
 `previousMatch`.
         */
         ";": "modaledit.nextMatch",
@@ -366,8 +366,8 @@ Repeating the motions can be done simply by calling `nextMatch` or
 ## Bookmarks
 
 You can also combine jump to bookmark motions with editing commands in Vim.
-Therefore, we define them along with the other motions. We use the 
-[bookmark commands](../README.html#bookmarks) provided by ModalEdit to implement
+Therefore, we define them along with the other motions. We use the
+[bookmark commands](../README.html#bookmarks) provided by ModalKeys to implement
 these keybindings:
 
 | Keys              | Cursor Motion
@@ -429,7 +429,7 @@ of using these names.
             "modaledit.enterInsert"
         ],
         /**
-The `a` has to check if the cursor is at the end of line. If so, we don't move 
+The `a` has to check if the cursor is at the end of line. If so, we don't move
 right because that would move to next line.
         */
         "a": [
@@ -454,7 +454,7 @@ right because that would move to next line.
         /**
 Note that visual mode is not really a mode. Basically we just set the
 `__selecting` flag that changes the behavior of normal mode commands. Nor is
-there a separate line selection mode. We just mimic Vim's behavior using 
+there a separate line selection mode. We just mimic Vim's behavior using
 VS Code's builtin commands that select ranges of text, when the `__selecting`
 flag is on.
         */
@@ -489,7 +489,7 @@ line, or expect a motion key sequence at the end which specifies the scope of
 | `Y`   | Yank (copy) rest of line
 | `p`   | Paste contents of clipboard after cursor
 | `P`   | Paste contents of clipboard at cursor
-| `J`   | Join current and next line. Add space in between 
+| `J`   | Join current and next line. Add space in between
 | `u`   | Undo last change
 | `.`   | Repeat last change
 
@@ -500,9 +500,9 @@ line, or expect a motion key sequence at the end which specifies the scope of
         "X": "deleteLeft",
         /**
 <key>r</key> and <key>s</key> commands delete character under cursor and enter
-insert mode. In Vim <key>r</key> and <key>R</key> keys swith momentarily or 
+insert mode. In Vim <key>r</key> and <key>R</key> keys swith momentarily or
 permanently to overwrite mode. Since this mode does not exist in VS Code, we
-settle on mapping both keys to the same sequence. 
+settle on mapping both keys to the same sequence.
         */
         "r,s": [
             "deleteRight",
@@ -524,7 +524,7 @@ as well. If you are wondering why we don't use VS Code's cut command, it has a
 synchronization issue that sometimes causes the execution to advance to the
 next command in the sequence before cutting is done. This leads to strange
 random behavior that usually causes the whole line to disappear instead of the
-rest of line. 
+rest of line.
         */
         "D": [
             "modaledit.cancelSelection",
@@ -555,7 +555,7 @@ clear the selection again.
             "modaledit.cancelSelection"
         ],
         /**
-Pasting text at cursor is done with <key>P</key> key. Following Vim convention 
+Pasting text at cursor is done with <key>P</key> key. Following Vim convention
 <key>p</key> pastes text after cursor position. In both cases we clear the
 selection after paste, so that we don't accidently end up in visual mode.
         */
@@ -583,7 +583,7 @@ selection afterwards.
         ],
         /**
 The last "simple" keybinding we define is <key>`</key> that repeats the last
-command that changed the text somehow. This command is provided by ModalEdit. It
+command that changed the text somehow. This command is provided by ModalKeys. It
 checks after each key sequence is typed whether it caused a change in file.
 If so, it stores the seqeuence as a change. The command just runs the stored
 keysequence again.
@@ -616,10 +616,10 @@ specifies the position or range you want to apply the command to.
 | `=`<_motion_> | Reindent (reformat) range specified by <_motion_>
 
 We can define all commands listed above in a single keybinding block. Remember
-that our strategy is just to map the key sequences of the edit commands that use 
-motions to equivalent commands that work in visual mode. We do the specified 
-motion in visual mode selecting a range of text, and then running the command 
-on the selection. It does not matter which editing command we run, all of them 
+that our strategy is just to map the key sequences of the edit commands that use
+motions to equivalent commands that work in visual mode. We do the specified
+motion in visual mode selecting a range of text, and then running the command
+on the selection. It does not matter which editing command we run, all of them
 can be mapped the same way.
         */
         "d,y,c,<,>,=": {
@@ -628,13 +628,13 @@ can be mapped the same way.
             /**
 The motions can be also divided to two categories: repeatable and non-repeatable.
 Some motions we can repeat, such as move to next character/word/line, but some
-we can only do once, such as move to end of line, beginning of file, or to a 
+we can only do once, such as move to end of line, beginning of file, or to a
 bookmark. Later on we make it possible to run repeatable motions _n_ times by
-typing number _n_ before a motion command or an editing command. 
+typing number _n_ before a motion command or an editing command.
 
-We can run all editing commands on the current line by repeating the command 
-key. For example <key>y</key><key>y</key> yanks current line, and 
-<key><</key><key><</key> outdents current line. By prefixing these commands 
+We can run all editing commands on the current line by repeating the command
+key. For example <key>y</key><key>y</key> yanks current line, and
+<key><</key><key><</key> outdents current line. By prefixing these commands
 with a number, we repeat the command _n_ times. To extract the number _n_ we
 slice all but last 2 characters of the key sequence. Then we append `V` command
 to it and lastly the actual editing command. The whole logic resides in the JS
@@ -655,11 +655,11 @@ the number from the start of the `__cmd` string.
 Another thing to note is that we actually have some logic when choosing what
 command to run; we transform the <key>c</key> key to <key>d</key><key>O</key>
 sequence, which deletes the selected range and then inserts a new line above
-cursor. As an example command <key>2</key><key>c</key><key>c</key> actually 
-maps to command <key>2</key><key>V</key><key>d</key><key>O</key>. 
+cursor. As an example command <key>2</key><key>c</key><key>c</key> actually
+maps to command <key>2</key><key>V</key><key>d</key><key>O</key>.
 
 All the other repeatable commands can be defined in almost identical way. For
-example the command to yank three words <key>3</key><key>y</key><key>w</key> is 
+example the command to yank three words <key>3</key><key>y</key><key>w</key> is
 converted to a sequence <key>v</key><key>3</key><key>w</key><key>y</key>.
             */
             "h,j,k,l,w,e,b,W,B,%": {
@@ -681,9 +681,9 @@ sequence and add <key>v</key> key in front.
                 }
             },
             /**
-Next motions jump to a character. They are handy when you want to edit text 
-until a specified character. For example the command 
-<key>d</key><key>t</key><key>"</key> deletes text until the next quotation mark. 
+Next motions jump to a character. They are handy when you want to edit text
+until a specified character. For example the command
+<key>d</key><key>t</key><key>"</key> deletes text until the next quotation mark.
 The implementation is exactly same as above, so the command would map to key
 sequence <key>v</key><key>t</key><key>"</key><key>d</key>.
             */
@@ -699,7 +699,7 @@ Doing an edit inside set of delimiters like braces, parenthesis or quotation
 marks can be done with the <key>a</key> or <key>i</key> movement. The difference
 between them is that <key>a</key> includes the delimiters in the edit whereas
 <key>i</key> does not. The desired delimiter is the last key in the sequence.
-Special delimiters <key>w</key>, <key>p</key>, <key>b</key>, <key>B</key>, and 
+Special delimiters <key>w</key>, <key>p</key>, <key>b</key>, <key>B</key>, and
 <key>t</key> apply the edit inside word, paragraph, parenthesis, curly braces,
 and angle brackets respectively.
             */
@@ -715,7 +715,7 @@ The last motion you can combine with editing commands is jump to tag. It is
 convenient when you want to edit long ranges of text that can't fit on screen.
 We have two variants of the motion: <key>`</key> edits until the exact mark
 location, <key>'</key> until the beginning of line where the mark specified as
-the last key resides. Key sequence is rearranged exactly as above. 
+the last key resides. Key sequence is rearranged exactly as above.
             */
             "`,'": {
                 "help": "Do until mark _",
@@ -729,9 +729,9 @@ the last key resides. Key sequence is rearranged exactly as above.
 ## Commands Prefixed by Number
 
 As stated above, you can repeat many motions and edit commands by prefixing
-them with number(s). All of the repeatable commands are listed below. We use a 
-[recursive keymap](../README.html#defining-recursive-keymaps) that loops in the 
-same mapping while you type number keys. After you type letter(s), we invoke the 
+them with number(s). All of the repeatable commands are listed below. We use a
+[recursive keymap](../README.html#defining-recursive-keymaps) that loops in the
+same mapping while you type number keys. After you type letter(s), we invoke the
 command designated by the letters <_num_> times, or perform a jump command to
 line <_num_>.
 
@@ -761,7 +761,7 @@ The recursive part of the keymap defined below.
             "0-9": 3,
             /**
 If any of the repeatable motions is typed after a number, we just do that motion
-<_num_> times. The `parseInt` function extracts the number from the beginning of 
+<_num_> times. The `parseInt` function extracts the number from the beginning of
 the key sequence.
             */
             "h,j,k,l,w,e,b,W,B,u,%": {
@@ -770,7 +770,7 @@ the key sequence.
                 "repeat": "parseInt(__cmd)"
             },
             /**
-Repeating <key>v</key> or <key>V</key> command will select <_num_> characters or 
+Repeating <key>v</key> or <key>V</key> command will select <_num_> characters or
 lines.
             */
             "v": {
@@ -794,7 +794,7 @@ key sequence with the parsed number in front.
                 "args": "{ keys: parseInt(__cmd) + 'cc' }"
             },
             /**
-We can join multiple lines at once, too. This works because the 
+We can join multiple lines at once, too. This works because the
 `editor.action.joinLines` joins all selected lines. We just have to clear the
 selection afterwards.
             */
@@ -837,7 +837,7 @@ Joining lines without space in between is implemented by repeating the command.
                     "repeat": "parseInt(__cmd)"
                 },
                 /**
-Repeating the complex editing commands is just a matter of jumping to their 
+Repeating the complex editing commands is just a matter of jumping to their
 keymap blocks. If <key>u</key> or <key>U</key> is pressed we jump to block `1`.
 The rest of the editing commands are implemented in block `2`.
 */
@@ -848,7 +848,7 @@ The rest of the editing commands are implemented in block `2`.
         /**
 ## Searching
 
-Searching introduces a pseudo-mode that captures the keyboard and suspends other 
+Searching introduces a pseudo-mode that captures the keyboard and suspends other
 commands as long as search is on. Searching commands are shown below.
 
 | Keys      | Command
@@ -858,8 +858,8 @@ commands as long as search is on. Searching commands are shown below.
 | `n`       | Select the next match
 | `p`       | Select the previous match
 
-**Note**: Searching commands work also with multiple cursors. As in Vim, search 
-wraps around if top or bottom of file is encountered. 
+**Note**: Searching commands work also with multiple cursors. As in Vim, search
+wraps around if top or bottom of file is encountered.
         */
         "/": [
             {
@@ -915,19 +915,19 @@ it has been changed. There is no way to get around this in VS Code.
     /**
 ## Motions in Visual Mode
 
-ModalEdit 2.0 adds a new configuration section called `selectbidings` that has
+ModalKeys 2.0 adds a new configuration section called `selectbidings` that has
 the same structure as the `keybindings` section. With it you can now map keys
-that act as the lead key of a normal mode sequence to run a commands when 
-pressed in visual mode. For example keys <key>d</key>, <key>c</key>, and 
+that act as the lead key of a normal mode sequence to run a commands when
+pressed in visual mode. For example keys <key>d</key>, <key>c</key>, and
 <key>y</key> work this way. In normal mode they must be followed by a motion
 command to specify the range that they are applied, but in visual mode they
 run on the selected text.
 
-`selectbindings` section is always checked first when ModalEdit looks for a 
-mapping for a keypress. If there is no binding defined in `selectbindings` 
+`selectbindings` section is always checked first when ModalKeys looks for a
+mapping for a keypress. If there is no binding defined in `selectbindings`
 then it checks the `keybindings` section. Note that you can still define normal
-mode commands that work differently when selection is active. You can use either 
-a conditional or parameterized command to check the `__selecting` flag, and 
+mode commands that work differently when selection is active. You can use either
+a conditional or parameterized command to check the `__selecting` flag, and
 perform a different action based on that.
 
 We define all the motions that do not yet work correctly in visual mode. The
@@ -960,9 +960,9 @@ full list is below:
 | `a< | a> | at`    | Select text inside ange brackets (tag) including them
 | `i[ | i] | at`    | Select text inside angle brackets (tag) not including them
 
-The basic movement commands are otherwise identical to normal mode defintions, 
-but the actual commands invoked are different. Roughly speaking, we just add 
-`Select` at the end of each command. 
+The basic movement commands are otherwise identical to normal mode defintions,
+but the actual commands invoked are different. Roughly speaking, we just add
+`Select` at the end of each command.
     */
     "selectbindings": {
         "l": "cursorRightSelect",
@@ -1027,14 +1027,14 @@ parameters we use; we include the `selectTillMatch` flag, and provide different
             }
         },
         /**
-Selecting text inside/around delimiters are motions that are only defined in 
-visual mode. The motions can be used along with editing commands in normal mode, 
-but obviously cannot be performed by themselves as they select ranges of text 
+Selecting text inside/around delimiters are motions that are only defined in
+visual mode. The motions can be used along with editing commands in normal mode,
+but obviously cannot be performed by themselves as they select ranges of text
 thus entering visual mode automatically.
 
-All variants of these motions are implemented with the 
+All variants of these motions are implemented with the
 [`modaledit.selectBetween` command](../README.html#selecting-text-between-delimiters).
-The command takes start and end delimiters, which can be also regular 
+The command takes start and end delimiters, which can be also regular
 expressions, and selects the range between these delimiters. The scope of the
 search is by default the current line, but for some variants we specify the
 `docScope` parameter which causes the search to consider the whole file.
@@ -1088,10 +1088,10 @@ search is by default the current line, but for some variants we specify the
 ## Editing Commands in Visual Mode
 
 The last pieces of puzzle are editing commands that operate on selected text in
-visual mode. They are the same editing operations we already defined in normal 
-mode, but remarkable simpler in this context. Since VS Code's operations already 
+visual mode. They are the same editing operations we already defined in normal
+mode, but remarkable simpler in this context. Since VS Code's operations already
 work on selected text, we only need to call the built-in commands and clear the
-selection afterwards.  
+selection afterwards.
 
 | Keys      | Command
 | --------- | -------------------------
@@ -1146,9 +1146,9 @@ Here are the implementations.
 ## Conclusion
 
 The list of commands we provided is by no means exhaustive but still contains
-literally thousands of key combinations that cover the most commonly used Vim 
-operations. This is quite a nice achievement considering that we only wrote 
-about 600 lines of configuration, and most of it is pretty trivial. This 
-demonstrates that ModalEdit's functionality is powerful enough to build all
-kinds of operations that make modal editors like Vim popular. 
+literally thousands of key combinations that cover the most commonly used Vim
+operations. This is quite a nice achievement considering that we only wrote
+about 600 lines of configuration, and most of it is pretty trivial. This
+demonstrates that ModalKeys's functionality is powerful enough to build all
+kinds of operations that make modal editors like Vim popular.
 */

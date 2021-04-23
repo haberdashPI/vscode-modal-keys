@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 * We create an output channel for diagnostic messages and pass it to the
 	 * `actions` module.
 	 */
-	let channel = vscode.window.createOutputChannel("ModalEdit")
+	let channel = vscode.window.createOutputChannel("ModalKeys")
 	actions.setOutputChannel(channel)
 	/**
 	 * Then we subscribe to events we want to react to.

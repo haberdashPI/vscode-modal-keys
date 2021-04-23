@@ -5,20 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>ModalEdit - Commands</title>
+    <title>ModalKeys - Commands</title>
     <link rel="icon" type="image/icon" href="../images/favicon.png" />
     <link rel="stylesheet" href="../css/main.css" />
-    
-    
+
+
 </head>
 <body>
-    
+
     <div class="navbar">
         <div class="navmenu">
-            
+
     <a class="title enabled" href="../index.html">
         <img src="../images/escape.svg" />
-        <span>ModalEdit</span>
+        <span>ModalKeys</span>
     </a>
     <a class="enabled" href="https://marketplace.visualstudio.com/items?itemName=johtela.vscode-modaledit">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M537.6 226.6c4.1-10.7 6.4-22.4 6.4-34.6 0-53-43-96-96-96-19.7 0-38.1 6-53.3 16.2C367 64.2 315.3 32 256 32c-88.4 0-160 71.6-160 160 0 2.7.1 5.4.2 8.1C40.2 219.8 0 273.2 0 336c0 79.5 64.5 144 144 144h368c70.7 0 128-57.3 128-128 0-61.9-44-113.6-102.4-125.4zm-132.9 88.7L299.3 420.7c-6.2 6.2-16.4 6.2-22.6 0L171.3 315.3c-10.1-10.1-2.9-27.3 11.3-27.3H248V176c0-8.8 7.2-16 16-16h48c8.8 0 16 7.2 16 16v112h65.4c14.2 0 21.4 17.2 11.3 27.3z"/></svg>
@@ -41,74 +41,74 @@
         <span>Next: Change Log</span>
     </a>
         </div>
-        
+
     <a class="hamburger">
         <div class="bar1"></div>
         <div class="bar2"></div>
         <div class="bar3"></div>
     </a>
     </div>
-    
+
     <div class="layout">
         <div class="sidepane collapsible">
-            
+
     <div class="tocmenu">
         <h3>Table of Contents</h3>
-        
+
     <ul>
-        
+
     <li>
-        
+
         <a href="../README.html">Home</a>
-        
+
     </li>
     <li>
-        
+
         <a href="../tutorial.html">Tutorial</a>
-        
+
     </li>
     <li>
-        
+
         <a href="../presets/vim.html">Vim Presets</a>
-        
+
     </li>
     <li>
         <button class="accordion">
         Implementation
         </button>
-            
+
     <ul>
-        
+
     <li>
-        
+
         <a href="extension.html">Extension</a>
-        
+
     </li>
     <li>
-        
+
         <a href="actions.html">Actions</a>
-        
+
     </li>
     <li>
-        
+
         <a href="commands.html" class="highlight">Commands</a>
-        
+
     </li>
     </ul>
     </li>
     <li>
-        
+
         <a href="../CHANGELOG.html">Change Log</a>
-        
+
     </li>
     <li>
-        
+
         <a href="../LICENSE.html">License</a>
-        
+
     </li>
     </ul>
     </div>
-            
+
     <div class="footer">
         Copyright © 2020 Tommi Johtela
         <div class="ad">
@@ -118,7 +118,7 @@
 
         </div>
         <div class="sideicon collapsible">
-            
+
     <a class="hamburger">
         <div class="bar1"></div>
         <div class="bar2"></div>
@@ -126,10 +126,10 @@
     </a>
         </div>
         <div class="scrollingarea closepopups">
-            
+
     <div class="contentarea">
         <h1 id="commands-and-state">Commands and State</h1>
-<p>This module implements the new commands provided by ModalEdit. It also stores
+<p>This module implements the new commands provided by ModalKeys. It also stores
 the extension state; which mode we are in, search parameters, bookmarks,
 quick snippets, etc.</p>
 <details>
@@ -140,7 +140,7 @@ quick snippets, etc.</p>
 </code></pre>
 </details>
 <h2 id="command-arguments">Command Arguments</h2>
-<p>Most commands provided by ModalEdit take arguments. Since command arguments
+<p>Most commands provided by ModalKeys take arguments. Since command arguments
 are stored in objects by-design, we define them as interfaces.</p>
 <h3 id="search-arguments">Search Arguments</h3>
 <p>Search arguments are documented in the
@@ -311,7 +311,7 @@ calls this function). We also create the status bar item.</p>
         <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.commands">commands</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="(command: string, callback: (...args: any[]) =&gt; any, thisArg?: any) =&gt; vscode.Disposable">registerCommand</span><span class="punctuation">(</span><a href="commands.html#5923"><span data-toggle="tooltip" data-title="&quot;modaledit.toggleSelection&quot;">toggleSelectionId</span></a><span class="punctuation">,</span> <a href="commands.html#15770"><span class="member" data-toggle="tooltip" data-title="() =&gt; Promise&lt;void&gt;">toggleSelection</span></a><span class="punctuation">)</span><span class="punctuation">,</span>
         <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.commands">commands</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="(command: string, callback: (...args: any[]) =&gt; any, thisArg?: any) =&gt; vscode.Disposable">registerCommand</span><span class="punctuation">(</span><a href="commands.html#5978"><span data-toggle="tooltip" data-title="&quot;modaledit.enableSelection&quot;">enableSelectionId</span></a><span class="punctuation">,</span> <a href="commands.html#16219"><span class="member" data-toggle="tooltip" data-title="() =&gt; void">enableSelection</span></a><span class="punctuation">)</span><span class="punctuation">,</span>
         <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.commands">commands</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="(command: string, callback: (...args: any[]) =&gt; any, thisArg?: any) =&gt; vscode.Disposable">registerCommand</span><span class="punctuation">(</span><a href="commands.html#6033"><span data-toggle="tooltip" data-title="&quot;modaledit.cancelSelection&quot;">cancelSelectionId</span></a><span class="punctuation">,</span> <a href="commands.html#14602"><span class="member" data-toggle="tooltip" data-title="() =&gt; Promise&lt;void&gt;">cancelSelection</span></a><span class="punctuation">)</span><span class="punctuation">,</span>
-        <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.commands">commands</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="(command: string, callback: (...args: any[]) =&gt; any, thisArg?: any) =&gt; vscode.Disposable">registerCommand</span><span class="punctuation">(</span><a href="commands.html#6088"><span data-toggle="tooltip" data-title="&quot;modaledit.cancelMultipleSelections&quot;">cancelMultipleSelectionsId</span></a><span class="punctuation">,</span> 
+        <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.commands">commands</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="(command: string, callback: (...args: any[]) =&gt; any, thisArg?: any) =&gt; vscode.Disposable">registerCommand</span><span class="punctuation">(</span><a href="commands.html#6088"><span data-toggle="tooltip" data-title="&quot;modaledit.cancelMultipleSelections&quot;">cancelMultipleSelectionsId</span></a><span class="punctuation">,</span>
             <a href="commands.html#15166"><span class="member" data-toggle="tooltip" data-title="() =&gt; void">cancelMultipleSelections</span></a><span class="punctuation">)</span><span class="punctuation">,</span>
         <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.commands">commands</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="(command: string, callback: (...args: any[]) =&gt; any, thisArg?: any) =&gt; vscode.Disposable">registerCommand</span><span class="punctuation">(</span><a href="commands.html#6161"><span data-toggle="tooltip" data-title="&quot;modaledit.search&quot;">searchId</span></a><span class="punctuation">,</span> <a href="commands.html#18018"><span class="member" data-toggle="tooltip" data-title="(args: string | SearchArgs) =&gt; Promise&lt;void&gt;">search</span></a><span class="punctuation">)</span><span class="punctuation">,</span>
         <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.commands">commands</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="(command: string, callback: (...args: any[]) =&gt; any, thisArg?: any) =&gt; vscode.Disposable">registerCommand</span><span class="punctuation">(</span><a href="commands.html#6198"><span data-toggle="tooltip" data-title="&quot;modaledit.cancelSearch&quot;">cancelSearchId</span></a><span class="punctuation">,</span> <a href="commands.html#24947"><span class="member" data-toggle="tooltip" data-title="() =&gt; Promise&lt;void&gt;">cancelSearch</span></a><span class="punctuation">)</span><span class="punctuation">,</span>
@@ -1038,31 +1038,31 @@ object that has <code>keybindings</code> and/or <code>selectbindings</code> prop
             <span class="keyword">if</span> <span class="punctuation">(</span><a href="commands.html#40201"><span data-toggle="tooltip" data-title="any">preset</span></a><span class="punctuation">.</span>selectbindings<span class="punctuation">)</span>
                 <a href="commands.html#40236"><span data-toggle="tooltip" data-title="vscode.WorkspaceConfiguration">config</span></a><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="(section: string, value: any, configurationTarget?: boolean | vscode.ConfigurationTarget | undefined, overrideInLanguage?: boolean | undefined) =&gt; Thenable&lt;void&gt;">update</span><span class="punctuation">(</span><span class="string">&quot;selectbindings&quot;</span><span class="punctuation">,</span> <a href="commands.html#40201"><span data-toggle="tooltip" data-title="any">preset</span></a><span class="punctuation">.</span>selectbindings<span class="punctuation">,</span> <span class="keyword">true</span><span class="punctuation">)</span>
             <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.window">window</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="{ (message: string, ...items: string[]): Thenable&lt;string | undefined&gt;; (message: string, options: vscode.MessageOptions, ...items: string[]): Thenable&lt;string | undefined&gt;; &lt;T extends vscode.MessageItem&gt;(message: string, ...items: T[]): Thenable&lt;...&gt;; &lt;T extends vscode.MessageItem&gt;(message: string, options: vscode.Me...">showInformationMessage</span><span class="punctuation">(</span>
-                <span class="string">&quot;ModalEdit: Keybindings imported.&quot;</span><span class="punctuation">)</span>
+                <span class="string">&quot;ModalKeys: Keybindings imported.&quot;</span><span class="punctuation">)</span>
         <span class="punctuation">}</span>
         <span class="keyword">catch</span> <span class="punctuation">(</span><span id="40833" data-toggle="tooltip" data-title="any">e</span><span class="punctuation">)</span> <span class="punctuation">{</span>
-            <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.window">window</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="{ (message: string, ...items: string[]): Thenable&lt;string | undefined&gt;; (message: string, options: vscode.MessageOptions, ...items: string[]): Thenable&lt;string | undefined&gt;; &lt;T extends vscode.MessageItem&gt;(message: string, ...items: T[]): Thenable&lt;...&gt;; &lt;T extends vscode.MessageItem&gt;(message: string, options: vscode.Me...">showWarningMessage</span><span class="punctuation">(</span><span class="string">&quot;ModalEdit: Bindings not imported.&quot;</span><span class="punctuation">,</span>
+            <a href="commands.html#263"><span data-toggle="tooltip" data-title="typeof vscode">vscode</span></a><span class="punctuation">.</span><span data-toggle="tooltip" data-title="typeof vscode.window">window</span><span class="punctuation">.</span><span class="member" data-toggle="tooltip" data-title="{ (message: string, ...items: string[]): Thenable&lt;string | undefined&gt;; (message: string, options: vscode.MessageOptions, ...items: string[]): Thenable&lt;string | undefined&gt;; &lt;T extends vscode.MessageItem&gt;(message: string, ...items: T[]): Thenable&lt;...&gt;; &lt;T extends vscode.MessageItem&gt;(message: string, options: vscode.Me...">showWarningMessage</span><span class="punctuation">(</span><span class="string">&quot;ModalKeys: Bindings not imported.&quot;</span><span class="punctuation">,</span>
                 <span class="string">`${</span><a href="commands.html#40833"><span data-toggle="tooltip" data-title="any">e</span></a><span class="string">}`</span><span class="punctuation">)</span>
         <span class="punctuation">}</span>
     <span class="punctuation">}</span>
 <span class="punctuation">}</span>
 </code></pre>
 
-        
+
     </div>
             <div class="stickypane">
-                
+
     <div class="pagemenu">
         <h3>On This Page</h3>
             <ul class="pagetree">
-                
+
             </ul>
     </div>
-                
+
             </div>
         </div>
     </div>
     <script src="../js/main.js"></script>
-    
+
 </body>
 </html>
