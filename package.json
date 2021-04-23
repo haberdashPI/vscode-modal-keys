@@ -208,6 +208,10 @@
                 "title": "ModalKeys: Normal mode"
             },
             {
+                "command": "modalkeys.enterMode",
+                "title": "ModalKeys: the specified mode."
+            },
+            {
                 "command": "modalkeys.enterInsert",
                 "title": "ModalKeys: Insert mode"
             },

@@ -306,7 +306,7 @@ export function onTextChanged() {
  * is needed to decide whether the `lastKeySequence` variable is updated.
  */
 async function runActionForKey(key: string, mode: string = keyMode): Promise<boolean> {
-    return await actions.handleKey(key, isSelecting() ? Visual : mode, mode === Search)
+    return await actions.handleKey(key, isSelecting() && mode === Normal ? Visual : mode, mode === Search)
 }
 
 function handleTypeSubscription(oldmode: string, newmode: string){
@@ -336,21 +336,23 @@ export async function enterInsert(){ enterMode('insert') }
 
 export async function enterMode(args: string | EnterModeArgs) {
     let newMode = (<string>((<EnterModeArgs>args).mode || args))
-    handleTypeSubscription(newMode, keyMode)
+    handleTypeSubscription(keyMode, newMode)
     const exitHook = modeHooks[keyMode]?.modeHooks?.exit
-    exitHook && await exitHook(newMode, keyMode)
+    exitHook && await exitHook(keyMode, newMode)
 
     const editor = vscode.window.activeTextEditor
+    let oldMode = keyMode
+    keyMode = newMode
     if (editor) {
-        await vscode.commands.executeCommand("setContext", "modalkeys.mode", newMode)
+        await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
         updateCursorAndStatusBar(editor)
     }
     const enterHook = modeHooks[keyMode]?.modeHooks?.enter
-    enterHook && await enterHook(newMode, keyMode)
+    enterHook && await enterHook(oldMode, keyMode)
 }
 
 function reviseSelectionMode(){
-    if(isSelecting() && keyMode !== Normal && keyMode !== Search){
+    if(isSelecting() && keyMode === Normal){
         keyMode = Visual
     }
 }

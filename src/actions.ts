@@ -1,4 +1,4 @@
-import { sortBy, merge, mapValues, flatten } from 'lodash'
+import { sortBy, merge, mapValues, flatten, uniq } from 'lodash'
 import { exec } from 'node:child_process'
 
 /**
@@ -388,11 +388,13 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
             for(let i = seq.length-1; i>=0; i--){
                 obj = {[seq[i]]: obj}
             }
-            let modes = (givenMode || 'normal|visual').split('|')
+            let modes = (givenMode ? givenMode.split('|') : ['__all__'])
             let newErrors = false
             for(let mode of modes){
                 if(sequencesFor[mode]?.some((oldseq: string) => {
-                    if(oldseq.startsWith(seq)){
+                    if(oldseq == seq){
+                        log(`WARN the sequence '${seq}' overwrites an existing binding.`)
+                    }if(oldseq.startsWith(seq)){
                         log(`ERROR the keysequence '${seq}' is a subsequence of the already defined sequence '${oldseq}'`)
                         return true
                     }else if(seq.startsWith(oldseq)){
@@ -415,9 +417,18 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
             return []
         }
     }))
+    let allModes = uniq(allEntries.map(x => x[0]))
+    allModes.push('normal', 'visual')
+    allModes = uniq(allModes)
     let result: any = {}
     for(let [key, value] of allEntries){
-        result = merge(result, {[key]: value})
+        if(key !== '__all__'){
+            result = merge(result, {[key]: value})
+        }else{
+            for(let mode of allModes){
+                result = merge(result, {[mode]: value})
+            }
+        }
     }
     return [result, errors]
 }
@@ -484,7 +495,7 @@ function isParameterized(x: any): x is Parameterized {
  * And finally this one checks if a value is a keymap.
  */
 function isKeymap(x: any): x is Keymap {
-    return x && (x.__keymap || (isObject(x) && !isParameterized(x) && !isConditional(x) && Object.values(x).every(isAction)))
+    return x && (x.__keymap || (isObject(x) && !isParameterized(x) && !isConditional(x) && !isCommandSequence(x) && Object.values(x).every(isAction)))
 }
 /**
  * ## Executing Commands
