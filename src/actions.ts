@@ -1,3 +1,5 @@
+import { sortBy, merge, mapValues, flatten } from 'lodash'
+
 /**
  * # Converting Keybinding Definitions to Actions
  *
@@ -67,6 +69,7 @@ export interface Parameterized {
 export interface Keymap {
     id: number
     help: string
+    __keymap: number
     [key: string]: Action
 }
 
@@ -237,16 +240,17 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     log("Validating keybindings in 'settings.json'...")
     keymapsById = {}
     let errors = 0
-    const keybindings = config.get<Keymodes>("keybindings")
-    if(keybindings){
-        for(let sel of Object.values(keybindings)){
-            if (isKeymap(sel)) {
-                errors += validateAndResolveKeymaps(sel)
+    const modes = expandBindings(config.get<any>("keybindings"))
+    if(!isKeymap(modes?.normal))
+        log("ERROR: Missing valid normal mode keybindings. Keybindings not updated.")
+    if(modes){
+        rootKeymodes = <Keymodes>(mapValues(modes, mode => {
+            if (isKeymap(mode)) {
+                errors += validateAndResolveKeymaps(mode)
             }
-        }
+            return mode
+        }))
     }
-    if(!isKeymap(keybindings?.normal))
-        log("ERROR: Invalid configuration structure. Keybindings not updated.")
     if (errors > 0)
         log(`Found ${errors} error${errors > 1 ? "s" : ""}. ` +
             "Keybindings might not work correctly.")
@@ -277,6 +281,7 @@ function validateAndResolveKeymaps(keybindings: Keymap) {
         log("ERROR: " + message)
         errors++
     }
+    keybindings.__keymap = 1
     if (typeof keybindings.id === 'number')
         keymapsById[keybindings.id] = keybindings
     for (let key in keybindings) {
@@ -330,6 +335,37 @@ function toVSCursorStyle(cursor: Cursor): vscode.TextEditorCursorStyle {
         default: return vscode.TextEditorCursorStyle.Line
     }
 }
+
+/**
+ * helper function to expand bindings to the full tree we need during action execution
+ *
+ */
+
+const normalFirst = (x: [string, any]) =>
+    x[0].match(/(^[a-z\|]*normal[a-z\|]*:)|^[^:]*$/) ? -1 : 0
+
+function expandBindings(bindings: any): Keymodes | undefined {
+    let allEntries = flatten(sortBy(Object.entries(bindings),normalFirst).map(([key, val]: [string, any]) => {
+        let res = key.match(/^(([a-z|]{2,}):)?([^:]*)$/)
+        if(res){
+            let [ match, g1, givenMode, seq ] = res
+            let obj = val
+            for(let i = seq.length-1; i>=0; i--){
+                obj = {[seq[i]]: obj}
+            }
+            return (givenMode || 'normal|visual').split('|').map(mode => [mode, obj])
+        }else {
+            log(`ERROR invalid binding entry '${key}'`)
+            return [[ 'nomode', undefined ]]
+        }
+    }))
+    let result: any = {}
+    for(let [key, value] of allEntries){
+        if(value) result = merge(result, {[key]: value})
+    }
+    return
+}
+
 /**
  * ## Type Predicates
  *
@@ -392,7 +428,7 @@ function isParameterized(x: any): x is Parameterized {
  * And finally this one checks if a value is a keymap.
  */
 function isKeymap(x: any): x is Keymap {
-    return isObject(x) && !isParameterized(x) && !isConditional(x) && Object.values(x).every(isAction)
+    return x.__keymap || (isObject(x) && !isParameterized(x) && !isConditional(x) && Object.values(x).every(isAction))
 }
 /**
  * ## Executing Commands
@@ -497,6 +533,7 @@ function replaceVars(args: object, mode: string){
         let [key, val] = entry
         val = val === '__line' ? editor?.selection?.active?.line :
             val === '__count' ? getArgumentCount() :
+            val === '-__count' ? -getArgumentCount() :
             val === '__mode' ? mode :
             isString(val) && /[\(\)]|__/.test(val) ? evalString(val, mode) :
             val
@@ -523,7 +560,7 @@ async function execute(action: Action, mode: string): Promise<Keymap | undefined
         for (const command of action) await execute(command, mode)
         return undefined
     }else if (isConditional(action)){
-        await executeConditional(action, selecting)
+        await executeConditional(action, mode)
     }else if (isParameterized(action)){
         await executeParameterized(action, mode)
         return undefined
@@ -531,6 +568,17 @@ async function execute(action: Action, mode: string): Promise<Keymap | undefined
         return <Keymap>action
     }
 }
+
+function finalizeCount(x: FinalCount | number | undefined): FinalCount | undefined {
+    return (x !== undefined && !isFinalCount(x)) ? { count: (<number>x) } : <FinalCount | undefined>x
+}
+function isFinalCount(x: any){
+    return x.count !== undefined
+}
+function updateCount(x: FinalCount | number | undefined, val: number){
+    return x === undefined ? val : (<number>x)*10 + val
+}
+
 /**
  * ## Key Press Handler
  *
@@ -563,24 +611,21 @@ export async function handleKey(key: string, keyMode: string, capture: boolean):
 
     if (capture && lastCommand)
         await executeVSCommand(lastCommand, key)
-    else if (key.match('[0-9]+')) {
-        if(argumentCount === undefined) {
-            argumentCount = Number(key)
-        }else if((<any>argumentCount).count) {
-            error()
-        }else{
-            argumentCount = (<number>argumentCount)*10 + Number(key)
-        }
-    }
     else if (newKeymap && newKeymap[key]) {
         newKeymap = await execute(newKeymap[key], keyMode)
         if(newKeymap){
             currentKeymap = newKeymap
-            if((<any>argumentCount).count === undefined && argumentCount !== undefined)
-                argumentCount = { count: (<number>argumentCount) }
+            argumentCount = finalizeCount(argumentCount)
         }else{
             keySequence = []
             argumentCount = undefined
+        }
+    }
+    else if (key.match('[0-9]+')) {
+        if(isFinalCount(argumentCount)){
+            error()
+        }else{
+            argumentCount = updateCount(argumentCount, Number(key))
         }
     }
     else {

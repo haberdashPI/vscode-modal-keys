@@ -1,37 +1,31 @@
 {
-    "name": "vscode-modaledit",
-    "displayName": "ModalEdit",
-    "description": "Configurable modal editing engine with built-in Vim keymaps",
-    "version": "2.2.1",
-    "publisher": "johtela",
+    "name": "vscode-modal-keys",
+    "displayName": "ModalKeys",
+    "description": "Customizable modal editing (ala vim and kakoune)",
+    "version": "0.0.1",
     "engines": {
-        "vscode": "^1.47.0"
+        "vscode": "^1.55.0"
     },
-    "repository": {
-        "url": "https://github.com/johtela/vscode-modaledit"
-    },
-    "license": "MPL-2.0",
+    "license": "MIT",
     "categories": [
         "Keymaps",
         "Other"
     ],
-    "homepage": "https://johtela.github.io/vscode-modaledit",
     "activationEvents": [
         "*"
     ],
-    "icon": "images/normal.jpg",
     "main": "./dist/extension.js",
     "contributes": {
         "configuration": {
             "type": "object",
-            "title": "ModalEdit",
+            "title": "ModalKeys",
             "properties": {
-                "modaledit.keybindings": {
+                "modalkeys.keybindings": {
                     "type": "object",
                     "description": "Keybindings map key → VS Code commands",
                     "default": {},
                     "patternProperties": {
-                        "^.([\\-,].)*$": {
+                        "^(([a-z|]{2,}):)?([^:]*)$": {
                             "anyOf": [
                                 {
                                     "type": "string",
@@ -92,73 +86,7 @@
                         }
                     }
                 },
-                "modaledit.selectbindings": {
-                    "type": "object",
-                    "description": "Keybindings used when selection is active",
-                    "default": {},
-                    "patternProperties": {
-                        "^.([\\-,].)*$": {
-                            "anyOf": [
-                                {
-                                    "type": "string",
-                                    "description": "VS Code command"
-                                },
-                                {
-                                    "type": "array",
-                                    "description": "Sequence of commands",
-                                    "items": {
-                                        "anyOf": [
-                                            {
-                                                "type": "object",
-                                                "description": "Action"
-                                            },
-                                            {
-                                                "type": "string",
-                                                "description": "VS Code command"
-                                            }
-                                        ]
-                                    }
-                                },
-                                {
-                                    "type": "object",
-                                    "description": "VS Code command with arguments",
-                                    "properties": {
-                                        "command": {
-                                            "type": "string",
-                                            "description": "VS Code command"
-                                        },
-                                        "args": {
-                                            "description": "Command arguments",
-                                            "anyOf": [
-                                                {
-                                                    "type": "object"
-                                                },
-                                                {
-                                                    "type": "string"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "object",
-                                    "description": "Conditional command",
-                                    "properties": {
-                                        "condition": {
-                                            "type": "string",
-                                            "description": "JavaScript expression that is evaluated"
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "number",
-                                    "description": "Keymap id"
-                                }
-                            ]
-                        }
-                    }
-                },
-                "modaledit.insertCursorStyle": {
+                "modalkeys.insertCursorStyle": {
                     "type": "string",
                     "enum": [
                         "block",
@@ -171,7 +99,7 @@
                     "default": "line",
                     "description": "Shape of the cursor when in insert mode."
                 },
-                "modaledit.normalCursorStyle": {
+                "modalkeys.normalCursorStyle": {
                     "type": "string",
                     "enum": [
                         "block",
@@ -184,7 +112,7 @@
                     "default": "block",
                     "description": "Shape of the cursor when in normal mode."
                 },
-                "modaledit.searchCursorStyle": {
+                "modalkeys.searchCursorStyle": {
                     "type": "string",
                     "enum": [
                         "block",
@@ -197,7 +125,7 @@
                     "default": "underline",
                     "description": "Shape of the cursor when incremental search is active."
                 },
-                "modaledit.selectCursorStyle": {
+                "modalkeys.selectCursorStyle": {
                     "type": "string",
                     "enum": [
                         "block",
@@ -210,60 +138,60 @@
                     "default": "line-thin",
                     "description": "Shape of the cursor when selection is active in normal mode."
                 },
-                "modaledit.insertStatusText": {
+                "modalkeys.insertStatusText": {
                     "type": "string",
                     "default": "-- $(edit) INSERT --",
                     "description": "Mode text (and icons) shown in status bar in insert mode."
                 },
-                "modaledit.insertStatusColor": {
+                "modalkeys.insertStatusColor": {
                     "type": "string",
                     "description": "Color of the status bar mode text in insert mode (in HTML format)."
                 },
-                "modaledit.normalStatusText": {
+                "modalkeys.normalStatusText": {
                     "type": "string",
-                    "default": "-- $(move) NORMAL --",
-                    "description": "Mode text (and icons) shown in status bar in normal mode."
+                    "default": "-- $(move) __MODENAME__ --",
+                    "description": "Mode text (and icons) shown in status bar in both normal and custom modes."
                 },
-                "modaledit.normalStatusColor": {
+                "modalkeys.normalStatusColor": {
                     "type": "string",
                     "description": "Color of the status bar mode text in normal mode (in HTML format)."
                 },
-                "modaledit.searchStatusText": {
+                "modalkeys.searchStatusText": {
                     "type": "string",
                     "default": "$(search) SEARCH",
                     "description": "Mode text (and icons) shown in status bar in search mode."
                 },
-                "modaledit.searchStatusColor": {
+                "modalkeys.searchStatusColor": {
                     "type": "string",
                     "description": "Color of the status bar mode text when in search mode (in HTML format)."
                 },
-                "modaledit.selectStatusText": {
+                "modalkeys.selectStatusText": {
                     "type": "string",
                     "default": "-- $(paintcan) VISUAL --",
                     "description": "Mode text (and icons) shown in status bar selection is active in normal mode."
                 },
-                "modaledit.selectStatusColor": {
+                "modalkeys.selectStatusColor": {
                     "type": "string",
                     "description": "Color of the status bar mode text when selection is active in normal mode (in HTML format)."
                 },
-                "modaledit.startInNormalMode": {
+                "modalkeys.startInNormalMode": {
                     "type": "boolean",
                     "default": true,
                     "description": "Is editor initially in normal mode?"
                 },
-                "modaledit.searchMatchBackground": {
+                "modalkeys.searchMatchBackground": {
                     "type": "string",
                     "description": "A html format color styling to highlight the current search match(if left blank defaults to built-in search style)."
                 },
-                "modaledit.searchMatchBorder": {
+                "modalkeys.searchMatchBorder": {
                     "type": "string",
                     "description": "A html format color styling for the border of the current search match (if left blank defaults to built-in search style)."
                 },
-                "modaledit.searchOtherMatchesBackground": {
+                "modalkeys.searchOtherMatchesBackground": {
                     "type": "string",
                     "description": "A html format color styling to highlight other search matches (if left blank defaults to built-in search style)."
                 },
-                "modaledit.searchOtherMatchesBorder": {
+                "modalkeys.searchOtherMatchesBorder": {
                     "type": "string",
                     "description": "A html format color styling for the border of other search matches (if left blank defaults to built-in search style)."
                 }
@@ -271,73 +199,88 @@
         },
         "commands": [
             {
-                "command": "modaledit.toggle",
-                "title": "ModalEdit: Toggle normal / insert mode"
+                "command": "modalkeys.toggle",
+                "title": "ModalKeys: Toggle normal / insert mode"
             },
             {
-                "command": "modaledit.enterNormal",
-                "title": "ModalEdit: Normal mode"
+                "command": "modalkeys.enterNormal",
+                "title": "ModalKeys: Normal mode"
             },
             {
-                "command": "modaledit.enterInsert",
-                "title": "ModalEdit: Insert mode"
+                "command": "modalkeys.enterInsert",
+                "title": "ModalKeys: Insert mode"
             },
             {
-                "command": "modaledit.defineBookmark",
-                "title": "ModalEdit: Define bookmark"
+                "command": "modalkeys.defineBookmark",
+                "title": "ModalKeys: Define bookmark"
             },
             {
-                "command": "modaledit.goToBookmark",
-                "title": "ModalEdit: Go to bookmark"
+                "command": "modalkeys.goToBookmark",
+                "title": "ModalKeys: Go to bookmark"
             },
             {
-                "command": "modaledit.showBookmarks",
-                "title": "ModalEdit: Show bookmarks"
+                "command": "modalkeys.showBookmarks",
+                "title": "ModalKeys: Show bookmarks"
             },
             {
-                "command": "modaledit.cancelSearch",
-                "title": "ModalEdit: Cancel search mode"
+                "command": "modalkeys.cancelSearch",
+                "title": "ModalKeys: Cancel search mode"
             },
             {
-                "command": "modaledit.deleteCharFromSearch",
-                "title": "ModalEdit: Delete the last search character"
+                "command": "modalkeys.deleteCharFromSearch",
+                "title": "ModalKeys: Delete the last search character"
             },
             {
-                "command": "modaledit.importPresets",
-                "title": "ModalEdit: Import preset keybindings"
+                "command": "modalkeys.importPresets",
+                "title": "ModalKeys: Import preset keybindings"
             }
         ],
         "keybindings": [
             {
                 "key": "Escape",
-                "command": "modaledit.enterNormal",
+                "command": "modalkeys.enterNormal",
                 "when": "editorTextFocus && !suggestWidgetMultipleSuggestions && !suggestWidgetVisible"
             },
             {
                 "key": "Escape",
-                "command": "modaledit.cancelSearch",
-                "when": "editorTextFocus && modaledit.searching"
+                "command": "modalkeys.cancelSearch",
+                "when": "editorTextFocus && modalkeys.searching"
             },
             {
                 "key": "Backspace",
-                "command": "modaledit.deleteCharFromSearch",
-                "when": "editorTextFocus && modaledit.searching"
+                "command": "modalkeys.deleteCharFromSearch",
+                "when": "editorTextFocus && modalkeys.searching"
             }
         ]
     },
     "scripts": {
-        "vscode:prepublish": "webpack --mode production",
-        "webpack": "webpack --mode development",
-        "webpack-dev": "webpack --mode development --watch",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./"
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "test-compile": "tsc -p ./",
+        "test-watch": "tsc -watch -p ./",
+        "pretest": "npm run test-compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
-        "@types/node": "^13.13.15",
-        "@types/vscode": "^1.47.0",
-        "ts-loader": "^6.2.2",
-        "typescript": "^3.9.7",
-        "webpack": "^4.44.1",
-        "webpack-cli": "^3.3.12"
+        "@types/glob": "^7.1.3",
+        "@types/mocha": "^8.0.4",
+        "@types/node": "^12.11.7",
+        "@types/vscode": "^1.55.0",
+        "@typescript-eslint/eslint-plugin": "^4.14.1",
+        "@typescript-eslint/parser": "^4.14.1",
+        "eslint": "^7.19.0",
+        "glob": "^7.1.6",
+        "mocha": "^8.2.1",
+        "ts-loader": "^8.0.14",
+        "typescript": "^4.1.3",
+        "vscode-test": "^1.5.0",
+        "webpack": "^5.19.0",
+        "webpack-cli": "^4.4.0"
+    },
+    "dependencies": {
+        "lodash": "^4.17.21"
     }
 }

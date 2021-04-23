@@ -34,7 +34,20 @@ interface SearchArgs {
     typeAfterPreviousMatch?: string
 }
 
-const Select = 'select'
+/**
+ * ### Enter Mode Arguments
+ *
+ * Arguments for entering specific typing modes, both standard and custom modes.
+ */
+interface EnterModeArgs {
+    mode: string
+}
+
+/**
+ * The standard modes all have constants defined to avoid typos. However, we need
+ * to allow for user defined modes in a keybindings file, so there is no enum.
+ */
+const Visual = 'visual'
 const Normal = 'normal'
 const Search = 'search'
 const Insert = 'insert'
@@ -81,10 +94,10 @@ interface QuickSnippetArgs {
  */
 interface TypeKeysArgs {
     keys: string,
-    mode: string
+    mode?: string
 }
 /**
- * ### Select Between Arguments
+ * ### Visual Between Arguments
  *
  * The `selectBetween` command takes as arguments the strings/regular
  * expressions which delimit the text to be selected. Both of them are optional,
@@ -185,6 +198,7 @@ let lastChange: string[] = []
 const toggleId = "modaledit.toggle"
 const enterModeId = "modaledit.enterMode"
 const enterInsertId = "modaledit.enterInsert"
+const enterNormalId = "modaledit.enterNormal"
 const toggleSelectionId = "modaledit.toggleSelection"
 const enableSelectionId = "modaledit.enableSelection"
 const cancelSelectionId = "modaledit.cancelSelection"
@@ -213,9 +227,9 @@ const importPresetsId = "modaledit.importPresets"
  */
 export function register(context: vscode.ExtensionContext) {
     context.subscriptions.push(
-        vscode.commands.registerCommand(toggleId, toggle),
         vscode.commands.registerCommand(enterModeId, enterMode),
         vscode.commands.registerCommand(enterInsertId, enterInsert),
+        vscode.commands.registerCommand(enterNormalId, enterNormal),
         vscode.commands.registerCommand(toggleSelectionId, toggleSelection),
         vscode.commands.registerCommand(enableSelectionId, enableSelection),
         vscode.commands.registerCommand(cancelSelectionId, cancelSelection),
@@ -262,7 +276,7 @@ async function onType(event: { text: string }) {
         textChanged = false
     }
     currentKeySequence.push(event.text)
-    if (await runActionForKey(event.text)) {
+    if (await runActionForKey(event.text, keyMode)) {
         lastKeySequence = currentKeySequence
         currentKeySequence = []
     }
@@ -291,8 +305,8 @@ export function onTextChanged() {
  * key sequence that did not (yet) cause any commands to run. This information
  * is needed to decide whether the `lastKeySequence` variable is updated.
  */
-async function runActionForKey(key: string): Promise<boolean> {
-    return await actions.handleKey(key, isSelecting() ? Select : keyMode, keyMode === Search)
+async function runActionForKey(key: string, mode: string = keyMode): Promise<boolean> {
+    return await actions.handleKey(key, isSelecting() ? Visual : mode, mode === Search)
 }
 
 function handleTypeSubscription(oldmode: string, newmode: string){
@@ -320,7 +334,11 @@ let modeHooks: any = {
     }
 }
 
-export async function enterMode(newMode: string) {
+export async function enterNormal(){ enterMode('normal') }
+export async function enterInsert(){ enterMode('insert') }
+
+export async function enterMode(args: string | EnterModeArgs) {
+    let newMode = (<string>((<EnterModeArgs>args).mode || args))
     handleTypeSubscription(newMode, keyMode)
     const exitHook = modeHooks[keyMode]?.modeHooks?.exit
     exitHook && await exitHook(newMode, keyMode)
@@ -336,7 +354,7 @@ export async function enterMode(newMode: string) {
 
 function reviseSelectionMode(){
     if(isSelecting() && keyMode !== Normal && keyMode !== Search){
-        keyMode = Select
+        keyMode = Visual
     }
 }
 
@@ -353,7 +371,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
         reviseSelectionMode()
         let [style, text, color] =
             keyMode === Search ? actions.getSearchStyles() :
-            keyMode === Select ? actions.getSelectStyles() :
+            keyMode === Visual ? actions.getSelectStyles() :
             keyMode === Insert ? actions.getInsertStyles() :
                 actions.getNormalStyles(keyMode)
 
@@ -402,7 +420,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
  * standard version to keep the state in sync.
  */
 async function cancelSelection(): Promise<void> {
-    if (keyMode === Select) {
+    if (keyMode === Visual) {
         await vscode.commands.executeCommand("cancelSelection")
         enterMode(Normal)
     }
@@ -413,7 +431,7 @@ async function cancelSelection(): Promise<void> {
  * Unlike `modaledit.cancelSelection` it preserves multiple cursors.
  */
 function cancelMultipleSelections() {
-    if (keyMode === Select) {
+    if (keyMode === Visual) {
         let editor = vscode.window.activeTextEditor
         if (editor)
             editor.selections = editor.selections.map(sel =>
@@ -428,8 +446,8 @@ function cancelMultipleSelections() {
  * selection.
  */
 async function toggleSelection(): Promise<void> {
-    if(keyMode !== Select){
-        enterMode(Select)
+    if(keyMode !== Visual){
+        enterMode(Visual)
     }else{
         enterMode(Normal)
     }
@@ -438,7 +456,7 @@ async function toggleSelection(): Promise<void> {
  * `modaledit.enableSelection` sets the selecting to true.
  */
 function enableSelection() {
-    enterMode(Select)
+    enterMode(Visual)
     updateCursorAndStatusBar(vscode.window.activeTextEditor)
 }
 /**
@@ -447,7 +465,7 @@ function enableSelection() {
  * selected in the active editor.
  */
 function isSelecting(): boolean {
-    return keyMode === Select ||
+    return keyMode === Visual ||
         vscode.window.activeTextEditor!.selections.some(
             selection => !selection.anchor.isEqual(selection.active))
 }
@@ -770,10 +788,10 @@ async function nextMatch(): Promise<void> {
     let editor = vscode.window.activeTextEditor
     if (editor && searchString) {
         if (searchTypeBeforeNextMatch)
-            await typeNormalKeys({ keys: searchTypeBeforeNextMatch })
+            await typeKeys({ keys: searchTypeBeforeNextMatch })
         highlightMatches(editor, editor.selections)
         if (searchTypeAfterNextMatch)
-            await typeNormalKeys({ keys: searchTypeAfterNextMatch })
+            await typeKeys({ keys: searchTypeAfterNextMatch })
     }
 }
 /**
@@ -784,12 +802,12 @@ async function previousMatch(): Promise<void> {
     let editor = vscode.window.activeTextEditor
     if (editor && searchString) {
         if (searchTypeBeforePreviousMatch)
-            await typeNormalKeys({ keys: searchTypeBeforePreviousMatch })
+            await typeKeys({ keys: searchTypeBeforePreviousMatch })
         searchBackwards = !searchBackwards
         highlightMatches(editor, editor.selections)
         searchBackwards = !searchBackwards
         if (searchTypeAfterPreviousMatch)
-            await typeNormalKeys({ keys: searchTypeAfterPreviousMatch })
+            await typeKeys({ keys: searchTypeAfterPreviousMatch })
     }
 }
 /**
@@ -831,7 +849,7 @@ async function goToBookmark(args?: BookmarkArgs): Promise<void> {
 async function showBookmarks(): Promise<void> {
     let items = Object.getOwnPropertyNames(bookmarks).map(name => bookmarks[name])
     let selected = await vscode.window.showQuickPick(items, {
-        placeHolder: "Select bookmark to jump to",
+        placeHolder: "Visual bookmark to jump to",
         matchOnDescription: true
     })
     if (selected)
@@ -888,14 +906,14 @@ async function insertQuickSnippet(args?: QuickSnippetArgs): Promise<void> {
 /**
  * ## Invoking Commands via Key Bindings
  *
- * The last command runs normal mode commands throught their key bindings.
+ * The last command runs commands for the given mode through their key bindings.
  * Implementing that is as easy as calling the keyboard handler.
  */
 async function typeKeys(args: TypeKeysArgs): Promise<void> {
     if (typeof args !== 'object' || typeof (args.keys) !== 'string')
         throw Error(`${typeKeysId}: Invalid args: ${JSON.stringify(args)}`)
     for (let i = 0; i < args.keys.length; i++)
-        await runActionForKey(args.keys[i])
+        await runActionForKey(args.keys[i], args.mode || Normal)
 }
 /**
  * ## Advanced Selection Command
