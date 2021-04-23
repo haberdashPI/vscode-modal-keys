@@ -17,8 +17,8 @@ ModalKeys is a fork of [ModalEdit](https://github.com/johtela/vscode-modaledit);
 debt to the hard and thoughtful work put into that extension. There are some important features that
 differ between the two extensions.
 
-1. Simplified keymap format: I personally find ModalEdit's keymaps to be needlessly cumbersome. It effectively creates a mini-language in JSON
-format. The phillosphy taken here is that if the behavior a key sequence maps to includes something as complicated as branches and loops, then it's time to write a small extension and implement that behavior in a real language.
+1. Revised keymap format: I personally find ModalEdit's keymaps to be needlessly cumbersome. I've tried to increase the succinctness and ease of use
+of the keymap format.
 2. Customized modes: ModalEdit only allows for a 'normal' and 'visual' mode, ModalKeys allows for any number of custom "normal-like" modes.
 3. Search term highlighting: ModalEdit does not highlight text that is part of a search (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19) for this feature), ModalKeys does.
 

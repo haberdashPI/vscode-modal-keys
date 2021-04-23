@@ -1,4 +1,5 @@
 import { sortBy, merge, mapValues, flatten } from 'lodash'
+import { exec } from 'node:child_process'
 
 /**
  * # Converting Keybinding Definitions to Actions
@@ -32,8 +33,9 @@ export type Command = string | Conditional | Parameterized | Command[]
  * be any type of command defined above.
  */
 export interface Conditional {
-    condition: string
-    [branch: string]: Command
+    if: string
+    then: Command,
+    else?: Command
 }
 /**
  * A command that takes arguments can be specified using the `Parameterized`
@@ -286,7 +288,7 @@ function validateAndResolveKeymaps(keybindings: Keymap) {
     if (typeof keybindings.id === 'number')
         keymapsById[keybindings.id] = keybindings
     for (let key in keybindings) {
-        if (keybindings.hasOwnProperty(key) && key != "id" && key != "help") {
+        if (key != "id" && key != "help") {
             let target = keybindings[key]
             if (isKeymap(target))
                 validateAndResolveKeymaps(target)
@@ -348,6 +350,32 @@ const normalFirst = (x: [string, any]) =>
 interface IHash{
     [key: string]: string[] | undefined
 }
+
+function expandCommands(x: any): Command {
+    if(x?.if){
+        let result: any = { "if": x.if }
+        if(x['else'] !== undefined)
+            result['else'] = expandCommands(x['else'])
+        if(x['then'] !== undefined)
+            result['then'] = expandCommands(x['then'])
+        return result
+    }else if(typeof(x) === 'string'){
+        return x
+    }else if(Array.isArray(x)){
+        return x.map(expandCommands)
+    }else if(isObject(x)){
+        let keys = Object.keys(x)
+        if(keys.length > 1){
+            log(`ERROR: command has multiple heads: ${keys.join(", ")}`)
+        }
+        return { command: keys[0], args: x[keys[0]] }
+    }else {
+        log(`ERROR: command is of unknown form (displaying value below).`)
+        log(JSON.stringify(x, null, 2))
+        return 'UNKNOWN_COMMAND_FORM'
+    }
+}
+
 function expandBindings(bindings: any): [Keymodes | undefined, number] {
     let sequencesFor: IHash = {}
     let errors = 0
@@ -356,7 +384,7 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
         let res = key.match(/^(([a-z|]{2,})::)?(.*)$/)
         if(res){
             let [ match, g1, givenMode, seq ] = res
-            let obj = val
+            let obj: any = expandCommands(val)
             for(let i = seq.length-1; i>=0; i--){
                 obj = {[seq[i]]: obj}
             }
@@ -434,9 +462,9 @@ function isCommand(x: any): x is Action {
  * This recognizes a conditional action.
  */
  function isConditional(x: any): x is Conditional {
-    return isObject(x) && isString(x.condition) &&
+    return isObject(x) && isString(x.if) &&
         Object.keys(x).every(key =>
-            key === "condition" || isCommand(x[key]))
+            key === "if" || isCommand(x[key]))
  }
 /**
  * This checks if a value is an array of commands.
@@ -516,10 +544,12 @@ function evalString(str: string, __mode: string): any {
  * executed.
  */
 async function executeConditional(cond: Conditional, mode: string): Promise<void> {
-    let res = evalString(cond.condition, mode)
-    let branch = isString(res) ? res : JSON.stringify(res)
-    if (branch && isAction(cond[branch]))
-        await execute(cond[branch], mode)
+    let res = evalString(cond.if, mode)
+    if (res && isAction(cond.then)){
+        await execute(cond.then, mode)
+    }else if(!res && isAction(cond.else)){
+        await execute(cond.else, mode)
+    }
 }
 /**
  * Parameterized commands can get their arguments in two forms: as a string
@@ -668,7 +698,7 @@ export async function handleKey(key: string, keyMode: string, capture: boolean):
     }
     if (!currentKeymap)
         keySequence = keySeqStack.pop()!
-    return !currentKeymap
+    return !currentKeymap && argumentCount === undefined
 }
 
 /**
