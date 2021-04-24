@@ -376,10 +376,8 @@ function expandCommands(x: any): Command {
     }
 }
 
-function expandBindings(bindings: any): [Keymodes | undefined, number] {
-    let sequencesFor: IHash = {}
-    let errors = 0
-    let allEntries = flatten(sortBy(Object.entries(bindings),normalFirst).map(([key, val]: [string, any]) => {
+function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash, withCommand?: string }){
+    return ([key, val]: [string, any]): [string, Action][] => {
         if(key === '__keymap'){ return [] }
         let res = key.match(/^(([a-z|]{2,})::)?(.*)$/)
         if(res){
@@ -391,10 +389,11 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
             let modes = (givenMode ? givenMode.split('|') : ['__all__'])
             let newErrors = false
             for(let mode of modes){
-                if(sequencesFor[mode]?.some((oldseq: string) => {
+                if(state.sequencesFor[mode]?.some((oldseq: string) => {
                     if(oldseq == seq){
                         log(`WARN the sequence '${seq}' overwrites an existing binding.`)
-                    }if(oldseq.startsWith(seq)){
+                        return false
+                    }else if(oldseq.startsWith(seq)){
                         log(`ERROR the keysequence '${seq}' is a subsequence of the already defined sequence '${oldseq}'`)
                         return true
                     }else if(seq.startsWith(oldseq)){
@@ -404,11 +403,11 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
                     return false
                 })){
                     newErrors = true
-                    errors++
+                    state.errors++
                     break
                 }else{
-                    if(sequencesFor[mode]) sequencesFor[mode]?.push(seq)
-                    else sequencesFor[mode] = [seq]
+                    if(state.sequencesFor[mode]) state.sequencesFor[mode]?.push(seq)
+                    else state.sequencesFor[mode] = [seq]
                 }
             }
             return !newErrors ? modes.map(mode => [mode, obj]) : []
@@ -416,7 +415,13 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
             log(`ERROR invalid binding entry '${key}'`)
             return []
         }
-    }))
+    }
+}
+
+function expandBindings(bindings: any): [Keymodes | undefined, number] {
+    let state = {sequencesFor: <IHash>{}, errors: 0}
+    let allEntries = flatten(sortBy(Object.entries(bindings),normalFirst).
+        map(expandEntryBindingsFn(state)))
     let allModes = uniq(allEntries.map(x => x[0]))
     allModes.push('normal', 'visual')
     allModes = uniq(allModes)
@@ -430,7 +435,7 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
             }
         }
     }
-    return [result, errors]
+    return [result, state.errors]
 }
 
 /**
