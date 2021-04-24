@@ -379,6 +379,20 @@ function expandCommands(x: any): Command {
 function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash, withCommand?: string }){
     return ([key, val]: [string, any]): [string, Action][] => {
         if(key === '__keymap'){ return [] }
+        if(key.startsWith('::using::')){
+            if(state.withCommand){
+                log(`ERROR: cannot nest '::using::' directives, ignoring child directive.`)
+            }else {
+                return flatten(sortBy(Object.entries(val),normalFirst).map(expandEntryBindingsFn({
+                    errors: state.errors,
+                    sequencesFor: state.sequencesFor,
+                    withCommand: key.split('::')[2]
+                })))
+            }
+        }
+        if(state.withCommand){
+            val = { [state.withCommand]: val }
+        }
         let res = key.match(/^(([a-z|]{2,})::)?(.*)$/)
         if(res){
             let [ match, g1, givenMode, seq ] = res
