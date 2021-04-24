@@ -305,13 +305,14 @@ export function onTextChanged() {
  * key sequence that did not (yet) cause any commands to run. This information
  * is needed to decide whether the `lastKeySequence` variable is updated.
  */
-async function runActionForKey(key: string, mode: string = keyMode): Promise<boolean> {
-    return await actions.handleKey(key, isSelecting() && mode === Normal ? Visual : mode, mode === Search)
+async function runActionForKey(key: string, mode: string = keyMode, clearCount: boolean = false): Promise<boolean> {
+    return await actions.handleKey(key, isSelecting() && mode === Normal ? Visual : mode, mode === Search, clearCount)
 }
 
 function handleTypeSubscription(oldmode: string, newmode: string){
     if(newmode !== Insert && !typeSubscription){
         typeSubscription = vscode.commands.registerCommand("type", onType)
+        vscode.commands.executeCommand('hideSuggestWidget')
     }else if(newmode === Insert && typeSubscription){
         typeSubscription.dispose()
         typeSubscription = undefined
@@ -912,7 +913,7 @@ async function typeKeys(args: TypeKeysArgs): Promise<void> {
     if (typeof args !== 'object' || typeof (args.keys) !== 'string')
         throw Error(`${typeKeysId}: Invalid args: ${JSON.stringify(args)}`)
     for (let i = 0; i < args.keys.length; i++)
-        await runActionForKey(args.keys[i], args.mode || Normal)
+        await runActionForKey(args.keys[i], args.mode || Normal, i === 0)
 }
 /**
  * ## Advanced Selection Command

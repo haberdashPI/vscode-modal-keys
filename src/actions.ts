@@ -694,7 +694,8 @@ function updateCount(x: FinalCount | number | undefined, val: number){
  * This indicates that the key invoked a command instead of just changing the
  * active keymap.
  */
-export async function handleKey(key: string, keyMode: string, capture: boolean): Promise<boolean> {
+export async function handleKey(key: string, keyMode: string, capture: boolean, clearCount: boolean = false): Promise<boolean> {
+    if(clearCount) argumentCount = undefined
     function error(){
         vscode.window.showWarningMessage("ModalKeys: Undefined key binding: " +
             keySequence.join(" - "))
