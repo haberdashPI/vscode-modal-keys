@@ -1,4 +1,4 @@
-import { sortBy, merge, mapValues, flatten, uniq } from 'lodash'
+import { sortBy, mergeWith, mapValues, flatten, uniq } from 'lodash'
 import { exec } from 'node:child_process'
 
 /**
@@ -428,10 +428,16 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
     let result: any = {}
     for(let [key, value] of allEntries){
         if(key !== '__all__'){
-            result = merge(result, {[key]: value})
+            result = mergeWith(result, {[key]: value}, (oldval: Action, newval: Action) => {
+                if(isCommand(oldval)){
+                    return newval
+                }
+            })
         }else{
             for(let mode of allModes){
-                result = merge(result, {[mode]: value})
+                result = mergeWith(result, {[mode]: value}, (oldval: Action, newval: Action) => {
+                    if(isCommand(oldval)){ return newval }
+                })
             }
         }
     }
