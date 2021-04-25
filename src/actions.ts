@@ -364,11 +364,11 @@ function expandCommands(x: any): Command {
     }else if(Array.isArray(x)){
         return x.map(expandCommands)
     }else if(isObject(x)){
-        let keys = Object.keys(x)
+        let keys = Object.keys(x).filter(x => x !== 'repeat')
         if(keys.length > 1){
             log(`ERROR: command has multiple heads: ${keys.join(", ")}`)
         }
-        return { command: keys[0], args: x[keys[0]] }
+        return { command: keys[0], args: x[keys[0]], repeat: x.repeat }
     }else {
         log(`ERROR: command is of unknown form (displaying value below).`)
         log(JSON.stringify(x, null, 2))
@@ -394,6 +394,9 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash, wit
             val = { [state.withCommand]: val }
         }
         let res = key.match(/^(([a-z|]{2,})::)?(.*)$/)
+        if(key.match(/[a-z|]{3,}:(.*)$/)){
+            log(`WARN the entry '${key}' looks like you might be trying to select a mode, did you mean to use a '::' instead of ':'?`)
+        }
         if(res){
             let [ match, g1, givenMode, seq ] = res
             let obj: any = expandCommands(val)
@@ -606,7 +609,7 @@ async function executeParameterized(action: Parameterized, mode: string) {
     }
     if (action.repeat) {
         if (action.repeat == '__count'){
-            repeat = argumentCount ? (<FinalCount>argumentCount).count : 1
+            repeat = getArgumentCount()
         }
     }
     if (action.args) {
