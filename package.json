@@ -3,7 +3,9 @@
     "displayName": "ModalKeys",
     "description": "Customizable modal editing (ala vim and kakoune)",
     "publisher": "haberdashpi",
-    "repository": { "url": "https://github.com/haberdashPI/vscode-modal-keys" },
+    "repository": {
+        "url": "https://github.com/haberdashPI/vscode-modal-keys"
+    },
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.55.0"

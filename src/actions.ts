@@ -269,7 +269,6 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
  * an ASCII range with dash `-`. The ASCII code of the first character must be
  * smaller than the second one's.
  */
-let keyRE = /^.([\-,].)+$/
 /**
  * The function itself is recursive; it calls itself, if it finds a nested
  * keymap. It stores all the keymaps it encounters in the `keymapsById`
@@ -300,23 +299,7 @@ function validateAndResolveKeymaps(keybindings: Keymap) {
                 else
                     keybindings[key] = target
             }
-            if (key.match(keyRE))
-                for (let i = 1; i < key.length; i += 2) {
-                    if (key[i] == '-') {
-                        let first = key.charCodeAt(i - 1)
-                        let last = key.charCodeAt(i + 1)
-                        if (first > last)
-                            error(`Invalid key range: "${key}"`)
-                        else
-                            for (let i = first; i <= last; i++)
-                                keybindings[String.fromCharCode(i)] = target
-                    }
-                    else {
-                        keybindings[key[i - 1]] = target
-                        keybindings[key[i + 1]] = target
-                    }
-                }
-            else if (key.length != 1 && key !== '__keymap')
+            if (key.length > 1 && key !== '__keymap')
                 error(`Invalid key binding: "${key}"`)
         }
     }
@@ -393,8 +376,8 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash, wit
         if(state.withCommand){
             val = { [state.withCommand]: val }
         }
-        let res = key.match(/^(([a-z|]{2,})::)?(.*)$/)
-        if(key.match(/[a-z|]{3,}:(.*)$/)){
+        let res = key.match(/^(([a-z|]{2,})::)?((.|\s)*)$/)
+        if(key.match(/[a-z|]{3,}:[^:](.*)$/)){
             log(`WARN the entry '${key}' looks like you might be trying to select a mode, did you mean to use a '::' instead of ':'?`)
         }
         if(res){
