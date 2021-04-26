@@ -691,8 +691,7 @@ function updateCount(x: FinalCount | number | undefined, val: number){
 export async function handleKey(key: string, keyMode: string, capture: boolean, clearCount: boolean = false): Promise<boolean> {
     if(clearCount) argumentCount = undefined
     function error(){
-        vscode.window.showWarningMessage("ModalKeys: Undefined key binding: " +
-            keySequence.join(" - "))
+        vscode.window.showWarningMessage("ModalKeys: Undefined key binding: " + keySequence.join(""))
         argumentCount = undefined
         currentKeymap = null
     }
@@ -704,6 +703,7 @@ export async function handleKey(key: string, keyMode: string, capture: boolean, 
 
     let newKeymap: undefined | Keymap = currentKeymap || rootKeymodes[keyMode]
 
+    keySequence.push(key)
     if (capture && lastCommand)
         await executeVSCommand(lastCommand, key)
     else if (newKeymap && newKeymap[key]) {
