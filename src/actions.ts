@@ -632,7 +632,7 @@ function replaceVars(args: object, mode: string){
             val === '__count' ? getArgumentCount() :
             val === '-__count' ? -getArgumentCount() :
             val === '__mode' ? mode :
-            isString(val) && /[\(\)]|__/.test(val) ? evalStringOrText(val, mode) :
+            isString(val) && /[+-/*]|__/.test(val) ? evalStringOrText(val, mode) :
             val
         result[key] = val
     }
