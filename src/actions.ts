@@ -299,7 +299,7 @@ function validateAndResolveKeymaps(keybindings: Keymap) {
                 else
                     keybindings[key] = target
             }
-            if (key.length > 1 && key !== '__keymap')
+            if (key.match(/[0-9]+/) || (key.length > 1 && key !== '__keymap'))
                 error(`Invalid key binding: "${key}"`)
         }
     }
@@ -530,7 +530,7 @@ async function executeVSCommand(command: string, ...rest: any[]): Promise<void> 
  * `evalString` function evaluates JavaScript expressions. Before doing so, it
  * defines some variables that can be used in the evaluated text.
  */
-function evalString(str: string, __mode: string): any {
+function evalString__(str: string, __mode: string): any {
     let __file = undefined
     let __line = undefined
     let __col = undefined
@@ -552,8 +552,11 @@ function evalString(str: string, __mode: string): any {
             cursor.translate({ characterDelta: 1 })))
         __selection = editor.document.getText(editor.selection)
     }
+    return eval(`(${str})`)
+}
+function evalString(str: string, __mode: string): any {
     try {
-        return eval(`(${str})`)
+        evalString__(str, __mode)
     }
     catch (error) {
         vscode.window.showErrorMessage("Evaluation error: " + error.message)
@@ -612,6 +615,14 @@ function getArgumentCount(): number {
     }
 }
 
+function evalStringOrText(val: string, mode: string){
+    try{
+        return evalString__(val, mode)
+    }catch {
+        return val
+    }
+}
+
 function replaceVars(args: object, mode: string){
     let editor = vscode.window.activeTextEditor
     let result: any = {}
@@ -621,7 +632,7 @@ function replaceVars(args: object, mode: string){
             val === '__count' ? getArgumentCount() :
             val === '-__count' ? -getArgumentCount() :
             val === '__mode' ? mode :
-            isString(val) && /[\(\)]|__/.test(val) ? evalString(val, mode) :
+            isString(val) && /[\(\)]|__/.test(val) ? evalStringOrText(val, mode) :
             val
         result[key] = val
     }
