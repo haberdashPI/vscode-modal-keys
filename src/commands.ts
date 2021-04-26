@@ -9,6 +9,7 @@
 import * as vscode from 'vscode'
 import * as actions from './actions'
 import { TextDecoder } from 'util'
+import { IHash } from './util'
 //#endregion
 /**
  * ## Command Arguments
@@ -146,6 +147,7 @@ let secondaryStatusBar: vscode.StatusBarItem
  * select mode, searching mode or some user defined mode
  */
 let keyMode = Normal
+let editorModes: IHash<string> = {}
 /**
  * Search state variables.
  */
@@ -309,9 +311,9 @@ async function runActionForKey(key: string, mode: string = keyMode, clearCount: 
     return await actions.handleKey(key, isSelecting() && mode === Normal ? Visual : mode, mode === Search, clearCount)
 }
 
-function handleTypeSubscription(oldmode: string, newmode: string){
-    if(newmode !== Insert && !typeSubscription){
-        typeSubscription = vscode.commands.registerCommand("type", onType)
+function handleTypeSubscription(newmode: string){
+    if(newmode !== Insert){
+        if(!typeSubscription) typeSubscription = vscode.commands.registerCommand("type", onType)
         vscode.commands.executeCommand('hideSuggestWidget')
     }else if(newmode === Insert && typeSubscription){
         typeSubscription.dispose()
@@ -337,13 +339,14 @@ export async function enterInsert(){ enterMode('insert') }
 
 export async function enterMode(args: string | EnterModeArgs) {
     let newMode = (<string>((<EnterModeArgs>args).mode || args))
-    handleTypeSubscription(keyMode, newMode)
+    handleTypeSubscription(newMode)
     const exitHook = modeHooks[keyMode]?.modeHooks?.exit
     exitHook && await exitHook(keyMode, newMode)
 
     const editor = vscode.window.activeTextEditor
     let oldMode = keyMode
     keyMode = newMode
+    if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = newMode
     if (editor) {
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
         updateCursorAndStatusBar(editor)
@@ -355,6 +358,20 @@ export async function enterMode(args: string | EnterModeArgs) {
 function reviseSelectionMode(){
     if(isSelecting() && keyMode === Normal){
         keyMode = Visual
+        const editor = vscode.window.activeTextEditor
+        if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = Visual
+    }
+}
+
+export async function restoreEditorMode(editor: vscode.TextEditor | undefined){
+    if(editor){
+        let newMode = editorModes[editor.document.uri.toString()] || Normal
+        handleTypeSubscription(newMode)
+        keyMode = newMode
+        await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
+        updateCursorAndStatusBar(editor)
+        const enterHook = modeHooks[keyMode]?.modeHooks?.enter
+        enterHook && await enterHook(Normal, keyMode)
     }
 }
 

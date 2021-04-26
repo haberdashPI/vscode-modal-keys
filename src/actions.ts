@@ -1,4 +1,5 @@
 import { sortBy, mergeWith, mapValues, flatten, uniq } from 'lodash'
+import { IHash } from './util'
 import { exec } from 'node:child_process'
 
 /**
@@ -330,10 +331,6 @@ function toVSCursorStyle(cursor: Cursor): vscode.TextEditorCursorStyle {
 const normalFirst = (x: [string, any]) =>
     x[0].match(/(^[a-z\|]*normal[a-z\|]*:)|^[^:]*$/) ? -1 : 0
 
-interface IHash{
-    [key: string]: string[] | undefined
-}
-
 function expandCommands(x: any): Command {
     if(x?.if){
         let result: any = { "if": x.if }
@@ -359,7 +356,7 @@ function expandCommands(x: any): Command {
     }
 }
 
-function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash, withCommand?: string }){
+function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<string[]>, withCommand?: string }){
     return ([key, val]: [string, any]): [string, Action][] => {
         if(key === '__keymap'){ return [] }
         if(key.startsWith('::using::')){
@@ -419,7 +416,7 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash, wit
 }
 
 function expandBindings(bindings: any): [Keymodes | undefined, number] {
-    let state = {sequencesFor: <IHash>{}, errors: 0}
+    let state = {sequencesFor: <IHash<string[]>>{}, errors: 0}
     let allEntries = flatten(sortBy(Object.entries(bindings),normalFirst).
         map(expandEntryBindingsFn(state)))
     let allModes = uniq(allEntries.map(x => x[0]))
