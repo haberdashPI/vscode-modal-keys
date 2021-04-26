@@ -1,31 +1,39 @@
-# Modal Editing in VS Code
+# Modal Keybindings in VS Code
 
-ModalKeys is a simple extension for defining modal keymaps in VSCode. The most prominent
+ModalKeys is a simple extension for defining modal keybindings in VSCode. The most prominent
 [modal editor][1] is [Vim][2], and ModalKeys includes presets that resemble Vim. While you
 can emulate existing modal editors like Vim or [Kakoune][8] with this extension, you can
 also build your keyboard layout from ground up and add exactly the features you need.
 
-ModalKeys ascribes to the philosophy that we will get the most out of modal editing if we mesh
-well with the existing features of VSCode, rather than attempt an exact clone of vim. If you
-prefer as an exact a clone as possible, consider using [VSCodeVim](https://github.com/VSCodeVim/Vim) or
-[vscode-neovim](https://github.com/asvetliakov/vscode-neovim). In ModalKeys, you define your
-keybindings using commands provided by VS Code and other extensions. You can build complex
-operations by arranging commands into sequences and specifying command arguments. ModalKeys comes with two built-in
-modes—normal and visual—but you can also define your own modes.
+Rather than attempt to reproduce all features of past editors, ModalKeys simply provides the
+means to easily define new keybindings for several pre-defined modes, and as many user defined
+modes as you want. If you prefer to replicate vim in VSCode, consider using
+[VSCodeVim](https://github.com/VSCodeVim/Vim) or
+[vscode-neovim](https://github.com/asvetliakov/vscode-neovim).
 
 ModalKeys is a fork of [ModalEdit](https://github.com/johtela/vscode-modaledit); I am in
 debt to the hard and thoughtful work put into that extension. There are some important features that
 differ between the two extensions.
 
-1. Revised keymap format: I personally find ModalEdit's keymaps to be needlessly cumbersome. I've tried to increase the succinctness and ease of use
-of the keymap format.
-2. Customized modes: ModalEdit only allows for a 'normal' and 'visual' mode, ModalKeys allows for any number of custom "normal-like" modes.
-3. Search term highlighting: ModalEdit does not highlight text that is part of a search (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19) for this feature), ModalKeys does.
+1. Revised keymap format: I personally find ModalEdit's keymaps to be needlessly cumbersome.
+   I've tried to increase the succinctness and ease of use of the keymap format.
+2. Customized modes: ModalEdit only allows for a 'normal' and 'visual' mode, ModalKeys
+   allows for any number of custom "normal-like" modes.
+3. Search term highlighting: ModalEdit does not highlight text that is part of a search
+   (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19) for this
+   feature), ModalKeys allows search text to be highlighted.
+4. Kaukune-like 'repeat-selection': if you are designing a modal editing experience around
+   kakune's noun-verb model (compared to vim's verb-noun model), it is useful to be able to
+   repeat the last selection (e.g. noun) that occurred before a verb. ModalKeys provides a
+   `repateLastUsedSelection` for this purpose.
+
+**TODO**: keyboard macros
+
 
 ## Getting Started
 
 When the extension is installed, text documents will open in normal mode. The
-current mode is shown in the status bar. You can switch between normal and insert modes by
+current mode is shown in the status bar. You can even switch between normal and insert modes by
 clicking the pane in the status bar.
 
 ![Status bar](images/status-bar.gif)
@@ -42,14 +50,18 @@ directory under your project directory.
 > instructions [here][14]. Otherwise keep reading this document.
 
 To define the key mappings used in normal mode, add a property named
-`modaledit.keybindings`. You should define at least one binding that will switch
+`modalkeys.keybindings`. You should define at least one binding that will switch
 the editor to the *insert mode*, which is the same as VS Code's default mode.
 ```js
-"modalkey.keybindings": {
-    "i": "modaledit.enterInsert"
+"modalkeys.keybindings": {
+    "i": "modalkeys.enterInsert"
 }
 ```
 When you save the `settings.json` file, keybindings take effect immediately.
+
+By default, any keys defined under `modalkeys.keybindings` way will be available in all
+modes other than insert mode (see below for how to make a binding specific to one or more
+modes).
 
 ModalKeys adds a regular VS Code keyboard shortcut for `Esc` to return back to
 normal mode. If you wish, you can remap this command to another key by
@@ -57,21 +69,12 @@ pressing `Ctrl+K Ctrl+S`.
 
 ### Selections/Visual Mode
 
-Visual mode works slighlty differently than Vim's, because VSCode allows selections to occur
-in 'insert' mode. Any time we request normal model (e.g. hit 'escape') and text is selected, visual mode starts. (Visual mode can also be manually started).
-By default all keys map to both normal and visual mode. However, to specify behavior that is specific to visual mode, you can prefix the binding with `visual:`, like so.
+There is also a second, built-in mode. Visual mode works slighlty differently than Vim's,
+because VSCode allows selections to occur in 'insert' mode. Any time we request normal model
+(e.g. hit 'escape') and text is selected, visual mode starts. (Visual mode can also be
+manually started).
 
-```js
-"modalkeys.keybinding": {
-    "visual:d": "edit.action.clipboardCutAction"
-}
-```
-
-The specify that the key does should only map for visual mode, you can prefix a key sequence
-with `normal:`. If bindings overwrite one another (e.g. one command for `normal` and
-different one for `visual|normal`) the last specified binding always wins.
-
-ModalKeys defines a new command `modaledit.toggleSelection` which allows you
+ModalKeys defines a new command `modalkeys.toggleSelection` which allows you
 to start selecting text in normal mode without holding down the shift key. This imitates
 Vim's visual mode.
 
@@ -79,17 +82,21 @@ You can also change the text shown in status bar during visual mode using [confi
 
 ![Selection active](images/selected-text.png)
 
-### Custom Key Modes
+### Mode Specific Bindings and Custom Modes
 
-You can also define keymaps for custom modes. This behave like normal mode in all respects except that they have their own custom set of keymappings.
+You can also define keymaps that are specific to one or more modes. These can be one of the
+built-in modes (normal and visual) or your own, custom mode. Custom modes behave like normal
+mode in all respects except that they have their own set of keymappings.
 
 To enter the given mode, you call the command `modalkeys.enterMode` with the argument `mode`
-set to the name of the custom mode.
+set to the name of the custom mode. To define bindings specific to one or more modes, you prefix the bindings with `[modename]::`. You can specificy multiple bindings using `|` e.g. `mycustommode|visual::`.
 
-For example, the following would map the typical directional keys of vim to a delete command.
+For example, the following would map the typical directional keys of vim to a delete command
+when you are in "evil" mode.
 ```js
 "modalkeys.keybinding": {
     "D": { command: "modalkeys.enterMode", args: { mode: "evil" } },
+    "evil::D": { command: "modalkeys.enterMode", args: { mode: "normal" } },
     "evil::j": "edit.action.clipbaordCutAction",
     "evil::k": "edit.action.clipbaordCutAction",
     "evil::h": "edit.action.clipbaordCutAction",
@@ -97,28 +104,23 @@ For example, the following would map the typical directional keys of vim to a de
 }
 ```
 
-If a binding should be associated with multiple modes, just separate them with a `|` marker.
-Note that, in effect, bindings have `normal|visual:` prefixed in front of them, by default.
-
-## TODO: stopped revising README here
-
 ## Configuration
 
-You can define the normal mode commands in four different ways. It is also
-possible to combine them freely.
+You can define the bindings in four different ways. It is also possible to combine them
+freely.
 
 ### Single Command
 
 The simplest way is to map a key to a single command. This has the format:
 ```js
-"<key>": "<command>"
+"<binding>": "<command>"
 ```
-The `<key>` needs to be a single character and `<command>` any valid VS Code
-command. You can see the list of all of the available commands by opening
-global settings with command **Preferences: Open Default Keyboard Shortcuts (JSON)**.
+The `<binding>` specifies the sequence of keys to press, and `<command>` is any valid VS
+Code command. You can see the list of all available commands by opening global settings with
+command **Preferences: Open Default Keyboard Shortcuts (JSON)**.
 
 The example in the previous section maps the `i` key to the
-`modaledit.enterInsert` command.
+`modalkeys.enterInsert` command.
 
 ### Commands with Arguments
 
@@ -126,43 +128,38 @@ Some [commands][6] take arguments. For example `cursorMove` which allows you
 to specify which direction and how much cursor moves. These commands can be
 executed by defining an object with prefined properties:
 ```js
-"<key>":  {
+"<binding>":  {
     "command": "<command>",
-    "args": { ... } | "{ ... }"
-    "repeat": number | "<JS expression>"
+    "args": { ... }
+    "repeat": number | "__count"
 }
 ```
-The `<command>` is again a valid VS Code command. The `args` property contains
-whatever arguments the command takes. It can be specified as a JSON object
-or as a string. If the value of the `args` property is a string, ModalKeys
-treats it as a JavaScript expression. It evaluates the expression and passes the
-result to the command. The following variables can be used inside expression
-strings:
+The `<command>` is again a valid VS Code command. The `args` property contains whatever
+arguments the command takes. It is specified as a JSON object. ModalKeys evaluates
+JavaScript expressions within the argument values. The following variables can be used
+inside expression strings:
 
 | Variable        | Type       | Description
 | --------------- | ---------- | -------------------------------------------------
-| `__file`        | `string`   | The file name of the document that is edited.
 | `__line`        | `number`   | The line number where the cursor is currently on.
-| `__col`         | `number`   | The column number where the cursor is currently on.
-| `__char`        | `string`   | The character under the cursor.
-| `__selection`   | `string`   | Currently selected text.
 | `__selecting`   | `boolean`  | Flag that indicates whether selection is active.
-| `__keySequence` | `string[]` | Array of keys that were pressed to invoke the command.
-| `__keys`        | `string[]` | Alias to the `__keySequence` variable.
-| `__rkeys`       | `string[]` | Contains the `__keys` array reversed. This is handy when you want to access the last characters of the array as they will be first in `__rkeys`.
-| `__cmd`         | `string`   | Containst the `__keys` array joined together to a string. Now you don't have to do this explicitly in you expressions.
-| `__rcmd`        | `string`   | Containst the `__rkeys` array joined together to a string.
+| `__mode`        | `string    | A string specifying the current mode
+| `__count`       | `number`   | A number indicating the prefixed numerical values in front of a command: see below.
 
-The `repeat` property allows you to run the command multiple times. If the value
-of the property is a number, it directly determines the repetition count. If it
-is a string, ModalKeys evaluates it as JS expression and checks if the result is
-a number. In that case the returned number is used as the repeat count. Note
-that numbers smaller than 1 will be ignored, and the command is always run at
-least once.
+The `repeat` property allows you to run the command multiple times. If the value of the
+property is a number, it directly determines the repetition count, and if it is `__count` it
+repeats the expression based on the prefixed numbers passed to the keybinding. When you type
+a modal command you can prefix it with numbers, these can passed as the `__count` variable
+to your command.
 
-If returned value is not a number, the expression is treated as a condition that
-is evaluated after the command has run. The command is repeated as long as the
-expression returns a truthy value.
+As a full example of using `__count`, the following would bind h to move left (like vim) in all modes.
+
+```js
+    "h": { "cursorMove": { to: 'left', value: '__count' } },
+```
+
+Because `value` is specified as `__count`, if you typed `12h`, the cursor would move 12
+characters to the left.
 
 Below is an example that maps key `o` to a command that moves the cursor to the
 end of line. It also selects the jumped range, if we have selection active.
@@ -179,7 +176,7 @@ To construct more complex operations consisting of multiple steps, you can
 define command sequences. Commands in a sequence will be run one after another.
 A sequence is defined as an array.
 ```js
-"<key>": [ <command1>, <command2>, ... ]
+"<binding>": [ <command1>, <command2>, ... ]
 ```
 In above, `<command>` can assume any of the supported forms: single command,
 one with arguments, or conditional command (see below).
@@ -201,19 +198,16 @@ commands depending on a specified condition. The most common use case for this
 is to run a different command when selection is active. The format of a
 conditional commands is:
 ```js
-"<key>":  {
-    "condition": "<condition>",
-    "<result1>": <command1>,
-    "<result2>": <command2>,
-    ...
+"<binding>":  {
+    "if": "<condition>",
+    "then": <command1>,
+    "else": <command2>,
 }
 ```
-Here `<condition>` can be any valid JavaScript expression. You can use
-variables listed in the "Commands with Arguments" section in the expression. If
-the expression evaluates to `<result1>`, `<command1>` will be executed, if to
-`<result2>`, `<command2>` will be run, and so forth. If none of the defined
-properties match the expression result, nothing is done. Commands can be of any
-kind: a single command, sequence, or command with arguments.
+Here `<condition>` can be any valid JavaScript expression. You can use variables listed in
+the "Commands with Arguments" section in the expression. If the expression evaluates to
+true, `<command1>` will be executed, if false, `<command2>` will be run. Commands can be
+of any kind: a single command, sequence, or command with arguments.
 
 Below is an example that moves cursor one word forward with `w` key. We use
 the `__selecting` variable to determine if a selection is active. If so, we
@@ -221,137 +215,11 @@ extend the selection using `cursorWordStartRightSelect` command, otherwise we
 just jump to next word with `cursorWordStartRight`.
 ```js
 "w": {
-    "condition": "__selecting",
-    "true": "cursorWordStartRightSelect",
-    "false": "cursorWordStartRight"
+    "if": "__selecting",
+    "then": "cursorWordStartRightSelect",
+    "else": "cursorWordStartRight"
 },
 ```
-
-### Binding Key Sequences
-
-When you want to define a multi-key sequence, nest the key bindings. You can
-define a two key command using the following format.
-```js
-"<key1>": {
-    "<key2>": <command>
-},
-```
-Again, the `<command>` can be in any of the forms described above. To invoke
-the command you first press `<key1>` in normal mode followed by `<key2>`.
-
-The example below defines two commands that are bound to key sequences `g - f`
-(search forwards) and `g - b` (search backwards).
-```js
-"g": {
-    "f": {
-        "command": "modaledit.search",
-        "args": {}
-    },
-    "b":
-        "command": "modaledit.search",
-        "args": {
-            "backwards": true
-        }
-    }
-}
-```
-
-### Defining Recursive Keymaps
-
-Version 1.5 of ModalKeys introduced the possibility to create recursive keymaps.
-With this feature you can define arbitrarily long keyboard sequences. This is
-useful, for example, for creating commands that you can repeat by entering first
-a number followed by a command key. Keymaps got two new features to enable this
-functionality.
-
-#### Key Ranges
-
-You can add multiple characters to a keybinding comma `,` and dash `-`. For
-example, `a,b` bind both `a` and `b` to the same action. You can also add ranges
-like any numeric character `0-9`. The ASCII code of the first character must be
-smaller than the second one's. You can also combine these notations; for
-instance, range `a,d-f` maps keys `a`, `d`, `e`, and `f` to a same action.
-
-#### Keymap IDs
-
-By giving keymap a numeric ID, you can refer to it in another (or same) keymap.
-With key ranges, this allows you to create a binding that can take theoretically
-infinitely long key sequence. The example below shows how you can define
-commands like `3w` that moves the cursor forward by three words. First we define
-the commands that moves or select the previous/next word (with keys `b` and `w`),
-and then we create a binding that matches a positive number using key ranges and
-a recursive keymap. We also use the
-[`modaledit.typeNormalKeys` command](#invoking-key-bindings) to invoke the
-existing key bindings and the [`repeat` property](#commands-with-arguments) to
-repeat the command.
-```js
-        "w": {
-            "condition": "__selecting",
-            "true": "cursorWordStartRightSelect",
-            "false": "cursorWordStartRight"
-        },
-        "b": {
-            "condition": "__selecting",
-            "true": "cursorWordStartLeftSelect",
-            "false": "cursorWordStartLeft"
-        },
-        "1-9": {
-            "id": 1,
-            "help": "Enter count followed by [w, b]",
-            "0-9": 1,
-            "w,b": {
-                "command": "modaledit.typeNormalKeys",
-                "args": "{ keys: __rkeys[0] }",
-                "repeat": "Number(__keys.slice(0, -1).join(''))"
-            }
-        }
-```
-We give the keymap attached to key range `1-9` the `id` of 1. When that keymap
-is active pressing key `0-9` will "jump" back to the same keymap. That is
-designated by the number `1` in the key binding. Only when the user presses
-some other key we get out of this keymap. If the user presses `w` or `b`, we
-run the command bound to the respective key. We get the repetition count by
-slicing the all but last character from the `__keys` array and converting that
-to a number. The command key is the last item of the `__keys` array. We can
-access it more easily using the reversed `__rkeys` array. The item is first in
-that array.
-
-The picture below illustrates how keymap and command objects are stored in
-memory.
-
-![recursive keymap](images/recursive-keymap-example.png)
-
-It is also possible to jump to another keymap, which enables even more
-complicated keyboard sequences. The only restriction is that you can only jump
-to a key binding which is already defined. I.e. you cannot refer to an ID of a
-keymap that appears later in the configuration.
-
-> To better understand how keymaps work behind the scenes check the source
-> [documentation][10].
-
-Another new feature used in the example above is the optional `help` property
-in the keymap. The contents of the property is shown in the status bar when the
-keymap is active. It makes using long keyboard sequences easier by providing a
-hint what keys you can press next.
-
-### Keybindings in Selection/Visual Mode
-
-ModalKeys 2.0 adds a new configuration section called `selectbidings` that has
-the same structure as the `keybindings` section. With it you can now map keys
-that act as the lead key of a normal mode sequence to run a commands when
-pressed in visual mode.
-
-For example, you might want the `d` key to be the leader key for sequence
-"delete word" `dw` in normal mode, but in selection mode `d` should delete the selection
-without expecting any following keys. Previously it was not possible to define
-this behavior, but now you can do it with `selectbindings`.
-
-`selectbindings` section is always checked first when ModalKeys looks for a
-mapping for a keypress. If there is no binding defined in `selectbindings`
-then it checks the `keybindings` section. Note that you can still define normal
-mode commands that work differently when selection is active. You can use either
-a conditional or parameterized command to check the `__selecting` flag, and
-perform a different action based on that.
 
 ### Debugging Keybindings
 
@@ -365,7 +233,7 @@ there. If your configuration is ok, you should see the following message.
 ### Changing Cursors
 
 You can set the cursor shape shown in each mode by changing the following
-settings.
+settings. Custom modes always use the cursor style of Normal mode.
 
 | Setting               | Default       | Description
 | --------------------- | ------------- | -------------------------------------
@@ -426,26 +294,7 @@ when you open it.
 
 ### Example Configurations
 
-You can find example key bindings [here][7]. These are my own settings. The
-cheat sheet for my keyboard layout is shown below. I have created it in
-<http://www.keyboard-layout-editor.com/>. Please note that my keyboard layout
-is Finnish, so the non-alphanumeric keys might be in strange places.
-
-![My keyboard layout](images/keyboard-layout.png)
-
-As you can see, I haven't followed Vim conventions but rather tailored the
-keyboard layout according to my own preferences. I encourage you to do the same.
-
-In general, you should not try to convert VS Code into a Vim clone. The editing
-philosophies of Vim and VS Code are quite dissimilar. Targets of Vim operations
-are defined with special range commands, whereas VS Code's commands operate on
-selected text. For example, to delete a word in Vim, you first press `d` to
-delete and then `w` for word. In VS Code you first select the word (with `W` or
-`e` key in my configuration) then you delete the selection with `d` key.
-
-To better understand the difference, check out [Kakoune editor's documentation][8].
-ModalKeys extends VS Code with normal mode editing, so you have more or less
-the same capabilities as in Kakoune.
+**TODO**
 
 ## Additional VS Code Commands
 
@@ -459,27 +308,29 @@ commands require any arguments.
 
 | Command                               | Description
 | ------------------------------------- | ----------------------------------------------
-| `modaledit.toggle`                    | Toggles between modes.
-| `modaledit.enterNormal`               | Switches to normal mode.
-| `modaledit.enterInsert`               | Switches to insert mode.
-| `modaledit.toggleSelection`           | Toggles selection mode on or off. Selection mode is implicitly on whenever editor has text selected.
-| `modaledit.enableSelection`           | Turn selection mode on.
-| `modaledit.cancelSelection`           | Cancel selection mode and clear selection.
-| `modaledit.cancelMultipleSelections`  | Cancel selection mode and clear selections, but preserve multiple cursors.
+| `modalkeys.toggle`                    | Toggles between modes.
+| `modalkeys.enterNormal`               | Switches to normal mode.
+| `modalkeys.enterInsert`               | Switches to insert mode.
+| `modalkeys.toggleSelection`           | Toggles selection mode on or off. Selection mode is implicitly on whenever editor has text selected.
+| `modalkeys.enableSelection`           | Turn selection mode on.
+| `modalkeys.cancelSelection`           | Cancel selection mode and clear selection.
+| `modalkeys.cancelMultipleSelections`  | Cancel selection mode and clear selections, but preserve multiple cursors.
+| `modalkeys.enterMode`                 | Enter a given mode, specified by the argument `mode` (a string).
 
 ### Incremental Search
 
-The standard search functionality in VS Code is quite clunky as it opens a
-dialog which takes you out of the editor. To achieve more fluid searching
-experience ModalKeys provides incremental search commands that mimic Vim's
+The standard search functionality in VS Code is quite clunky for some desirable features of
+a modal editor, as it opens a dialog which takes you out of the editor. To achieve more
+fluid searching experience ModalKeys provides incremental search commands that mimic Vim's
 corresponding operations.
 
+**TODO**: simplify these arguments to a single command `repeatSearchOnStuckPosition`
 > There are lot of new parameters in the `search` command that were added in
 > version 2.0. Specifically, `typeAfter...` and `typeBefore...` arguments might
 > seem odd at first glance. Please see the [change log](CHANGELOG.html) to
 > understand the rationale why they are needed.
 
-#### `modaledit.search`
+#### `modalkeys.search`
 
 Starts incremental search. The cursor is changed to indicate that editor is in
 search mode. Normal mode commands are suppressed while incremental search is
@@ -497,28 +348,28 @@ The command takes following arguments. All of them are optional.
 | `wrapAround`              | `boolean` | `false`     | Search wraps around to top/bottom depending on search direction. Default is off.
 | `acceptAfter`             | `number`  | `undefined` | Accept search automatically after _x_ characters has been entered. This helps implementing quick one or two character search operations.
 | `selectTillMatch`         | `boolean` | `false`     | Select the range from current position till the match instead of just the match. Useful with `acceptAfter` to quickly extend selection till the specified character(s).
-| `typeAfterAccept`         | `string`  | `undefined` | Allows to run normal mode commands through key bindings (see `modaledit.typeNormalKeys` command) after successful search. The argument can be used to enter insert mode, or clear selection after search, for example.
+| `typeAfterAccept`         | `string`  | `undefined` | Allows to run normal mode commands through key bindings (see `modalkeys.typeNormalKeys` command) after successful search. The argument can be used to enter insert mode, or clear selection after search, for example.
 | `typeBeforeNextMatch`     | `string`  | `undefined` | Run the specified key commands *before* searhing for the next match.
 | `typeAfterNextMatch`      | `string`  | `undefined` | Run the specified key commands *after* the next match command is executed.
 | `typeBeforePreviousMatch` | `string`  | `undefined` | Run the specified key commands *before* searhing for the previous match.
 | `typeAfterPreviousMatch`  | `string`  | `undefined` | Run the specified key commands *after* the previous match command executed.
 
-#### `modaledit.cancelSearch`
+#### `modalkeys.cancelSearch`
 
 Cancels the incremental search, returns the cursor to the starting position,
 and switches back to normal mode.
 
-#### `modaledit.deleteCharFromSearch`
+#### `modalkeys.deleteCharFromSearch`
 
 Deletes the last character of the search string. By default the backspace key
 is bound to this command when ModalKeys is active and in search mode.
 
-#### `modaledit.nextMatch`
+#### `modalkeys.nextMatch`
 
 Moves to the next match and selectes it. Which way to search depends on the
 search direction.
 
-#### `modaledit.previousMatch`
+#### `modalkeys.previousMatch`
 
 Moves to the previous match and selectes it. Which way to search depends on the
 search direction.
@@ -527,9 +378,9 @@ search direction.
 
 To quickly jump inside documents ModalKeys provides two bookmark commands:
 
-- `modaledit.defineBookmark` stores the current position in a bookmark, and
-- `modaledit.goToBookmark` jumps to the given bookmark.
-- `modaledit.showBookmarks` shows the defined bookmarks in the command bar and
+- `modalkeys.defineBookmark` stores the current position in a bookmark, and
+- `modalkeys.goToBookmark` jumps to the given bookmark.
+- `modalkeys.showBookmarks` shows the defined bookmarks in the command bar and
   allows jumping to them by selecting one.
 
 The first two commands take one argument which contains the bookmark name. It
@@ -544,159 +395,75 @@ If the argument is omitted, default value `0` is assumed.
 }
 ```
 
-### Quick Snippets
-
-Snippets come in handy when you need to insert boilerplate text. However, the
-problem with snippets is that very seldom one bothers to create a new one. If a
-snippet is used only a couple of times in a specific situation, the effort of
-defining it nullifies the advantage.
-
-With ModalKeys, you can create snippets quickly by selecting a region of text
-and invoking command `modaledit.defineQuickSnippet`. You can assign the snippet
-to a register by specifying its index as an argument.
-```js
-{
-    "command": "modaledit.defineQuickSnippet",
-    "args": {
-        "snippet": 1
-    }
-}
-```
-Use the `modaledit.insertQuickSnippet` command to insert the defined snippet at
-the cursor position. It takes the same argument as `modaledit.defineQuickSnippet`.
-
-A snippet can have arguments or placeholders which you can fill in after
-inserting it. These are written as `$1`, `$2`, ... inside the snippet. You can
-quickly define the arguments with the `modaledit.fillSnippetArgs` command. First
-multi-select all the arguments (by pressing `Alt` while selecting with a mouse),
-then run the command. After that, select the snippet itself and run the
-`modaledit.defineQuickSnippet` command.
-
-In the following example key sequence `q - a` fills snippet arguments,
-`q - w - 1` defines snippet in register 1, and `q - 1` inserts it.
-
-![Quick snippet](images/quick-snippet.gif)
-
-It is usually a good idea to run `editor.action.formatDocument` after inserting
-a snippet to clean up whitespace. You can do this automatically adding it
-to the command sequence.
-```js
-"q": {
-    "1": [
-        {
-            "command": "modaledit.insertQuickSnippet",
-            "args": {
-                "snippet": 1
-            }
-        },
-        "editor.action.formatDocument"
-    ],
-}
-```
-
 ### Invoking Key Bindings
 
-The new command `modaledit.typeNormalKeys` invokes commands through key
-bindings. Calling this command with a key sequence has the same effect as
-pressing the keys in normal mode. This allows you to treat key bindings as
-subroutines that can be called using this command.
+The command `modalkeys.typeKeys` invokes commands through key bindings. Calling this
+command with a key sequence has the same effect as pressing the keys in given mode. This
+allows you to treat key bindings as subroutines that can be called using this command.
 
-The command has one argument `keys` which contains the key sequence as string.
-Assuming that keys `k` and `u` are bound to some commands, the following
-example runs them both one after another.
+The command has arguments:
+
+1. `keys`: contains the key sequence as string.
+2. `mode`: defaults to 'normal', and specifies what mode the keys should be typed in
+
+Assuming that keys `k` and `u` are bound to some commands, the following example runs them
+both one after another.
+
 ```js
 {
-    "command": "modaledit.typeNormalKeys",
+    "command": "modaledit.typeKeys",
     "args": {
         "keys": "ku"
     }
 }
 ```
 
-### Selecting Text Between Delimiters
-
-The `modaledit.selectBetween` command helps implement advanced selection
-operations. The command takes as arguments two strings/regular expressions that
-delimit the text to be selected. Both of them are optional, but in order for the
-command to do anything one of them needs to be defined. If the `from` argument
-is missing, the selection goes from the cursor position forwards to the `to`
-string. If the `to` is missing the selection goes backwards till the `from`
-string. In addition to these parameters, the command has four flags:
-
-- If the `regex` flag is on, `from` and `to` strings are treated as regular
-  expressions in the search.
-- The `inclusive` flag tells if the delimiter strings are included in the
-  selection or not. By default the delimiter strings are not part of the
-  selection.
-- The `caseSensitive` flag makes the search case-sensitive. When this flag is
-  missing or false the search is case-insensitive.
-- By default the search scope is the current line. If you want search inside
-  the whole document, set the `docScope` flag.
-
-Below is an example that selects all text inside quotation marks. For more
-advanced examples check the [tutorial][9].
-```js
-{
-    "command": "modaledit.selectBetween",
-    "args": {
-        "from": "(",
-        "to": ")"
-    }
-}
-```
-
 ### Repeat Last Change
 
-`modaledit.repeatLastChange` command repeats the last command (sequence) that
+`modalkeys.repeatLastChange` command repeats the last command (sequence) that
 caused text in the editor to change. It corresponds to the [dot `.` command][13]
 in Vim. The command takes no arguments.
 
-### Importing Presets
+### Repeat Last Used Selection
 
-In version 2.0, new command `modaledit.importPresets` was introduced. It reads
-keybindings from a file and copies them to the global `settings.json` file. It
-overrides existing keybindings, so back them up somewhere before running the
-command, if you want to preserve them.
+`modalkeys.repeatLastUsedSelection` repeats the last command (sequence) that cased the
+selected to change *just before* the last change occured. This is useful for implementing a
+kakaune-like workflow, where selections are applied and followed by actions: this is in
+contrast to the vim-like approach of specifying actions followed by objects (which are kind
+of like selecitons, but are not visualy displayed). E.g. `wd` in a kakune-like workflow might select a word (`w`) and then delete it (`d`), whereas, in vim, you would type `dw` to delete a word. By repeating the last used selection, you could repeat `w` and repeating the last change, you could repeat `d`. Or you could have both repeat commands occur with a single storke, like below.
 
-In 2.0, also Vim keybindings were added as built-in presets. You can learn more
-about Vim bindings [here][14]. Built-in presets are located under the `presets`
-folder under the extension installation folder. The command scans and lists all
-the files there. It also provides an option to browse for any other file you
-want to import.
-
-Presets are stored either in a JSON or JavaScript file. In either case, the
-file to be imported should evaluate to an object which should have at least one
-of the following properties:
-```json
+```js
 {
-    "keybindings": { ... },
-    "selectbindings": { ... }
+    ".": [ "modalkeys.repeatLastUsedSelection", "modalkeys.repeatLastChange" ]
 }
 ```
-Both of the properties must follow the configuration structure defined above.
-It is also possible to define the object in JS. In that case the object should
-be the expression that the whole script evaluates to.
+
+### Importing Presets
+
+You can use `modalkeys.importPresets` to import a set of keybindings in both JSON and
+JavaScript form. It reads keybindings from a file and copies them to the global
+`settings.json` file. It overrides existing keybindings, so back them up somewhere before
+running the command, if you want to preserve them.
+
+Preset keybindings for vim are available. You can learn more about Vim bindings [here][14].
+Built-in presets are located under the `presets` folder under the extension installation
+folder. The command scans and lists all the files there. It also provides an option to
+browse for any other file you want to import.
+
+As noted above, presets are stored either in a JSON or JavaScript file. In either case, the
+file to be imported should evaluate to an object which should have a single property at the top level, named `keybindings`.
+
+It is also possible to define the object in JS. In that case the object should be the
+expression that the whole script evaluates to (i.e. the last value in the script)
 
 ## Acknowledgements
 
-I was using the [Simple Vim][3] extension for a long time, but was never fully
-happy with it. It shares the idea of being a simple extension reusing VS Code's
-functionality, but it is sorely lacking in configurability. If you don't like
-its default key mappings, you are out of luck.
-
-Then I found extension called [Vimspired][4] which has a really great idea for
-implementing modal editing: just add a section in the `settings.json` which
-contains the keymap for normal mode. This allows you to mimic Vim behavior, if
-you wish to do so, or take a completely different approach. For example, don't
-use `h`, `j`, `k`, `l` keys to move the cursor but `w`, `a`, `s`, `d` keys
-instead.
-
-I really like Vimspired, but still wanted to change some of its core behavior
-and add many additional features. I didn't want to harass the author with
-extensive pull requests, so I decided to implement my own take of the theme. I
-shameleslly copied the core parts of Vimspired and then changed them beyond
-recognition. Anyway, credit goes to [Brian Malehorn][5] for coming up with the
-great idea and helping me jump start my project.
+Much of the organization, concept and documentation for this extension owes a debt to
+[ModalEdit](https://github.com/johtela/vscode-modaledit). Thanks to @joetela for creating
+such a well documented, well organized, and useful extension. Other, past extension, to whom
+I am indebted include [Simple Vim][3], [Vimspired][4] and its creator [Brian Malehorn][5].
+It is slowly being reshaped to fit my own purposes and views on how the code can best grow
+to allow for new features.
 
 [1]: https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors
 [2]: https://www.vim.org/
