@@ -189,6 +189,10 @@ let quickSnippets: string[] = []
  * the last sequence that caused text to change.
  */
 let textChanged = false
+let selectionChanged = true
+let lastSelection: string[] = []
+let lastUsedSelection: string[] = []
+let repeatedSequence = false
 let currentKeySequence: string[] = []
 let lastKeySequence: string[] = []
 let lastChange: string[] = []
@@ -219,6 +223,7 @@ const insertQuickSnippetId = "modalkeys.insertQuickSnippet"
 const typeKeysId = "modalkeys.typeKeys"
 const selectBetweenId = "modalkeys.selectBetween"
 const repeatLastChangeId = "modalkeys.repeatLastChange"
+const repeatLastUsedSelectionId = "modalkeys.repeatLastUsedSelection"
 const importPresetsId = "modalkeys.importPresets"
 /**
  * ## Registering Commands
@@ -252,6 +257,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(typeKeysId, typeKeys),
         vscode.commands.registerCommand(selectBetweenId, selectBetween),
         vscode.commands.registerCommand(repeatLastChangeId, repeatLastChange),
+        vscode.commands.registerCommand(repeatLastUsedSelectionId, repeatLastUsedSelection),
         vscode.commands.registerCommand(importPresetsId, importPresets)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
@@ -273,10 +279,22 @@ export function register(context: vscode.ExtensionContext) {
  * variables needed by the `repeatLastChange` command and the status bar.
  */
 async function onType(event: { text: string }) {
-    if (textChanged) {
-        lastChange = lastKeySequence
+    if(!repeatedSequence){
+        if (textChanged) {
+            lastChange = lastKeySequence
+            lastUsedSelection = lastSelection
+            textChanged = false
+        }
+        if(selectionChanged){
+            lastSelection = lastKeySequence
+            selectionChanged = false
+        }
+    }else{
+        repeatedSequence = false
+        selectionChanged = false
         textChanged = false
     }
+
     currentKeySequence.push(event.text)
     if (await runActionForKey(event.text, keyMode)) {
         lastKeySequence = currentKeySequence
@@ -297,7 +315,11 @@ async function onType(event: { text: string }) {
  * to indicate that the last command that changed editor text.
  */
 export function onTextChanged() {
-    textChanged = true
+     textChanged = true
+}
+
+export function onSelectionChanged(){
+    if(!textChanged) selectionChanged = true;
 }
 /**
  * This helper function just calls the `handleKey` function in the `actions`
@@ -1057,9 +1079,17 @@ function selectBetween(args: SelectBetweenArgs) {
  * time the user presses a key.
  */
 async function repeatLastChange(): Promise<void> {
+    repeatedSequence = true
     for (let i = 0; i < lastChange.length; i++)
         await runActionForKey(lastChange[i])
     currentKeySequence = lastChange
+}
+
+async function repeatLastUsedSelection(): Promise<void> {
+    repeatedSequence = true
+    for(let i = 0; i < lastUsedSelection.length; i++){
+        await runActionForKey(lastUsedSelection[i])
+    }
 }
 /**
  * ## Use Preset Keybindings
