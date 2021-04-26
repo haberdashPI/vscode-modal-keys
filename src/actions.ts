@@ -553,7 +553,7 @@ function evalString__(str: string, __mode: string): any {
 }
 function evalString(str: string, __mode: string): any {
     try {
-        evalString__(str, __mode)
+        return evalString__(str, __mode)
     }
     catch (error) {
         vscode.window.showErrorMessage("Evaluation error: " + error.message)
