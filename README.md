@@ -1,5 +1,7 @@
 # Modal Keybindings in VS Code
 
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+
 ModalKeys is a simple extension for defining modal keybindings in VSCode. The most prominent
 [modal editor][1] is [Vim][2], and ModalKeys includes presets that resemble Vim. While you
 can emulate existing modal editors like Vim or [Kakoune][8] with this extension, you can
