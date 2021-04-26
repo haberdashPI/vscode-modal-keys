@@ -29,7 +29,6 @@ differ between the two extensions.
 
 **TODO**: keyboard macros
 
-
 ## Getting Started
 
 When the extension is installed, text documents will open in normal mode. The
@@ -166,7 +165,7 @@ end of line. It also selects the jumped range, if we have selection active.
 ```js
 "o": {
     "command": "cursorMove",
-    "args": "{ to: 'wrappedLineEnd', select: __selecting }"
+    "args": { to: 'wrappedLineEnd', select: '__selecting' }
 },
 ```
 
