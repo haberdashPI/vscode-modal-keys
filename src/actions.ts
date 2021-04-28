@@ -129,24 +129,9 @@ let rootKeymodes: Keymodes
  * The current active keymap is stored here. The active keymap changes when the
  * user invokes a multi-key action sequence.
  */
-let currentKeymap: Keymap | null = null
 
-let argumentCount: FinalCount | number | undefined = undefined
 interface FinalCount { count: number }
-/**
- * The last command run is also stored. This is needed to run commands which
- * capture the keyboard.
- */
-let lastCommand: string
-/**
- * The key sequence that user has pressed is stored for error reporting
- * purposes and to make it available to command arguments. Since commands
- * can invoke other commands through `typeNormalKeys` command, we need to
- * maintain the key sequences in a stack. Both current key sequence and the
- * stack is initialized to empty array.
- */
-let keySequence: string[] = []
-let keySeqStack: string[][] = []
+
 /**
  * We need a dictionary that returns a keymap for given id.
  */
@@ -181,12 +166,7 @@ export function getSelectStyles():
 export function getStartInNormalMode(): boolean {
     return startInNormalMode
 }
-/**
- * You can also set the last command from outside the module.
- */
-export function setLastCommand(command: string) {
-    lastCommand = command
-}
+
 /**
  * ## Logging
  *
@@ -505,250 +485,238 @@ function isParameterized(x: any): x is Parameterized {
 function isKeymap(x: any): x is Keymap {
     return x && (x.__keymap || (isObject(x) && !isParameterized(x) && !isConditional(x) && !isCommandSequence(x) && Object.values(x).every(isAction)))
 }
-/**
- * ## Executing Commands
- *
- * In the end all keybindings will invoke one or more VS Code commands. The
- * following function runs a command whose name and arguments are given as
- * parameters. If the command throws an exception because of invalid arguments,
- * for example, the error is shown in the popup window at the corner of the
- * screen.
- */
-async function executeVSCommand(command: string, ...rest: any[]): Promise<void> {
-    try {
-        await vscode.commands.executeCommand(command, ...rest)
-        lastCommand = command
-    }
-    catch (error) {
-        vscode.window.showErrorMessage(error.message)
-    }
-}
-/**
- * `evalString` function evaluates JavaScript expressions. Before doing so, it
- * defines some variables that can be used in the evaluated text.
- */
-function evalString__(str: string, __mode: string): any {
-    let __file = undefined
-    let __line = undefined
-    let __col = undefined
-    let __char = undefined
-    let __selection = undefined
-    let __count = getArgumentCount()
-    let __keySequence = keySequence
-    let __keys = keySequence
-    let __rkeys = keySequence.slice().reverse()
-    let __cmd = __keys.join('')
-    let __rcmd = __rkeys.join('')
-    let editor = vscode.window.activeTextEditor
-    if (editor) {
-        let cursor = editor.selection.active
-        __file = editor.document.fileName
-        __line = cursor.line
-        __col = cursor.character
-        __char = editor.document.getText(new vscode.Range(cursor,
-            cursor.translate({ characterDelta: 1 })))
-        __selection = editor.document.getText(editor.selection)
-    }
-    return eval(`(${str})`)
-}
-function evalString(str: string, __mode: string): any {
-    try {
-        return evalString__(str, __mode)
-    }
-    catch (error) {
-        vscode.window.showErrorMessage("Evaluation error: " + error.message)
-        return undefined
-    }
-}
-/**
- * We need the evaluation function when executing conditional command. The
- * condition is evaluated and if a key is found that matches the result, it is
- * executed.
- */
-async function executeConditional(cond: Conditional, mode: string): Promise<void> {
-    let res = evalString(cond.if, mode)
-    if (res && isAction(cond.then)){
-        await execute(cond.then, mode)
-    }else if(!res && isAction(cond.else)){
-        await execute(cond.else, mode)
-    }
-}
-/**
- * Parameterized commands can get their arguments in two forms: as a string
- * that is evaluated to get the actual arguments, or as an object. Before
- * executing the command, we inspect the `repeat` property. If it is string
- * we evaluate it, and check if the result is a number. If so, we update the
- * `repeat` variable that designates repetition count. If not, we treate it as
- * a continue condition. The subroutine `exec` runs the command either `repeat`
- * times or as long as the expression in the `repeat` property returns a truthy
- * value.
- */
-async function executeParameterized(action: Parameterized, mode: string) {
-    let repeat: number = 1
-    async function exec(args?: any) {
-        let cont = true
-        for (let i = 0; i < repeat; i++)
-            await executeVSCommand(action.command, args)
-    }
-    if (action.repeat) {
-        if (action.repeat == '__count'){
-            repeat = getArgumentCount()
-        }
-    }
-    if (action.args) {
-        await exec(replaceVars(action.args, mode))
-    }
-    else
-        await exec()
-}
 
-function getArgumentCount(): number {
-    if(argumentCount === undefined){
-        return 1
-    }else if((<any>argumentCount).count){
-        return (<FinalCount>argumentCount).count
-    }else{
-        return <number>argumentCount
-    }
-}
-
-function evalStringOrText(val: string, mode: string){
-    try{
-        return evalString__(val, mode)
-    }catch {
-        return val
-    }
-}
-
-function replaceVars(args: object, mode: string){
-    let editor = vscode.window.activeTextEditor
-    let result: any = {}
-    for(const entry of Object.entries(args)){
-        let [key, val] = entry
-        val = val === '__line' ? editor?.selection?.active?.line :
-            val === '__count' ? getArgumentCount() :
-            val === '-__count' ? -getArgumentCount() :
-            val === '__mode' ? mode :
-            isString(val) && /[+-/*]|__/.test(val) ? evalStringOrText(val, mode) :
-            val
-        result[key] = val
+export class KeyState {
+    argumentCount?: number
+    countFinalized: boolean = false
+    currentKeymap?: Keymap
+    keySequence: string[] = []
+    capturingCommand?: string
+    capturedKeys: string[] = []
+    commandsCapture: string[]
+    constructor(captures: string[] = []){
+        this.commandsCapture = captures
     }
 
-    return result
-}
-
-/**
- * ## Executing Actions
- *
- * Before running any commands, we need to identify which type of action we got.
- * Depending on the type we use different function to execute the command. If
- * the action is not a command, it has to be a keymap. Since we resolved `id`
- * referenences in `validateAndResolveKeymaps`, an action has to be a keymap
- * object at this point. We set the new keymap as the active one.
- */
-async function execute(action: Action, mode: string): Promise<Keymap | undefined> {
-    if (isString(action)){
-        await executeVSCommand(action)
-        return undefined
-    }else if (isCommandSequence(action)){
-        for (const command of action) await execute(command, mode)
-        return undefined
-    }else if (isConditional(action)){
-        await executeConditional(action, mode)
-    }else if (isParameterized(action)){
-        await executeParameterized(action, mode)
-        return undefined
-    }else{
-        return <Keymap>action
-    }
-}
-
-function finalizeCount(x: FinalCount | number | undefined): FinalCount | undefined {
-    return (x !== undefined && !isFinalCount(x)) ? { count: (<number>x) } : <FinalCount | undefined>x
-}
-function isFinalCount(x: any){
-    return x?.count !== undefined
-}
-function updateCount(x: FinalCount | number | undefined, val: number){
-    return x === undefined ? val : (<number>x)*10 + val
-}
-
-/**
- * ## Key Press Handler
- *
- * Now that the plumbing of actions is implemented, it is straightforward to
- * map the pressed key to an action. The special case occurs when a command
- * captures the keyboard. Then we rerun the previous command and give the key
- * to it as an argument.
- *
- * Otherwise we just check if the current keymap contains binding for the key
- * pressed, and execute the action. If not, we present an error to the user.
- *
- * As a last step the function returns `true`, if the current keymap is `null`.
- * This indicates that the key invoked a command instead of just changing the
- * active keymap.
- */
-// TODO: handle key makes use of a lot of global state
-// we need to make it self contained, so that nested calls to handleKey can work
-// as expected. This is probably best managed by using a class
-// KeyHandler
-export async function handleKey(key: string, keyMode: string, capture: boolean, clearCount: boolean = false): Promise<boolean> {
-    if(clearCount) argumentCount = undefined
-    function error(){
-        vscode.window.showWarningMessage("ModalKeys: Undefined key binding: " + keySequence.join(""))
-        argumentCount = undefined
-        currentKeymap = null
+    waitingForKey() { return this.currentKeymap !== undefined || this.argumentCount !== undefined }
+    reset() {
+        this.currentKeymap = undefined
+        this.argumentCount = undefined
+        this.countFinalized = false
+        this.keySequence = []
+        this.capturingCommand = undefined
+        this.capturedKeys = []
     }
 
-    if(!currentKeymap){
-        keySeqStack.push(keySequence)
-        keySequence = []
-    }
+    captureFor(command: string){ this.capturingCommand = command }
 
-    let newKeymap: undefined | Keymap = currentKeymap || rootKeymodes[keyMode]
-
-    keySequence.push(key)
-    if (capture && lastCommand)
-        await executeVSCommand(lastCommand, key)
-    else if (newKeymap && newKeymap[key]) {
-        newKeymap = await execute(newKeymap[key], keyMode)
-        if(newKeymap){
-            currentKeymap = newKeymap
-            argumentCount = finalizeCount(argumentCount)
+    update(keymap: Keymap | undefined){
+        if(keymap){
+            this.currentKeymap = keymap
+            this.countFinalized = true
         }else{
-            keySequence = []
-            argumentCount = undefined
-            currentKeymap = newKeymap || null
+            this.reset()
         }
     }
-    else if (key.match('[0-9]+')) {
-        if(isFinalCount(argumentCount)){
-            error()
+
+    updateCount(val: number){
+        if(this.countFinalized){
+            this.error()
         }else{
-            argumentCount = updateCount(argumentCount, Number(key))
+            this.argumentCount = 10*(this.argumentCount || 0)* Number(val)
         }
     }
-    else {
-        error()
+
+    error(){
+        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""))
+        this.reset()
     }
-    if (!currentKeymap)
-        keySequence = keySeqStack.pop()!
-    return !currentKeymap && argumentCount === undefined
+
+
+    /**
+     * `evalString` function evaluates JavaScript expressions. Before doing so, it
+     * defines some variables that can be used in the evaluated text.
+     */
+    evalString__(str: string, __mode: string): any {
+        let __file = undefined
+        let __line = undefined
+        let __col = undefined
+        let __char = undefined
+        let __selection = undefined
+        let __count = this.argumentCount || 1
+        let editor = vscode.window.activeTextEditor
+        if (editor) {
+            let cursor = editor.selection.active
+            __file = editor.document.fileName
+            __line = cursor.line
+            __col = cursor.character
+            __char = editor.document.getText(new vscode.Range(cursor,
+                cursor.translate({ characterDelta: 1 })))
+            __selection = editor.document.getText(editor.selection)
+        }
+        return eval(`(${str})`)
+    }
+    evalString(str: string, __mode: string): any {
+        try {
+            return this.evalString__(str, __mode)
+        }
+        catch (error) {
+            vscode.window.showErrorMessage("Evaluation error: " + error.message)
+            return undefined
+        }
+    }
+
+    /**
+     * We need the evaluation function when executing conditional command. The
+     * condition is evaluated and if a key is found that matches the result, it is
+     * executed.
+     */
+    async executeConditional(cond: Conditional, mode: string): Promise<void> {
+        let res = this.evalString(cond.if, mode)
+        if (res && isAction(cond.then)){
+            await this.execute(cond.then, mode)
+        }else if(!res && isAction(cond.else)){
+            await this.execute(cond.else, mode)
+        }
+    }
+    /**
+     * Parameterized commands can get their arguments in two forms: as a string
+     * that is evaluated to get the actual arguments, or as an object. Before
+     * executing the command, we inspect the `repeat` property. If it is string
+     * we evaluate it, and check if the result is a number. If so, we update the
+     * `repeat` variable that designates repetition count. If not, we treate it as
+     * a continue condition. The subroutine `exec` runs the command either `repeat`
+     * times or as long as the expression in the `repeat` property returns a truthy
+     * value.
+     */
+    async executeParameterized(action: Parameterized, mode: string) {
+        let this_ = this
+        let repeat: number = 1
+        async function exec(args?: any) {
+            let cont = true
+            for (let i = 0; i < repeat; i++)
+                await this_.executeVSCommand(action.command, args)
+        }
+        if (action.repeat) {
+            if (action.repeat == '__count'){
+                repeat = this.argumentCount || 1
+            }
+        }
+        if (action.args) {
+            await exec(this.replaceVars(action.args, mode))
+        }
+        else
+            await exec()
+    }
+
+    evalStringOrText(val: string, mode: string){
+        try{
+            return this.evalString__(val, mode)
+        }catch {
+            return val
+        }
+    }
+
+    replaceVars(args: object, mode: string){
+        let editor = vscode.window.activeTextEditor
+        let result: any = {}
+        for(const entry of Object.entries(args)){
+            let [key, val] = entry
+            val = val === '__line' ? editor?.selection?.active?.line :
+                val === '__count' ? this.argumentCount || 1 :
+                val === '-__count' ? -(this.argumentCount || 1) :
+                val === '__mode' ? mode :
+                isString(val) && /[+-/*]|__/.test(val) ? this.evalStringOrText(val, mode) :
+                val
+            result[key] = val
+        }
+
+        return result
+    }
+
+    /**
+     * ## Executing Actions
+     *
+     * Before running any commands, we need to identify which type of action we got.
+     * Depending on the type we use different function to execute the command. If
+     * the action is not a command, it has to be a keymap. Since we resolved `id`
+     * referenences in `validateAndResolveKeymaps`, an action has to be a keymap
+     * object at this point. We set the new keymap as the active one.
+     */
+    async execute(action: Action, mode: string) {
+        if (isString(action)){
+            await this.executeVSCommand(action)
+            this.reset()
+        }else if (isCommandSequence(action)){
+            for (const command of action) await this.execute(command, mode)
+            this.reset()
+        }else if (isConditional(action)){
+            await this.executeConditional(action, mode)
+        }else if (isParameterized(action)){
+            await this.executeParameterized(action, mode)
+            this.reset()
+        }else{
+            this.update(<Keymap>action)
+        }
+    }
+
+    /**
+     * ## Executing Commands
+     *
+     * In the end all keybindings will invoke one or more VS Code commands. The
+     * following function runs a command whose name and arguments are given as
+     * parameters. If the command throws an exception because of invalid arguments,
+     * for example, the error is shown in the popup window at the corner of the
+     * screen.
+     */
+    async executeVSCommand(command: string, ...rest: any[]): Promise<void> {
+        try {
+            await vscode.commands.executeCommand(command, ...rest)
+            this.commandsCaptures
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(error.message)
+        }
+    }
+
+
+    /**
+     * ## Key Press Handler
+     *
+     * Now that the plumbing of actions is implemented, it is straightforward to
+     * map the pressed key to an action. The special case occurs when a command
+     * captures the keyboard. Then we rerun the previous command and give the key
+     * to it as an argument.
+     *
+     * Otherwise we just check if the current keymap contains binding for the key
+     * pressed, and execute the action. If not, we present an error to the user.
+     *
+     * As a last step the function returns `true`, if the current keymap is `null`.
+     * This indicates that the key invoked a command instead of just changing the
+     * active keymap.
+     */
+    // TODO: handle key makes use of a lot of global state
+    // we need to make it self contained, so that nested calls to handleKey can work
+    // as expected. This is probably best managed by using a class
+    // KeyHandler
+    async handleKey(key: string, keyMode: string) {
+        let newKeymap: undefined | Keymap = this.currentKeymap || rootKeymodes[keyMode]
+
+        this.keySequence.push(key)
+        if (this.capturingCommand){
+            this.capturedKeys.push(key)
+            await this.executeVSCommand(this.capturingCommand, key)
+        }else if (newKeymap && newKeymap[key]) {
+            await this.execute(newKeymap[key], keyMode)
+        }
+        else if (key.match('[0-9]+')) {
+            this.updateCount(Number(key))
+        }
+        else {
+            this.error()
+        }
+    }
+
+    getHelp() { return this.currentKeymap?.help }
 }
 
-/**
- * When normal mode is requested anew, we want to reset the keybindings;
- * This allows the user to cancel, mid sequence, a mistyped key sequence.
- */
-export function resetHandleKey(){ currentKeymap = null; }
-
-/**
- * ## Keymap Help
- *
- * When defining complex key sequences you can help the user by defining what
- * keys she can press next and what they do. If the help is defined, it is shown
- * in the status bar.
- */
-export function getHelp(): string | undefined {
-    return currentKeymap?.help
-}

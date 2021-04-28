@@ -7,7 +7,7 @@
  */
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
-import * as actions from './actions'
+import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles } from './actions'
 import { TextDecoder } from 'util'
 import { IHash } from './util'
 //#endregion
@@ -270,6 +270,8 @@ export function register(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
 }
 
+let keyState = new KeyState([searchId])
+
 /**
  * ## Keyboard Event Handler
  *
@@ -300,7 +302,7 @@ async function onType(event: { text: string }) {
         lastKeySequence = currentKeySequence
         currentKeySequence = []
     }
-    updateCursorAndStatusBar(vscode.window.activeTextEditor, actions.getHelp())
+    updateCursorAndStatusBar(vscode.window.activeTextEditor, keyState.getHelp())
     // clear any search decorators if this key did not alter search state
     // (meaning it was not a search command)
     if(!searchChanged){
@@ -329,8 +331,9 @@ export function onSelectionChanged(){
  * key sequence that did not (yet) cause any commands to run. This information
  * is needed to decide whether the `lastKeySequence` variable is updated.
  */
-async function runActionForKey(key: string, mode: string = keyMode, clearCount: boolean = false): Promise<boolean> {
-    return await actions.handleKey(key, isSelecting() && mode === Normal ? Visual : mode, mode === Search, clearCount)
+async function runActionForKey(key: string, mode: string = keyMode, state: KeyState = keyState) {
+    await state.handleKey(key, isSelecting() && mode === Normal ? Visual : mode)
+    return state.waitingForKey()
 }
 
 function handleTypeSubscription(newmode: string){
@@ -349,7 +352,7 @@ let modeHooks: any = {
             await vscode.commands.executeCommand("cancelSelection")
     },
     normal: {
-        enter: async (n: string, o: string) => await actions.resetHandleKey()
+        enter: async (n: string, o: string) => keyState.reset()
     },
     search: {
         enter: async (newmode: string, oldmode: string) => {searchOldMode = oldmode}
@@ -409,10 +412,10 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
         // Get the style parameters
         reviseSelectionMode()
         let [style, text, color] =
-            keyMode === Search ? actions.getSearchStyles() :
-            keyMode === Visual ? actions.getSelectStyles() :
-            keyMode === Insert ? actions.getInsertStyles() :
-                actions.getNormalStyles(keyMode)
+            keyMode === Search ? getSearchStyles() :
+            keyMode === Visual ? getSelectStyles() :
+            keyMode === Insert ? getInsertStyles() :
+                getNormalStyles(keyMode)
 
         /**
          * Update the cursor style.
@@ -539,7 +542,7 @@ async function search(args: SearchArgs | string): Promise<void> {
          * works with multiple cursors. Finally we store the search arguments
          * in the module level variables.
          */
-        actions.setLastCommand(searchId)
+        keyState.captureFor(searchId)
         enterMode(Search)
         searchString = ""
         searchStartSelections = editor.selections
@@ -951,8 +954,9 @@ async function insertQuickSnippet(args?: QuickSnippetArgs): Promise<void> {
 async function typeKeys(args: TypeKeysArgs): Promise<void> {
     if (typeof args !== 'object' || typeof (args.keys) !== 'string')
         throw Error(`${typeKeysId}: Invalid args: ${JSON.stringify(args)}`)
+
     for (let i = 0; i < args.keys.length; i++)
-        await runActionForKey(args.keys[i], args.mode || Normal, i === 0)
+        await runActionForKey(args.keys[i], args.mode || Normal, )
 }
 /**
  * ## Advanced Selection Command
