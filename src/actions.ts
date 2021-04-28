@@ -493,9 +493,17 @@ export class KeyState {
     keySequence: string[] = []
     capturingCommand?: string
     capturedKeys: string[] = []
-    commandsCapture: string[]
-    constructor(captures: string[] = []){
-        this.commandsCapture = captures
+    commandsCapture: IHash<boolean>
+    constructor(parent?: KeyState, ...captures: string[]){
+        this.commandsCapture = {}
+        for(const command of captures){
+            this.commandsCapture[command] = true
+        }
+        if(parent?.commandsCapture){
+            for(const command of Object.keys(parent.commandsCapture)){
+                this.commandsCapture[command] = true
+            }
+        }
     }
 
     waitingForKey() { return this.currentKeymap !== undefined || this.argumentCount !== undefined }
@@ -595,7 +603,8 @@ export class KeyState {
         async function exec(args?: any) {
             let cont = true
             for (let i = 0; i < repeat; i++)
-                await this_.executeVSCommand(action.command, args)
+                await this_.executeVSCommand(action.command,
+                    {...args, __INTERNAL_CALL: true })
         }
         if (action.repeat) {
             if (action.repeat == '__count'){
@@ -645,7 +654,7 @@ export class KeyState {
      */
     async execute(action: Action, mode: string) {
         if (isString(action)){
-            await this.executeVSCommand(action)
+            await this.executeVSCommand(action, { __INTERNAL_CALL: true })
             this.reset()
         }else if (isCommandSequence(action)){
             for (const command of action) await this.execute(command, mode)
@@ -672,7 +681,9 @@ export class KeyState {
     async executeVSCommand(command: string, ...rest: any[]): Promise<void> {
         try {
             await vscode.commands.executeCommand(command, ...rest)
-            this.commandsCaptures
+            if(this.commandsCapture[command]){
+                this.captureFor(command)
+            }
         }
         catch (error) {
             vscode.window.showErrorMessage(error.message)

@@ -23,6 +23,7 @@ import { IHash } from './util'
  * [README](../README.html#code-modaledit-search-code).
  */
 interface SearchArgs {
+    __INTERNAL_CALL?: boolean // priveate: indicates if the command was created internally to this extension
     backwards?: boolean
     caseSensitive?: boolean
     wrapAround?: boolean
@@ -192,9 +193,13 @@ let textChanged = false
 let selectionChanged = true
 let lastSelection: string[] = []
 let lastUsedSelection: string[] = []
+let lastSelectionMode: string | undefined
+let lastUsedSelectionMode: string | undefined
 let repeatedSequence = false
+let currentKeyMode: string | undefined
 let currentKeySequence: string[] = []
 let lastKeySequence: string[] = []
+let lastChangeMode: string | undefined
 let lastChange: string[] = []
 /**
  * ## Command Names
@@ -270,7 +275,7 @@ export function register(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
 }
 
-let keyState = new KeyState([searchId])
+let keyState = new KeyState(undefined, searchId)
 
 /**
  * ## Keyboard Event Handler
@@ -283,11 +288,14 @@ let keyState = new KeyState([searchId])
 async function onType(event: { text: string }) {
     if(!repeatedSequence){
         if (textChanged) {
+            lastChangeMode = currentKeyMode
             lastChange = lastKeySequence
             lastUsedSelection = lastSelection
+            lastUsedSelectionMode = lastSelectionMode
             textChanged = false
         }
         if(selectionChanged){
+            lastSelectionMode = currentKeyMode
             lastSelection = lastKeySequence
             selectionChanged = false
         }
@@ -298,8 +306,10 @@ async function onType(event: { text: string }) {
     }
 
     currentKeySequence.push(event.text)
+    currentKeyMode = keyMode
     if (await runActionForKey(event.text, keyMode)) {
         lastKeySequence = currentKeySequence
+        currentKeyMode = undefined
         currentKeySequence = []
     }
     updateCursorAndStatusBar(vscode.window.activeTextEditor, keyState.getHelp())
@@ -542,7 +552,7 @@ async function search(args: SearchArgs | string): Promise<void> {
          * works with multiple cursors. Finally we store the search arguments
          * in the module level variables.
          */
-        keyState.captureFor(searchId)
+        args.__INTERNAL_CALL || keyState.captureFor(searchId)
         enterMode(Search)
         searchString = ""
         searchStartSelections = editor.selections
@@ -955,8 +965,9 @@ async function typeKeys(args: TypeKeysArgs): Promise<void> {
     if (typeof args !== 'object' || typeof (args.keys) !== 'string')
         throw Error(`${typeKeysId}: Invalid args: ${JSON.stringify(args)}`)
 
+    let typeKeyState = new KeyState(keyState)
     for (let i = 0; i < args.keys.length; i++)
-        await runActionForKey(args.keys[i], args.mode || Normal, )
+        await runActionForKey(args.keys[i], args.mode || Normal, typeKeyState)
 }
 /**
  * ## Advanced Selection Command
@@ -1084,17 +1095,20 @@ function selectBetween(args: SelectBetweenArgs) {
  */
 async function repeatLastChange(): Promise<void> {
     repeatedSequence = true
+    let nestedState = new KeyState(keyState)
     for (let i = 0; i < lastChange.length; i++)
-        await runActionForKey(lastChange[i])
+        await runActionForKey(lastChange[i], lastChangeMode, nestedState)
     currentKeySequence = lastChange
 }
 
 async function repeatLastUsedSelection(): Promise<void> {
     repeatedSequence = true
+    let nestedState = new KeyState(keyState)
     for(let i = 0; i < lastUsedSelection.length; i++){
-        await runActionForKey(lastUsedSelection[i])
+        await runActionForKey(lastUsedSelection[i], lastUsedSelectionMode, nestedState)
     }
 }
+
 /**
  * ## Use Preset Keybindings
  *
