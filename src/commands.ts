@@ -7,7 +7,7 @@
  */
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
-import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles } from './actions'
+import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, log } from './actions'
 import { TextDecoder } from 'util'
 import { IHash } from './util'
 //#endregion
@@ -189,18 +189,15 @@ let quickSnippets: string[] = []
  * It also needs to save the current and last command key sequence, as well as
  * the last sequence that caused text to change.
  */
-let textChanged = false
-let selectionChanged = true
-let lastSelection: string[] = []
-let lastUsedSelection: string[] = []
-let lastSelectionMode: string | undefined
-let lastUsedSelectionMode: string | undefined
+let textChanged: boolean
+let selectionChanged: boolean
+let selectionUsed: boolean
+let lastSelection: KeyWord
+let lastUsedSelection: KeyWord
 let repeatedSequence = false
-let currentKeyMode: string | undefined
-let currentKeySequence: string[] = []
-let lastKeySequence: string[] = []
-let lastChangeMode: string | undefined
-let lastChange: string[] = []
+let currentSequence: KeyWord
+let lastSequence: KeyWord
+let lastChange: KeyWord
 /**
  * ## Command Names
  *
@@ -229,6 +226,7 @@ const typeKeysId = "modalkeys.typeKeys"
 const selectBetweenId = "modalkeys.selectBetween"
 const repeatLastChangeId = "modalkeys.repeatLastChange"
 const repeatLastUsedSelectionId = "modalkeys.repeatLastUsedSelection"
+const touchDocumentId = 'modalkeys.touchDocument'
 const importPresetsId = "modalkeys.importPresets"
 /**
  * ## Registering Commands
@@ -263,6 +261,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(selectBetweenId, selectBetween),
         vscode.commands.registerCommand(repeatLastChangeId, repeatLastChange),
         vscode.commands.registerCommand(repeatLastUsedSelectionId, repeatLastUsedSelection),
+        vscode.commands.registerCommand(touchDocumentId, touchDocument),
         vscode.commands.registerCommand(importPresetsId, importPresets)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
@@ -277,6 +276,43 @@ export function register(context: vscode.ExtensionContext) {
 
 let keyState = new KeyState(undefined, searchId)
 
+interface KeyCommand {
+    command: string
+    args?: object
+}
+interface KeyWord {
+    seq: string[] | KeyCommand
+    mode: string
+}
+interface KeySentence {
+    noun?: KeyWord
+    verb?: KeyWord
+}
+
+let lastSentence: KeySentence = {}
+let pendingSentence: KeySentence = {}
+let lastWord: KeyWord = { seq: [], mode: '' }
+let currentWord: KeyWord = { seq: [], mode: '' }
+
+function addKey(word: KeyWord, key: string, mode: string){
+    if((<KeyCommand>word.seq).command){
+        throw Error(`Expected key sequence, got a command`)
+    }else{
+        let seq = (<string[]>word.seq)
+
+        if(seq.length === 0) word.mode = mode
+        seq.push(key)
+    }
+}
+
+function keySeq(word: KeyWord){
+    if((<KeyCommand>word.seq).command){
+        return ""
+    }else{
+        (<string[]>word.seq).join("")
+    }
+}
+
 /**
  * ## Keyboard Event Handler
  *
@@ -288,29 +324,33 @@ let keyState = new KeyState(undefined, searchId)
 async function onType(event: { text: string }) {
     if(!repeatedSequence){
         if (textChanged) {
-            lastChangeMode = currentKeyMode
-            lastChange = lastKeySequence
-            lastUsedSelection = lastSelection
-            lastUsedSelectionMode = lastSelectionMode
+            lastSentence = { ...pendingSentence, verb: lastWord }
+            pendingSentence = { noun: {
+                seq: { command: cancelMultipleSelectionsId },
+                mode: '' }
+            }
             textChanged = false
         }
         if(selectionChanged){
-            lastSelectionMode = currentKeyMode
-            lastSelection = lastKeySequence
+            pendingSentence = {
+                noun: selectionUsed ? lastWord : {
+                    seq: { command: cancelMultipleSelectionsId },
+                    mode: lastWord.mode
+                }
+            }
             selectionChanged = false
         }
     }else{
         repeatedSequence = false
         selectionChanged = false
+        selectionUsed = false
         textChanged = false
     }
 
-    currentKeySequence.push(event.text)
-    currentKeyMode = keyMode
+    addKey(currentWord, event.text, keyMode)
     if (await runActionForKey(event.text, keyMode)) {
-        lastKeySequence = currentKeySequence
-        currentKeyMode = undefined
-        currentKeySequence = []
+        lastWord = currentWord
+        currentWord = { seq: [], mode: '' }
     }
     updateCursorAndStatusBar(vscode.window.activeTextEditor, keyState.getHelp())
     // clear any search decorators if this key did not alter search state
@@ -330,8 +370,20 @@ export function onTextChanged() {
      textChanged = true
 }
 
-export function onSelectionChanged(){
-    if(!textChanged) selectionChanged = true;
+/**
+ * Some commands should be treated as actions to repeat, even though they do not change
+ * anything in the document: e.g. sending text to a REPL. You can call touchDocument to make
+ * sure the command is treated as an action.
+ */
+function touchDocument() {
+    textChanged = true
+}
+
+export function onSelectionChanged(e: vscode.TextEditorSelectionChangeEvent){
+    if(!textChanged){
+        selectionChanged = true
+        selectionUsed = e.selections.some(sel => !sel.isEmpty)
+    }
 }
 /**
  * This helper function just calls the `handleKey` function in the `actions`
@@ -343,7 +395,7 @@ export function onSelectionChanged(){
  */
 async function runActionForKey(key: string, mode: string = keyMode, state: KeyState = keyState) {
     await state.handleKey(key, isSelecting() && mode === Normal ? Visual : mode)
-    return state.waitingForKey()
+    return !state.waitingForKey()
 }
 
 function handleTypeSubscription(newmode: string){
@@ -446,7 +498,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
          * The info given by search command is shown only as long there are
          * no other messages to show.
          */
-        let sec = "    " + currentKeySequence.join("")
+        let sec = " " + keySeq(currentWord)
         if (help)
             sec = `${sec}    ${help}`
         if (searchInfo) {
@@ -1096,16 +1148,28 @@ function selectBetween(args: SelectBetweenArgs) {
 async function repeatLastChange(): Promise<void> {
     repeatedSequence = true
     let nestedState = new KeyState(keyState)
-    for (let i = 0; i < lastChange.length; i++)
-        await runActionForKey(lastChange[i], lastChangeMode, nestedState)
-    currentKeySequence = lastChange
+    if((<KeyCommand>lastSentence.verb?.seq)?.command){
+        let call = (<KeyCommand>lastSentence.verb?.seq)
+        vscode.commands.executeCommand(call.command, call.args)
+    }else if(lastSentence.verb){
+        let seq = (<string[]>lastSentence.verb?.seq)
+        for (let i = 0; i < seq.length; i++)
+            await runActionForKey(seq[i], lastSentence.verb.mode, nestedState)
+        currentWord = lastWord
+    }
 }
 
 async function repeatLastUsedSelection(): Promise<void> {
     repeatedSequence = true
     let nestedState = new KeyState(keyState)
-    for(let i = 0; i < lastUsedSelection.length; i++){
-        await runActionForKey(lastUsedSelection[i], lastUsedSelectionMode, nestedState)
+    if((<KeyCommand>lastSentence.noun?.seq).command){
+        let call = (<KeyCommand>lastSentence.noun?.seq)
+        vscode.commands.executeCommand(call.command, call.args)
+    }else if(lastSentence.noun){
+        let seq = (<string[]>lastSentence.noun?.seq)
+        for (let i = 0; i < seq.length; i++)
+            await runActionForKey(seq[i], lastSentence.noun.mode, nestedState)
+        currentWord = lastWord
     }
 }
 

@@ -531,7 +531,7 @@ export class KeyState {
         if(this.countFinalized){
             this.error()
         }else{
-            this.argumentCount = 10*(this.argumentCount || 0)* Number(val)
+            this.argumentCount = 10*(this.argumentCount || 0) + Number(val)
         }
     }
 
