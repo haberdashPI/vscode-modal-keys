@@ -23,7 +23,6 @@ import { IHash } from './util'
  * [README](../README.html#code-modaledit-search-code).
  */
 interface SearchArgs {
-    __INTERNAL_CALL?: boolean // priveate: indicates if the command was created internally to this extension
     backwards?: boolean
     caseSensitive?: boolean
     wrapAround?: boolean
@@ -274,7 +273,7 @@ export function register(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
 }
 
-let keyState = new KeyState(undefined, searchId)
+let keyState = new KeyState({[Search]: searchId})
 
 interface KeyCommand {
     command: string
@@ -604,7 +603,6 @@ async function search(args: SearchArgs | string): Promise<void> {
          * works with multiple cursors. Finally we store the search arguments
          * in the module level variables.
          */
-        args.__INTERNAL_CALL || keyState.captureFor(searchId)
         enterMode(Search)
         searchString = ""
         searchStartSelections = editor.selections
@@ -1017,9 +1015,14 @@ async function typeKeys(args: TypeKeysArgs): Promise<void> {
     if (typeof args !== 'object' || typeof (args.keys) !== 'string')
         throw Error(`${typeKeysId}: Invalid args: ${JSON.stringify(args)}`)
 
-    let typeKeyState = new KeyState(keyState)
-    for (let i = 0; i < args.keys.length; i++)
-        await runActionForKey(args.keys[i], args.mode || Normal, typeKeyState)
+    let typeKeyState = new KeyState({}, keyState)
+    let startMode = keyMode
+    let newMode = args.mode || Normal
+    if(keyMode !== newMode) enterMode(newMode)
+    for (let i = 0; i < args.keys.length; i++){
+        await runActionForKey(args.keys[i], newMode, typeKeyState)
+    }
+    if(keyMode !== startMode) enterMode(startMode)
 }
 /**
  * ## Advanced Selection Command
@@ -1147,29 +1150,35 @@ function selectBetween(args: SelectBetweenArgs) {
  */
 async function repeatLastChange(): Promise<void> {
     repeatedSequence = true
-    let nestedState = new KeyState(keyState)
+    let nestedState = new KeyState({}, keyState)
     if((<KeyCommand>lastSentence.verb?.seq)?.command){
         let call = (<KeyCommand>lastSentence.verb?.seq)
         vscode.commands.executeCommand(call.command, call.args)
     }else if(lastSentence.verb){
+        let startMode = keyMode
         let seq = (<string[]>lastSentence.verb?.seq)
+        if(keyMode !== lastSentence.verb.mode) enterMode(lastSentence.verb.mode)
         for (let i = 0; i < seq.length; i++)
             await runActionForKey(seq[i], lastSentence.verb.mode, nestedState)
         currentWord = lastWord
+        if(keyMode !== startMode) enterMode(startMode)
     }
 }
 
 async function repeatLastUsedSelection(): Promise<void> {
     repeatedSequence = true
-    let nestedState = new KeyState(keyState)
+    let nestedState = new KeyState({}, keyState)
     if((<KeyCommand>lastSentence.noun?.seq).command){
         let call = (<KeyCommand>lastSentence.noun?.seq)
         vscode.commands.executeCommand(call.command, call.args)
     }else if(lastSentence.noun){
+        let startMode = keyMode
         let seq = (<string[]>lastSentence.noun?.seq)
+        if(keyMode !== lastSentence.noun.mode) enterMode(lastSentence.noun.mode)
         for (let i = 0; i < seq.length; i++)
             await runActionForKey(seq[i], lastSentence.noun.mode, nestedState)
         currentWord = lastWord
+        if(keyMode !== startMode) enterMode(startMode)
     }
 }
 

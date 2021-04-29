@@ -491,19 +491,10 @@ export class KeyState {
     countFinalized: boolean = false
     currentKeymap?: Keymap
     keySequence: string[] = []
-    capturingCommand?: string
     capturedKeys: string[] = []
-    commandsCapture: IHash<boolean>
-    constructor(parent?: KeyState, ...captures: string[]){
-        this.commandsCapture = {}
-        for(const command of captures){
-            this.commandsCapture[command] = true
-        }
-        if(parent?.commandsCapture){
-            for(const command of Object.keys(parent.commandsCapture)){
-                this.commandsCapture[command] = true
-            }
-        }
+    modeCaptures: IHash<string>
+    constructor(modeCaptures: IHash<string>, parent?: KeyState){
+        this.modeCaptures = { ...(parent?.modeCaptures || {}), ...modeCaptures }
     }
 
     waitingForKey() { return this.currentKeymap !== undefined || this.argumentCount !== undefined }
@@ -512,11 +503,8 @@ export class KeyState {
         this.argumentCount = undefined
         this.countFinalized = false
         this.keySequence = []
-        this.capturingCommand = undefined
         this.capturedKeys = []
     }
-
-    captureFor(command: string){ this.capturingCommand = command }
 
     update(keymap: Keymap | undefined){
         if(keymap){
@@ -603,8 +591,7 @@ export class KeyState {
         async function exec(args?: any) {
             let cont = true
             for (let i = 0; i < repeat; i++)
-                await this_.executeVSCommand(action.command,
-                    {...args, __INTERNAL_CALL: true })
+                await this_.executeVSCommand(action.command, args)
         }
         if (action.repeat) {
             if (action.repeat == '__count'){
@@ -654,7 +641,7 @@ export class KeyState {
      */
     async execute(action: Action, mode: string) {
         if (isString(action)){
-            await this.executeVSCommand(action, { __INTERNAL_CALL: true })
+            await this.executeVSCommand(action)
             this.reset()
         }else if (isCommandSequence(action)){
             for (const command of action) await this.execute(command, mode)
@@ -681,9 +668,6 @@ export class KeyState {
     async executeVSCommand(command: string, ...rest: any[]): Promise<void> {
         try {
             await vscode.commands.executeCommand(command, ...rest)
-            if(this.commandsCapture[command]){
-                this.captureFor(command)
-            }
         }
         catch (error) {
             vscode.window.showErrorMessage(error.message)
@@ -714,9 +698,10 @@ export class KeyState {
         let newKeymap: undefined | Keymap = this.currentKeymap || rootKeymodes[keyMode]
 
         this.keySequence.push(key)
-        if (this.capturingCommand){
+        const command = this.modeCaptures[keyMode]
+        if (command){
             this.capturedKeys.push(key)
-            await this.executeVSCommand(this.capturingCommand, key)
+            await this.executeVSCommand(command, key)
         }else if (newKeymap && newKeymap[key]) {
             await this.execute(newKeymap[key], keyMode)
         }
