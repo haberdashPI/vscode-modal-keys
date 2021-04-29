@@ -189,14 +189,10 @@ let quickSnippets: string[] = []
  * the last sequence that caused text to change.
  */
 let textChanged: boolean
+let ignoreChangedText: boolean = false
 let selectionChanged: boolean
 let selectionUsed: boolean
-let lastSelection: KeyWord
-let lastUsedSelection: KeyWord
 let repeatedSequence = false
-let currentSequence: KeyWord
-let lastSequence: KeyWord
-let lastChange: KeyWord
 /**
  * ## Command Names
  *
@@ -226,6 +222,7 @@ const selectBetweenId = "modalkeys.selectBetween"
 const repeatLastChangeId = "modalkeys.repeatLastChange"
 const repeatLastUsedSelectionId = "modalkeys.repeatLastUsedSelection"
 const touchDocumentId = 'modalkeys.touchDocument'
+const untouchDocumentId = 'modalkeys.untouchDocument'
 const importPresetsId = "modalkeys.importPresets"
 /**
  * ## Registering Commands
@@ -261,6 +258,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(repeatLastChangeId, repeatLastChange),
         vscode.commands.registerCommand(repeatLastUsedSelectionId, repeatLastUsedSelection),
         vscode.commands.registerCommand(touchDocumentId, touchDocument),
+        vscode.commands.registerCommand(untouchDocumentId, untouchDocument),
         vscode.commands.registerCommand(importPresetsId, importPresets)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
@@ -308,7 +306,7 @@ function keySeq(word: KeyWord){
     if((<KeyCommand>word.seq).command){
         return ""
     }else{
-        (<string[]>word.seq).join("")
+        return (<string[]>word.seq).join("")
     }
 }
 
@@ -322,7 +320,7 @@ function keySeq(word: KeyWord){
  */
 async function onType(event: { text: string }) {
     if(!repeatedSequence){
-        if (textChanged) {
+        if (textChanged && !ignoreChangedText) {
             lastSentence = { ...pendingSentence, verb: lastWord }
             pendingSentence = { noun: {
                 seq: { command: cancelMultipleSelectionsId },
@@ -330,7 +328,7 @@ async function onType(event: { text: string }) {
             }
             textChanged = false
         }
-        if(selectionChanged){
+        if(selectionChanged && !ignoreChangedText){
             pendingSentence = {
                 noun: selectionUsed ? lastWord : {
                     seq: { command: cancelMultipleSelectionsId },
@@ -339,6 +337,7 @@ async function onType(event: { text: string }) {
             }
             selectionChanged = false
         }
+        ignoreChangedText = false
     }else{
         repeatedSequence = false
         selectionChanged = false
@@ -378,8 +377,16 @@ function touchDocument() {
     textChanged = true
 }
 
+/**
+ * Some commands should not be treated as actions to repeat (e.g. undo),
+ * and we need a way to ignore these actions.
+ */
+function untouchDocument() {
+    ignoreChangedText = true
+}
+
 export function onSelectionChanged(e: vscode.TextEditorSelectionChangeEvent){
-    if(!textChanged){
+    if(!textChanged && !ignoreChangedText){
         selectionChanged = true
         selectionUsed = e.selections.some(sel => !sel.isEmpty)
     }
