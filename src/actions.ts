@@ -13,7 +13,6 @@ import { IHash } from './util'
 import { isEmpty } from 'lodash'
 
 import * as vscode from 'vscode'
-
 /**
  * ## Action Definitions
  *
@@ -51,6 +50,7 @@ export interface Conditional {
  */
 export interface Parameterized {
     command: string
+    label?: string
     args?: {}
     repeat?: number | string
 }
@@ -76,9 +76,14 @@ interface Keymap {
     [key: string]: Action
 }
 
+interface Keyhelp{
+    label: string,
+    kind: string
+}
+
 export interface Keymodes {
-    normal: Keymap,
-    [mode: string]: Keymap | undefined
+    help: IHash<Keyhelp>,
+    command: IHash<Keymap>,
 }
 
 export interface ActionVars {
@@ -224,7 +229,7 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     keymapsById = {}
 
     let [modes, errors] = expandBindings(config.get<any>("keybindings"))
-    if(!isKeymap(modes?.normal))
+    if(!isKeymap(modes?.command?.normal))
         log("ERROR: Missing valid normal mode keybindings. Keybindings not updated.")
     else if(modes){
         rootKeymodes = <Keymodes>(mapValues(modes, mode => {
@@ -347,6 +352,9 @@ function expandCommands__(x: any): Command {
     }
 }
 
+function isLabelStub(obj: any){
+    return obj.label !== undefined && Object.keys(obj).length === 1
+}
 function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<string[]>, withCommand?: string }){
     return ([key, val]: [string, any]): [string, Action][] => {
         if(key === '__keymap'){ return [] }
@@ -361,7 +369,11 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
                 })))
             }
         }
-        if(state.withCommand){
+        let docBinding = false
+        if(key.startsWith('::doc::')){
+            docBinding = true
+            key = key.slice('::doc::'.length)
+        }else if(state.withCommand){
             val = { [state.withCommand]: val }
         }
         let res = key.match(/^(([a-z|]{2,})::)?((.|\s)*)$/)
@@ -370,35 +382,45 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
         }
         if(res){
             let [ match, g1, givenMode, seq ] = res
-            let obj: any = expandCommands(val)
-            for(let i = seq.length-1; i>=0; i--){
-                obj = {[seq[i]]: obj}
+            let obj: any
+            if(val.label){
+                obj = val
+            }else{
+                obj = docBinding ? val : expandCommands(val)
+                for(let i = seq.length-1; i>=0; i--){
+                    obj = {[seq[i]]: obj}
+                }
             }
             let modes = (givenMode ? givenMode.split('|') : ['__all__'])
             let newErrors = false
             for(let mode of modes){
-                if(state.sequencesFor[mode]?.some((oldseq: string) => {
-                    if(oldseq == seq){
-                        log(`WARN the sequence '${seq}' overwrites an existing binding.`)
-                        return false
-                    }else if(oldseq.startsWith(seq)){
-                        log(`ERROR the keysequence '${seq}' is a subsequence of the already defined sequence '${oldseq}'`)
-                        return true
-                    }else if(seq.startsWith(oldseq)){
-                        log(`ERROR the existing keysequence '${oldseq}' is a subseqeunce of the the new sequence '${seq}'.`)
-                        return true
-                    }
-                    return false
-                })){
-                    newErrors = true
-                    state.errors++
-                    break
+                if(docBinding){
+                    modes.
                 }else{
-                    if(state.sequencesFor[mode]) state.sequencesFor[mode]?.push(seq)
-                    else state.sequencesFor[mode] = [seq]
+                    if(state.sequencesFor[mode]?.some((oldseq: string) => {
+                        if(oldseq == seq){
+                            log(`WARN the sequence '${seq}' overwrites an existing binding.`)
+                            return false
+                        }else if(oldseq.startsWith(seq)){
+                            log(`ERROR the keysequence '${seq}' is a subsequence of the already defined sequence '${oldseq}'`)
+                            return true
+                        }else if(seq.startsWith(oldseq)){
+                            log(`ERROR the existing keysequence '${oldseq}' is a subseqeunce of the the new sequence '${seq}'.`)
+                            return true
+                        }
+                        return false
+                    })){
+                        newErrors = true
+                        state.errors++
+                        break
+                    }else{
+                        if(state.sequencesFor[mode]) state.sequencesFor[mode]?.push(seq)
+                        else state.sequencesFor[mode] = [seq]
+                    }
                 }
+                // TODO: figure out how to insert the documentation entries
+                return !newErrors ? modes.map(mode => [mode, obj]) : []
             }
-            return !newErrors ? modes.map(mode => [mode, obj]) : []
         }else {
             log(`ERROR invalid binding entry '${key}'`)
             return []
