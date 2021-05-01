@@ -161,6 +161,8 @@ let searchChanged: boolean = false;
 let searchDecorator: vscode.TextEditorDecorationType;
 let searchOtherDecorator: vscode.TextEditorDecorationType;
 
+let bookMarkDecorator: vscode.TextEditorDecorationType;
+
 /**
  * Current search parameters.
  */
@@ -213,6 +215,7 @@ const nextMatchId = "modalkeys.nextMatch"
 const previousMatchId = "modalkeys.previousMatch"
 const defineBookmarkId = "modalkeys.defineBookmark"
 const goToBookmarkId = "modalkeys.goToBookmark"
+const clearBookmarkId = "modalkeys.clearBookmark"
 const showBookmarksId = "modalkeys.showBookmarks"
 const fillSnippetArgsId = "modalkeys.fillSnippetArgs"
 const defineQuickSnippetId = "modalkeys.defineQuickSnippet"
@@ -249,6 +252,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(previousMatchId, previousMatch),
         vscode.commands.registerCommand(defineBookmarkId, defineBookmark),
         vscode.commands.registerCommand(goToBookmarkId, goToBookmark),
+        vscode.commands.registerCommand(clearBookmarkId, clearBookmark),
         vscode.commands.registerCommand(showBookmarksId, showBookmarks),
         vscode.commands.registerCommand(fillSnippetArgsId, fillSnippetArgs),
         vscode.commands.registerCommand(defineQuickSnippetId, defineQuickSnippet),
@@ -806,6 +810,7 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
         let matchBorder = config.get<string>('searchMatchBorder');
         let highlightBackground = config.get<string>('searchOtherMatchesBackground');
         let highlightBorder = config.get<string>('searchOtherMatchesBorder');
+        let bookmarkColor = config.get<string>('bookmarkColor')
 
         searchDecorator = vscode.window.createTextEditorDecorationType({
             backgroundColor: matchBackground ||
@@ -822,6 +827,11 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
                 new vscode.ThemeColor('editor.findMatchHighlightBorder'),
             borderStyle: "solid"
         });
+
+        bookMarkDecorator = vscode.window.createTextEditorDecorationType({
+            backgroundColor: bookmarkColor || "rgba(0,0,150,0.5)",
+            isWholeLine: true
+        })
     }
 }
 
@@ -929,11 +939,41 @@ function defineBookmark(args?: BookmarkArgs) {
     let editor = vscode.window.activeTextEditor
     if (editor) {
         let label = args?.bookmark?.toString() || '0'
+        if(bookmarks[label]){
+            vscode.window.showWarningMessage("ModalKeys - Bookmark already defined. Clear it first.")
+            return
+        }
         let document = editor.document
         let position = editor.selection.active
         bookmarks[label] = new Bookmark(label, document, position)
+
+        updateBookmarkDecorators(editor)
     }
 }
+
+function updateBookmarkDecorators(editor: vscode.TextEditor){
+    let kv = Object.entries(bookmarks)
+    editor.setDecorations(bookMarkDecorator, kv.map(([label, mark]) => ({
+         range: new vscode.Range(
+            new vscode.Position(mark.position.line, 0),
+            new vscode.Position(mark.position.line, editor.document.lineAt(mark.position.line).range.end.character + 1),
+        ),
+        renderOptions: { after: {
+            margin: "0.5em",
+            contentText: "mark "+label,
+            color: "editorLineNumber.foreground"
+        } }
+    })))
+}
+
+function clearBookmark(args?: BookmarkArgs){
+    let editor = vscode.window.activeTextEditor
+    if(editor){
+        delete bookmarks[args?.bookmark?.toString() || '0']
+        updateBookmarkDecorators(editor)
+    }
+}
+
 /**
  * Jumping to bookmark is also easy, just call the `changeSelection` function
  * we already defined. It makes sure that selection is visible.
