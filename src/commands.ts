@@ -424,7 +424,10 @@ let modeHooks: any = {
             await vscode.commands.executeCommand("cancelSelection")
     },
     normal: {
-        enter: async (n: string, o: string) => keyState.reset()
+        enter: async (n: string, o: string) => {
+            currentWord = { seq: [], mode: '' }
+            keyState.reset()
+        }
     },
     search: {
         enter: async (newmode: string, oldmode: string) => {searchOldMode = oldmode}
@@ -437,19 +440,19 @@ export async function enterInsert(){ enterMode('insert') }
 export async function enterMode(args: string | EnterModeArgs) {
     let newMode = (<string>((<EnterModeArgs>args).mode || args))
     handleTypeSubscription(newMode)
-    const exitHook = modeHooks[keyMode]?.modeHooks?.exit
+    const exitHook = modeHooks[keyMode]?.exit
     exitHook && await exitHook(keyMode, newMode)
 
     const editor = vscode.window.activeTextEditor
     let oldMode = keyMode
     keyMode = newMode
     if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = newMode
+    const enterHook = modeHooks[keyMode]?.enter
+    enterHook && await enterHook(oldMode, keyMode)
     if (editor) {
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
         updateCursorAndStatusBar(editor)
     }
-    const enterHook = modeHooks[keyMode]?.modeHooks?.enter
-    enterHook && await enterHook(oldMode, keyMode)
 }
 
 function reviseSelectionMode(){
