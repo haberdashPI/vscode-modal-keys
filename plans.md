@@ -1,1 +1,6 @@
-- implement '.' operator for kakune like selection modes
+- revise documentation
+- add folder to list presets
+- display visual layout of keyboard
+- add macro recording
+    - non-insert only
+    - manage insert mode too (using document modified events)

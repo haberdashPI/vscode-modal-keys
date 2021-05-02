@@ -130,15 +130,14 @@ to specify which direction and how much cursor moves. These commands can be
 executed by defining an object with prefined properties:
 ```js
 "<binding>":  {
-    "command": "<command>",
-    "args": { ... }
+    "<command>": { ... }
     "repeat": number | "__count"
 }
 ```
-The `<command>` is again a valid VS Code command. The `args` property contains whatever
-arguments the command takes. It is specified as a JSON object. ModalKeys evaluates
-JavaScript expressions within the argument values. The following variables can be used
-inside expression strings:
+The `<command>` is again a valid VS Code command. The arguments passed to "<command>" ({ ...
+}) contains whatever arguments the command takes. It is specified as a JSON object.
+ModalKeys evaluates JavaScript expressions within the argument values. The following
+variables can be used inside expression strings:
 
 | Variable        | Type       | Description
 | --------------- | ---------- | -------------------------------------------------
@@ -147,11 +146,8 @@ inside expression strings:
 | `__mode`        | `string    | A string specifying the current mode
 | `__count`       | `number`   | A number indicating the prefixed numerical values in front of a command: see below.
 
-The `repeat` property allows you to run the command multiple times. If the value of the
-property is a number, it directly determines the repetition count, and if it is `__count` it
-repeats the expression based on the prefixed numbers passed to the keybinding. When you type
-a modal command you can prefix it with numbers, these can passed as the `__count` variable
-to your command.
+When you type a modal command you can prefix it with numbers, these are passed using the
+`__count` variable to your command.
 
 As a full example of using `__count`, the following would bind h to move left (like vim) in all modes.
 
@@ -162,13 +158,15 @@ As a full example of using `__count`, the following would bind h to move left (l
 Because `value` is specified as `__count`, if you typed `12h`, the cursor would move 12
 characters to the left.
 
+The `repeat` property allows you to run the command multiple times. If the value of the
+property is a number, it directly determines the repetition count, and if it is `__count` it
+repeats the expression based on the prefixed numbers passed to the keybinding.
+
 Below is an example that maps key `o` to a command that moves the cursor to the
 end of line. It also selects the jumped range, if we have selection active.
+
 ```js
-"o": {
-    "command": "cursorMove",
-    "args": { to: 'wrappedLineEnd', select: '__selecting' }
-},
+"o": { "cursorMove": { to: 'wrappedLineEnd', select: '__selecting' } },
 ```
 
 ### Sequence of Commands
