@@ -961,7 +961,7 @@ function updateBookmarkDecorators(editor: vscode.TextEditor){
         renderOptions: { after: {
             margin: "0.5em",
             contentText: "mark "+label,
-            color: "editorLineNumber.foreground"
+            color: new vscode.ThemeColor("editorLineNumber.foreground")
         } }
     })))
 }
