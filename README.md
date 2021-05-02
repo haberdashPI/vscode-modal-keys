@@ -229,6 +229,20 @@ there. If your configuration is ok, you should see the following message.
 
 ![output log](images/output-log.png)
 
+### Advanced Keybindings
+
+You can specify a series of shortcuts that all use the same command, each with different arguments to that same command. Use the following format.
+
+```js
+"::using::<command>": {
+    "<binding1>": { ... },
+    "<binding2>": { ... },
+    ...
+}
+```
+
+Each binding is bound to the command `<command>`, passing the arguments specified for that binding (`{...}`).
+
 ### Changing Cursors
 
 You can set the cursor shape shown in each mode by changing the following
@@ -277,7 +291,7 @@ they are same as the rest of text in the status bar.
 | Setting            | Default                   | Description
 | ------------------ | ------------------------- | -------------------------------------
 | `insertStatusText` | `-- $(edit) INSERT --`    | Status text shown in insert mode
-| `normalStatusText` | `-- $(move) NORMAL --`    | Status text shown in normal mode
+| `normalStatusText` | `-- $(move) __MODENAME__ --`    | Status text shown in normal, or custom modes
 | `searchStatusText` | `$(search) SEARCH`        | Status text shown when search is active
 | `selectStatusText` | `-- $(paintcan) VISUAL --`| Status text shown when selection is active in normal mode
 | `insertStatusColor`| `undefined`               | Status text color in insert mode
