@@ -3,8 +3,10 @@
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://img.shields.io/badge/Project%20Status-WIP-yellow)](https://www.repostatus.org/#wip)
 
 ModalKeys is a simple extension for defining modal keybindings in VSCode. The most prominent
-[modal editor][1] is [Vim][2], and ModalKeys includes presets that resemble Vim. While you
-can emulate existing modal editors like Vim or [Kakoune][8] with this extension, you can
+[modal editor](https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors) is
+[Vim](https://www.vim.org/) and ModalKeys includes presets that resemble Vim. While you can
+emulate existing modal editors like Vim or
+[Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html) with this extension, you can
 also build your keyboard layout from ground up and add exactly the features you need.
 
 Rather than attempt to reproduce all features of past editors, ModalKeys simply provides the
@@ -28,6 +30,7 @@ differ between the two extensions.
    kakune's noun-verb model (compared to vim's verb-noun model), it is useful to be able to
    repeat the last selection (e.g. noun) that occurred before a verb. ModalKeys provides a
    `repateLastUsedSelection` for this purpose.
+5. Visual booksmarking: when you [place bookmarks](#Bookmarks), there is a visual indication of the bookmark at its location
 
 **TODO**: keyboard macros
 
@@ -46,9 +49,9 @@ settings file, open command palette with `Ctrl+Shift+P` and look up command
 project specific, edit the `settings.json` that is located in the `.vscode`
 directory under your project directory.
 
-> You might want to skip to the [tutorial][9], if you prefer learning by
+> You might want to skip to the [tutorial](https://johtela.github.io/vscode-modaledit/docs/.vscode/settings.html), if you prefer learning by
 > example. If you want to start with Vim keybindings, you'll find the
-> instructions [here][14]. Otherwise keep reading this document.
+> instructions [here](TODO). Otherwise keep reading this document.
 
 To define the key mappings used in normal mode, add a property named
 `modalkeys.keybindings`. You should define at least one binding that will switch
@@ -105,7 +108,7 @@ when you are in "evil" mode.
 }
 ```
 
-## Configuration
+## Keybindings
 
 You can define the bindings in four different ways. It is also possible to combine them
 freely.
@@ -125,7 +128,7 @@ The example in the previous section maps the `i` key to the
 
 ### Commands with Arguments
 
-Some [commands][6] take arguments. For example `cursorMove` which allows you
+Some [commands](https://code.visualstudio.com/api/references/commands#commands) take arguments. For example `cursorMove` which allows you
 to specify which direction and how much cursor moves. These commands can be
 executed by defining an object with prefined properties:
 ```js
@@ -243,6 +246,8 @@ You can specify a series of shortcuts that all use the same command, each with d
 
 Each binding is bound to the command `<command>`, passing the arguments specified for that binding (`{...}`).
 
+## Configuration
+
 ### Changing Cursors
 
 You can set the cursor shape shown in each mode by changing the following
@@ -282,7 +287,7 @@ settings. Leave these blanks to use the theme colors for built-in search command
 With version 2.0, you can also change the text shown in status bar in each mode
 along with the text color. Note that you can add icons in the text by using
 syntax `$(icon-name)` where `icon-name` is a valid name from the gallery of
-[built-in icons][15].
+[built-in icons](https://microsoft.github.io/vscode-codicons/dist/codicon.html).
 
 The color of the status text is specified in HTML format, such as `#ffeeff`,
 `cyan`, or `rgb(50, 50, 50)`. By default these colors are not defined, and thus
@@ -423,32 +428,25 @@ Assuming that keys `k` and `u` are bound to some commands, the following example
 both one after another.
 
 ```js
-{
-    "command": "modaledit.typeKeys",
-    "args": {
-        "keys": "ku"
-    }
-}
+{ "modaledit.typeKeys": { "keys": "ku" } }
 ```
 
 ### Repeat Last Change
 
 `modalkeys.repeatLastChange` command repeats the last command (sequence) that
-caused text in the editor to change. It corresponds to the [dot `.` command][13]
+caused text in the editor to change. It corresponds to the [dot `.` command](https://vim.fandom.com/wiki/Repeat_last_change)
 in Vim. The command takes no arguments.
 
 ### Repeat Last Used Selection
 
 `modalkeys.repeatLastUsedSelection` repeats the last command (sequence) that cased the
-selected to change *just before* the last change occured. This is useful for implementing a
-kakaune-like workflow, where selections are applied and followed by actions: this is in
+selected to change *just before* the last change occurred. This is useful for implementing a
+kakaune-like workflow, where selections are applied and then followed by actions: this is in
 contrast to the vim-like approach of specifying actions followed by objects (which are kind
-of like selecitons, but are not visualy displayed). E.g. `wd` in a kakune-like workflow might select a word (`w`) and then delete it (`d`), whereas, in vim, you would type `dw` to delete a word. By repeating the last used selection, you could repeat `w` and repeating the last change, you could repeat `d`. Or you could have both repeat commands occur with a single storke, like below.
+of like selections, but are not visually displayed). E.g. `wd` in a kakaune-like workflow might select a word (`w`) and then delete it (`d`), whereas, in vim, you would type `dw` to delete a word. By repeating the last used selection, you could repeat `w` and repeating the last change, you could repeat `d`. Or you could have both repeat commands occur with a single stroke, like below.
 
 ```js
-{
-    ".": [ "modalkeys.repeatLastUsedSelection", "modalkeys.repeatLastChange" ]
-}
+{ ".": [ "modalkeys.repeatLastUsedSelection", "modalkeys.repeatLastChange" ] }
 ```
 
 ### Importing Presets
@@ -458,7 +456,7 @@ JavaScript form. It reads keybindings from a file and copies them to the global
 `settings.json` file. It overrides existing keybindings, so back them up somewhere before
 running the command, if you want to preserve them.
 
-Preset keybindings for vim are available. You can learn more about Vim bindings [here][14].
+Preset keybindings for vim are available. You can learn more about Vim bindings [here](TODO).
 Built-in presets are located under the `presets` folder under the extension installation
 folder. The command scans and lists all the files there. It also provides an option to
 browse for any other file you want to import.
@@ -471,25 +469,4 @@ expression that the whole script evaluates to (i.e. the last value in the script
 
 ## Acknowledgements
 
-Much of the organization, concept and documentation for this extension owes a debt to
-[ModalEdit](https://github.com/johtela/vscode-modaledit). Thanks to @joetela for creating
-such a well documented, well organized, and useful extension. Other, past extension, to whom
-I am indebted include [Simple Vim][3], [Vimspired][4] and its creator [Brian Malehorn][5].
-It is slowly being reshaped to fit my own purposes and views on how the code can best grow
-to allow for new features.
-
-[1]: https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors
-[2]: https://www.vim.org/
-[3]: https://marketplace.visualstudio.com/items?itemName=jpotterm.simple-vim
-[4]: https://marketplace.visualstudio.com/items?itemName=bmalehorn.vimspired
-[5]: https://marketplace.visualstudio.com/publishers/bmalehorn
-[6]: https://code.visualstudio.com/api/references/commands#commands
-[7]: https://gist.github.com/johtela/b63232747fdd465748fedb9ca6422c84
-[8]: https://kakoune.org/why-kakoune/why-kakoune.html
-[9]: https://johtela.github.io/vscode-modaledit/docs/.vscode/settings.html
-[10]: https://johtela.github.io/vscode-modaledit/docs/src/actions.html
-[11]: https://johtela.github.io/vscode-modaledit/docs/CHANGELOG.html#version-1-5
-[12]: https://johtela.github.io/vscode-modaledit/docs/CHANGELOG.html#version-2-0
-[13]: https://vim.fandom.com/wiki/Repeat_last_change
-[14]: https://johtela.github.io/vscode-modaledit/docs/presets/vim.html
-[15]: https://microsoft.github.io/vscode-codicons/dist/codicon.html
+Much of the organization, concept and documentation for this extension owes a debt to [ModalEdit](https://github.com/johtela/vscode-modaledit). Thanks to @joetela for creating such a well documented, well organized, and useful extension. Other, past extensions, to whom I am indebted include [Simple Vim](https://marketplace.visualstudio.com/items?itemName=jpotterm.simple-vim), [Vimspired](https://marketplace.visualstudio.com/items?itemName=bmalehorn.vimspired). It is slowly being reshaped to fit my own purposes and views on how the code can best grow to allow for new features.
