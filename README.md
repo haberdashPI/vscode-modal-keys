@@ -26,11 +26,11 @@ differ between the two extensions.
 3. Search term highlighting: ModalEdit does not highlight text that is part of a search
    (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19) for this
    feature), ModalKeys allows search text to be highlighted.
-4. Kaukune-like 'repeat-selection': if you are designing a modal editing experience around
-   kakune's noun-verb model (compared to vim's verb-noun model), it is useful to be able to
+4. Kakoune-like 'repeat-selection': if you are designing a modal editing experience around
+   kakoune's noun-verb model (compared to vim's verb-noun model), it is useful to be able to
    repeat the last selection (e.g. noun) that occurred before a verb. ModalKeys provides a
    `repateLastUsedSelection` for this purpose.
-5. Visual booksmarking: when you [place bookmarks](#Bookmarks), there is a visual indication of the bookmark at its location
+5. Visual bookmarking: when you [place bookmarks](#Bookmarks), there is a visual indication of the bookmark at its location.
 
 **TODO**: keyboard macros
 
