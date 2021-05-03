@@ -441,14 +441,14 @@ export async function enterMode(args: string | EnterModeArgs) {
     let newMode = (<string>((<EnterModeArgs>args).mode || args))
     handleTypeSubscription(newMode)
     const exitHook = modeHooks[keyMode]?.exit
-    exitHook && await exitHook(keyMode, newMode)
+    exitHook && await exitHook(newMode, keyMode)
 
     const editor = vscode.window.activeTextEditor
     let oldMode = keyMode
     keyMode = newMode
     if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = newMode
     const enterHook = modeHooks[keyMode]?.enter
-    enterHook && await enterHook(oldMode, keyMode)
+    enterHook && await enterHook(keyMode, oldMode)
     if (editor) {
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
         updateCursorAndStatusBar(editor)
