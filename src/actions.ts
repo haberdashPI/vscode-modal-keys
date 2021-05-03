@@ -381,14 +381,9 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
         }
         if(res){
             let [ match, g1, givenMode, seq ] = res
-            let obj: any
-            if(val.label){
-                obj = val
-            }else{
-                obj = docBinding ? val : expandCommands(val)
-                for(let i = seq.length-1; i>=0; i--){
-                    obj = {[seq[i]]: obj}
-                }
+            let obj: any = docBinding ? val : expandCommands(val)
+            for(let i = seq.length-1; i>=0; i--){
+                obj = {[seq[i]]: obj}
             }
             let modes = (givenMode ? givenMode.split('|') : ['__all__'])
             let newErrors = false
@@ -419,12 +414,12 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
                         if(state.sequencesFor[mode]) state.sequencesFor[mode]?.push(seq)
                         else state.sequencesFor[mode] = [seq]
                     }
-                }
-                // TODO: figure out how to insert the documentation entries
-                if(!newErrors){
-                    for(const mode of modes){
-                        keymodes.command[mode] = keymodes.command[mode] === undefined ? obj :
-                            mergeWith(keymodes.command[mode], obj, overloadCommands)
+                    // TODO: figure out how to insert the documentation entries
+                    if(!newErrors){
+                        for(const mode of modes){
+                            keymodes.command[mode] = keymodes.command[mode] === undefined ? obj :
+                                mergeWith(keymodes.command[mode], obj, overloadCommands)
+                        }
                     }
                 }
                 return keymodes
