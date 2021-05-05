@@ -63,7 +63,7 @@ the editor to the *insert mode*, which is the same as VS Code's default mode.
 ```
 When you save the `settings.json` file, keybindings take effect immediately.
 
-By default, any keys defined under `modalkeys.keybindings` way will be available in all
+By default, any keys defined under `modalkeys.keybindings` will be available in all
 modes other than insert mode (see below for how to make a binding specific to one or more
 modes).
 
