@@ -506,13 +506,9 @@ export class KeyState {
         this.capturedKeys = []
     }
 
-    update(keymap: Keymap | undefined){
-        if(keymap){
-            this.currentKeymap = keymap
-            this.countFinalized = true
-        }else{
-            this.reset()
-        }
+    update(keymap: Keymap){
+        this.currentKeymap = keymap
+        this.countFinalized = true
     }
 
     updateCount(val: number){
@@ -642,17 +638,19 @@ export class KeyState {
     async execute(action: Action, mode: string) {
         if (isString(action)){
             await this.executeVSCommand(action)
-            this.reset()
+            return true
         }else if (isCommandSequence(action)){
             for (const command of action) await this.execute(command, mode)
-            this.reset()
+            return true
         }else if (isConditional(action)){
             await this.executeConditional(action, mode)
+            return true
         }else if (isParameterized(action)){
             await this.executeParameterized(action, mode)
-            this.reset()
+            return true
         }else{
             this.update(<Keymap>action)
+            return false
         }
     }
 
@@ -703,7 +701,9 @@ export class KeyState {
             this.capturedKeys.push(key)
             await this.executeVSCommand(command, key)
         }else if (newKeymap && newKeymap[key]) {
-            await this.execute(newKeymap[key], keyMode)
+            if(await this.execute(newKeymap[key], keyMode)){
+                this.reset()
+            }
         }
         else if (key.match('[0-9]+')) {
             this.updateCount(Number(key))
