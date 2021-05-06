@@ -457,7 +457,7 @@ export async function enterMode(args: string | EnterModeArgs) {
     keyMode = newMode
     if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = visualFlag ? Visual : newMode
     const enterHook = modeHooks[keyMode]?.enter
-    enterHook && await enterHook(keyMode, oldMode)
+    enterHook && newMode !== oldMode && await enterHook(keyMode, oldMode)
     if (editor) {
         updateCursorAndStatusBar(editor)
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
