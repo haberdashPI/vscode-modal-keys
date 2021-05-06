@@ -447,15 +447,14 @@ export async function enterMode(args: string | EnterModeArgs) {
     if(newMode === Visual){
         newMode = Normal
         visualFlag = true
-    }
-    if(newMode !== Visual){ visualFlag = false }
+    }else if(newMode !== Visual){ visualFlag = false }
     const exitHook = modeHooks[keyMode]?.exit
     exitHook && await exitHook(newMode, keyMode)
 
     const editor = vscode.window.activeTextEditor
     let oldMode = keyMode
     keyMode = newMode
-    if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = newMode
+    if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = visualFlag ? Visual : newMode
     const enterHook = modeHooks[keyMode]?.enter
     enterHook && await enterHook(keyMode, oldMode)
     if (editor) {
@@ -468,7 +467,13 @@ export async function restoreEditorMode(editor: vscode.TextEditor | undefined){
     if(editor){
         let newMode = editorModes[editor.document.uri.toString()] || Normal
         handleTypeSubscription(newMode)
-        keyMode = newMode
+        if(newMode === Visual){
+            keyMode = Normal
+            visualFlag = true
+        }else{
+            keyMode = newMode
+            visualFlag = false
+        }
         updateCursorAndStatusBar(editor)
         const enterHook = modeHooks[keyMode]?.modeHooks?.enter
         enterHook && await enterHook(Normal, keyMode)
@@ -562,7 +567,11 @@ function cancelMultipleSelections() {
  * selection.
  */
 async function toggleSelection(): Promise<void> {
-    visualFlag = !visualFlag
+    if(isSelecting()){
+        enterMode(Normal)
+    }else{
+        enterMode(Visual)
+    }
 }
 /**
  * `modalkeys.enableSelection` sets the selecting to true.
