@@ -48,10 +48,14 @@ interface EnterModeArgs {
  * The standard modes all have constants defined to avoid typos. However, we need
  * to allow for user defined modes in a keybindings file, so there is no enum.
  */
-const Visual = 'visual'
 const Normal = 'normal'
 const Search = 'search'
 const Insert = 'insert'
+const Visual = 'visual'
+let visualFlag = false // visual mode is a special version of normal mode
+// it's treated this way because of the asyncrhonous nature of selections
+// so we need to track visual mode by two conditions: a user setable flag
+// *and* the current editor state; these must both be independently setable
 
 /**
  * ### Bookmark Arguments
@@ -419,10 +423,10 @@ function handleTypeSubscription(newmode: string){
 }
 
 let modeHooks: any = {
-    select: {
-        exit: async (n: string, o: string) =>
-            await vscode.commands.executeCommand("cancelSelection")
-    },
+    // select: {
+    //     exit: async (n: string, o: string) =>
+    //         await vscode.commands.executeCommand("cancelSelection")
+    // },
     normal: {
         enter: async (n: string, o: string) => {
             currentWord = { seq: [], mode: '' }
@@ -440,6 +444,11 @@ export async function enterInsert(){ enterMode('insert') }
 export async function enterMode(args: string | EnterModeArgs) {
     let newMode = (<string>((<EnterModeArgs>args).mode || args))
     handleTypeSubscription(newMode)
+    if(newMode === Visual){
+        newMode = Normal
+        visualFlag = true
+    }
+    if(newMode !== Visual){ visualFlag = false }
     const exitHook = modeHooks[keyMode]?.exit
     exitHook && await exitHook(newMode, keyMode)
 
@@ -450,16 +459,8 @@ export async function enterMode(args: string | EnterModeArgs) {
     const enterHook = modeHooks[keyMode]?.enter
     enterHook && await enterHook(keyMode, oldMode)
     if (editor) {
-        await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
         updateCursorAndStatusBar(editor)
-    }
-}
-
-function reviseSelectionMode(){
-    if(isSelecting() && keyMode === Normal){
-        keyMode = Visual
-        const editor = vscode.window.activeTextEditor
-        if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = Visual
+        await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
     }
 }
 
@@ -468,10 +469,10 @@ export async function restoreEditorMode(editor: vscode.TextEditor | undefined){
         let newMode = editorModes[editor.document.uri.toString()] || Normal
         handleTypeSubscription(newMode)
         keyMode = newMode
-        await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
         updateCursorAndStatusBar(editor)
         const enterHook = modeHooks[keyMode]?.modeHooks?.enter
         enterHook && await enterHook(Normal, keyMode)
+        await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
     }
 }
 
@@ -481,15 +482,13 @@ export async function restoreEditorMode(editor: vscode.TextEditor | undefined){
  * so, it shows the search parameters. If no editor is active, we hide the
  * status bar items.
  */
-export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
-    help?: string) {
+export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined, help?: string) {
     if (editor) {
         // Get the style parameters
-        reviseSelectionMode()
         let [style, text, color] =
             keyMode === Search ? getSearchStyles() :
-            keyMode === Visual ? getSelectStyles() :
             keyMode === Insert ? getInsertStyles() :
+            (keyMode === Normal && isSelecting()) ? getSelectStyles() :
                 getNormalStyles(keyMode)
 
         /**
@@ -537,7 +536,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined,
  * standard version to keep the state in sync.
  */
 async function cancelSelection(): Promise<void> {
-    if (keyMode === Visual) {
+    if (keyMode === Normal && visualFlag) {
         await vscode.commands.executeCommand("cancelSelection")
         enterMode(Normal)
     }
@@ -563,28 +562,20 @@ function cancelMultipleSelections() {
  * selection.
  */
 async function toggleSelection(): Promise<void> {
-    if(keyMode !== Visual){
-        enterMode(Visual)
-    }else{
-        enterMode(Normal)
-    }
+    visualFlag = !visualFlag
 }
 /**
  * `modalkeys.enableSelection` sets the selecting to true.
  */
-function enableSelection() {
-    enterMode(Visual)
-    updateCursorAndStatusBar(vscode.window.activeTextEditor)
-}
+function enableSelection() { enterMode(Visual) }
 /**
  * The following helper function actually determines, if a selection is active.
  * It checks not only the `selecting` flag but also if there is any text
  * selected in the active editor.
  */
-function isSelecting(): boolean {
-    return keyMode === Visual ||
-        vscode.window.activeTextEditor!.selections.some(
-            selection => !selection.anchor.isEqual(selection.active))
+function isSelecting(editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor): boolean {
+    return keyMode === Normal && (visualFlag ||
+        (editor ? editor.selections.some(s => !s.isEmpty) : false))
 }
 /**
  * Function that sets the selecting flag off. This function is called from one
