@@ -10,6 +10,7 @@ import * as vscode from 'vscode'
 import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, log } from './actions'
 import { TextDecoder } from 'util'
 import { IHash } from './util'
+import { markAsUntransferable } from 'node:worker_threads'
 //#endregion
 /**
  * ## Command Arguments
@@ -941,7 +942,17 @@ async function previousMatch(): Promise<void> {
 function defineBookmark(args?: BookmarkArgs) {
     let editor = vscode.window.activeTextEditor
     if (editor) {
-        let label = args?.bookmark?.toString() || '0'
+        let label = args?.bookmark?.toString() || '1'
+        if(label === '1'){
+            let nums = Object.keys(bookmarks).
+                filter((k: string) => /[0-9]+/.test(k))
+            if(nums.length > 0){
+                let maxNum = nums.
+                    map(k => Number(k)).
+                    reduce((a,b) => a > b ? a : b)
+                label = (maxNum + 1).toString()
+            }
+        }
         if(bookmarks[label]){
             vscode.window.showWarningMessage("ModalKeys - Bookmark already defined. Clear it first.")
             return
@@ -972,7 +983,16 @@ function updateBookmarkDecorators(editor: vscode.TextEditor){
 function clearBookmark(args?: BookmarkArgs){
     let editor = vscode.window.activeTextEditor
     if(editor){
-        delete bookmarks[args?.bookmark?.toString() || '0']
+        let ed = editor
+        let label = args?.bookmark?.toString() || '1'
+        if(label === '1'){
+            let nearNum = Object.values(bookmarks).
+                filter(mark => mark.position.line === ed.selection.active.line)
+            if(nearNum.length > 0){
+                label = nearNum[0].label
+            }
+        }
+        delete bookmarks[label]
         updateBookmarkDecorators(editor)
     }
 }
@@ -982,7 +1002,21 @@ function clearBookmark(args?: BookmarkArgs){
  * we already defined. It makes sure that selection is visible.
  */
 async function goToBookmark(args?: BookmarkArgs): Promise<void> {
-    let label = args?.bookmark?.toString() || '0'
+    let label = args?.bookmark?.toString() || '1'
+    if(label === '1'){
+        let ed = vscode.window.activeTextEditor
+        let numBooks = Object.values(bookmarks).
+            filter(x => /[0-9]+/.test(x.label))
+        let nearNum = numBooks.
+            filter(mark => mark.position.line === ed?.selection?.active?.line)
+        let sorted = numBooks.sort((a,b) => Number(a.label) < Number(b.label) ? -1 : 1)
+        let i = nearNum.length > 0 ? sorted.indexOf(nearNum[0]) : 0
+        if(i < sorted.length-1){
+            label = sorted[i+1].label.toString()
+        }else{
+            label = sorted[0].label.toString()
+        }
+    }
     let bm = bookmarks[label]
     if (bm) {
         await vscode.window.showTextDocument(bm.document)
