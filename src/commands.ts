@@ -375,6 +375,7 @@ async function onType(event: { text: string }) {
  */
 export function onTextChanged() {
      textChanged = true
+     updateBookmarkDecorators
 }
 
 /**
