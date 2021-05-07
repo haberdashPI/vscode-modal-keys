@@ -42,12 +42,12 @@ block for key bindings. We'll use the [Vim Cheat Sheet][] as our specification
 for key bindings to be added.
 ```js
 {
-    "modaledit.keybindings": {
+    "modalkeys.keybindings": {
 ```
 ## Switching Between Modes
 
 First things first: we need to be able to enter the normal mode somehow. The
-<key>Esc</key> key is mapped to the `modaledit.enterNormal` command by default,
+<key>Esc</key> key is mapped to the `modalkeys.enterNormal` command by default,
 so we dont't need to do anything for that. If you like, you can map other keys to
 this command using VS Code's standard keymappings pressing
 <key>Ctrl</key>+<key>K</key> <key>Ctrl</key>+<key>S</key>.
@@ -57,14 +57,14 @@ this command using VS Code's standard keymappings pressing
 There are multiple ways to enter insert mode. If you want to insert text in the
 current cursor position, you press <key>i</key>.
 ```js
-        "i": "modaledit.enterInsert",
+        "i": "modalkeys.enterInsert",
 ```
 To insert text at the beginning of line, you press <key>I</key>. For this
 operation, we need a command sequence, i.e. an array of commands.
 ```js
         "I": [
             "cursorHome",
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
 ```
 ### Append Text
@@ -80,16 +80,10 @@ the command based on the result. In this case, the result `false` will execute
 the `cursorRight` command.
 ```js
         "a": [
-            {
-                "condition": "__char == ''",
-                "false": "cursorRight"
-            },
-            "modaledit.enterInsert"
+            { "if": "__char == ''", "then": "cursorRight" },
+            "modalkeys.enterInsert"
         ],
-        "A": [
-            "cursorEnd",
-            "modaledit.enterInsert"
-        ],
+        "A": [ "cursorEnd", "modalkeys.enterInsert" ],
 ```
 ### Open a New Line
 
@@ -98,14 +92,8 @@ empty line, and putting the cursor on it. There are two variants of this command
 as well: <key>o</key> opens a new line below the current line whereas
 <key>O</key> opens it on the current line.
 ```js
-        "o": [
-            "editor.action.insertLineAfter",
-            "modaledit.enterInsert"
-        ],
-        "O": [
-            "editor.action.insertLineBefore",
-            "modaledit.enterInsert"
-        ],
+        "o": [ "editor.action.insertLineAfter", "modalkeys.enterInsert" ],
+        "O": [ "editor.action.insertLineBefore", "modalkeys.enterInsert" ],
 ```
 Now we can test the commands we just created.
 
@@ -121,29 +109,25 @@ about text selection.
 ### Selecting Text
 
 In Vim, there is a separate "visual" mode that you activate when you want to
-select text. Visual mode can be characterwise or linewise. VS Code has no
-simillar concept. By contrast, to select text you move the cursor with
-<key>Shift</key> key depressed.
+select text. Visual mode can be characterwise or linewise.
 
-ModalKeys bridges this gap by providing the special command
-`modaledit.toggleSelection` which toggles selection mode on and off. Selection
-mode is not really a mode in the same sense as normal and insert mode are; you
-can select text both in normal mode and insert mode. Rather it is an additional
-flag that you can set when you want to select text as you move the cursor.
+The selection mode is not really a mode in the same sense as normal and insert mode are; you can
+select text both in normal mode and insert mode. Rather it is an additional flag that you
+can set when you want to select text as you move the cursor.
 
 Selection mode is also implicitly on whenever there is text selected. If you
 select text with mouse, for example, the selection mode is turned on (Vim
 behaves like this too). To turn off the selection mode, call
-`modaledit.toggleSelection` again (or `modaledit.clearSelection`).
+`modalkeys.toggleSelection` again (or `modalkeys.clearSelection`).
 
 The end result is that selection mode works _almost_ like visual mode in Vim,
-the main difference being that selection mode is not automatically turned off
+the main difference being that selections are not automatically turned off
 when you enter insert mode.
 
-So, let's add a binding to toggle selection mode on or off. We use the familiar
+So, let's add a binding to toggle selections on or off. We use the familiar
 <key>v</key> key for this.
 ```js
-        "v": "modaledit.toggleSelection",
+        "v": "modalkeys.toggleSelection",
 ```
 
 Now we can add commands for cursor movement. These commands use the generic
@@ -153,29 +137,34 @@ which allows us to define parameters as a JS expression. The `__selecting` flag
 in the expression indicates whether selection mode is on. The same effect could
 be achieved also with a conditional command, but this way is a bit simpler.
 ```js
-        "h": {
-            "command": "cursorMove",
-            "args": "{ to: 'left', select: __selecting }"
-        },
-        "j": {
-            "command": "cursorMove",
-            "args": "{ to: 'down', select: __selecting }"
-        },
-        "k": {
-            "command": "cursorMove",
-            "args": "{ to: 'up', select: __selecting }"
-        },
-        "l": {
-            "command": "cursorMove",
-            "args": "{ to: 'right', select: __selecting }"
-        },
+        "h": { "cursorMove": { to: 'left', select: '__selecting' } },
+        "j": { "cursorMove": { to: 'down', select: '__selecting' } },
+        "k": { "cursorMove": { to: 'up', select: '__selecting' } },
+        "l": { "cursorMove": { to: 'right', select: '__selecting' } },
 ```
+
+If we want to be more succinct in how we write these commands, we can also do the following.
+
+```js
+    "::using::cursorMove": {
+        "h": { to: 'left', select: '__selecting' },
+        "j": { to: 'down', select: '__selecting' },
+        "k": { to: 'up', select: '__selecting' },
+        "l": { to: 'right', select: '__selecting' },
+    }
+```
+
+ModalKeys will knows to re-write this, so the two ways of specifying these commands are
+equivalent.
+
 We can also simulate linewise visual mode using VS Code's `expandLineSelection`
-command. Note that we don't need to call `modaledit.toggleSelection` this time
+command. Note that we don't need to call `modalkeys.toggleSelection` this time
 as selection mode is turned on automatically.
+
 ```js
         "V": "expandLineSelection",
 ```
+
 ### Moving Inside Screen
 
 To move cursor quickly to the top, middle, or bottom of the screen we use keys
@@ -183,18 +172,11 @@ To move cursor quickly to the top, middle, or bottom of the screen we use keys
 [`cursorMove` command][commands].
 
 ```js
-        "H": {
-            "command": "cursorMove",
-            "args": "{ to: 'viewPortTop', select: __selecting }"
-        },
-        "M": {
-            "command": "cursorMove",
-            "args": "{ to: 'viewPortCenter', select: __selecting }"
-        },
-        "L": {
-            "command": "cursorMove",
-            "args": "{ to: 'viewPortBottom', select: __selecting }"
-        },
+    "::using::cursorMove": {
+        "H": { to: 'viewPortTop', select: '__selecting' },
+        "M": { to: 'viewPortCenter', select: '__selecting' },
+        "L": { to: 'viewPortBottom', select: '__selecting' },
+    }
 ```
 
 ### Jumping to Previous/Next Word
@@ -206,14 +188,14 @@ in this use case.
 
 ```js
         "w": {
-            "condition": "__selecting",
-            "true": "cursorWordStartRightSelect",
-            "false": "cursorWordStartRight"
+            "if": "__selecting",
+            "then": "cursorWordStartRightSelect",
+            "else": "cursorWordStartRight"
         },
         "b": {
-            "condition": "__selecting",
-            "true": "cursorWordStartLeftSelect",
-            "false": "cursorWordStartLeft"
+            "if": "__selecting",
+            "then": "cursorWordStartLeftSelect",
+            "else": "cursorWordStartLeft"
         },
 ```
 
@@ -221,16 +203,17 @@ in this use case.
 
 ```js
         "e": {
-            "condition": "__selecting",
-            "true": "cursorWordEndRightSelect",
-            "false": "cursorWordEndRight"
+            "if": "__selecting",
+            "then": "cursorWordEndRightSelect",
+            "else": "cursorWordEndRight"
         },
 ```
 
 > **Note**: We omit variants of these commands <key>W</key>, <key>B</key>, and
 > <key>E</key> which skip the punctuation characters. There are no built-in
-> commands in VS Code that work exactly like those in Vim. This is one of the
-> subtle differences between the editors.
+> commands in VS Code that work exactly like those in Vim. There are some extensions
+> you can make use of to implement these commands (e.g. [Selection Utilities](https://github.com/haberdashPI/vscode-selection-utilities)).
+> That's beyond the scope of this tutorial.
 
 ### Jumping to Start/End of Line
 
@@ -239,48 +222,39 @@ In the similar vein, we'll throw in commands for jumping to the beginning
 line <key>$</key>.
 
 ```js
-        "0": {
-            "command": "cursorMove",
-            "args": "{ to: 'wrappedLineStart', select: __selecting }"
-        },
-        "^": {
-            "command": "cursorMove",
-            "args": "{ to: 'wrappedLineFirstNonWhitespaceCharacter', select: __selecting }"
-        },
-        "$": {
-            "command": "cursorMove",
-            "args": "{ to: 'wrappedLineEnd', select: __selecting }"
-        },
+    "::using::curosrMove": {
+        "0": { to: 'wrappedLineStart', select: '__selecting' },
+        "^": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__selecting' },
+        "$": { to: 'wrappedLineEnd', select: '__selecting' },
+    }
 ```
 
 A lesser known variant of above commands is <key>g</key><key>_</key> that jumps
-to the last non-blank character of the line. Since it is a two key sequence we
-need to open a block for all commands beginning with <key>g</key>.
+to the last non-blank character of the line.
 ```js
-        "g": {
-            "_": {
-                "command": "cursorMove",
-                "args": "{ to: 'wrappedLineLastNonWhitespaceCharacter', select: __selecting }"
-            },
+    "g_": { "cursorMove":
+        { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__selecting' }
+    },
 ```
+
 ### Jumping to Start/End of Document
 
 Another motion command is <key>g</key><key>g</key> which jumps to the beginning
 of the file.
 ```js
             "g": {
-                "condition": "__selecting",
-                "true": "cursorTopSelect",
-                "false": "cursorTop"
+                "if": "__selecting",
+                "then": "cursorTopSelect",
+                "else": "cursorTop"
             },
         },
 ```
 The opposite of that is <key>G</key> wich jumps to the end of file.
 ```js
         "G": {
-            "condition": "__selecting",
-            "true": "cursorBottomSelect",
-            "false": "cursorBottom"
+            "if": "__selecting",
+            "then": "cursorBottomSelect",
+            "else": "cursorBottom"
         },
 ```
 
@@ -291,11 +265,15 @@ sophisticated ones. Seasoned Vim users avoid hitting movement commands
 repeatedly by using <key>f</key> and <key>F</key> keys which move directly to a
 given character. VS Code provides no built-in command for this, but ModalKeys
 includes an incremental search command which can be customized to this purpose.
+
+> TODO: stop tutorial here, we need to first implement the clearner means of
+> handling serach before documenting it.
+
 ```js
         "f": {
             "condition": "__selecting",
             "true": {
-                "command": "modaledit.search",
+                "command": "modalkeys.search",
                 "args": {
                     "caseSensitive": true,
                     "acceptAfter": 1,
@@ -303,7 +281,7 @@ includes an incremental search command which can be customized to this purpose.
                 }
             },
             "false": {
-                "command": "modaledit.search",
+                "command": "modalkeys.search",
                 "args": {
                     "caseSensitive": true,
                     "acceptAfter": 1,
@@ -331,7 +309,7 @@ previous character. The `backwards` parameter switches the search direction.
         "F": {
             "condition": "__selecting",
             "true": {
-                "command": "modaledit.search",
+                "command": "modalkeys.search",
                 "args": {
                     "caseSensitive": true,
                     "acceptAfter": 1,
@@ -340,7 +318,7 @@ previous character. The `backwards` parameter switches the search direction.
                 }
             },
             "false": {
-                "command": "modaledit.search",
+                "command": "modalkeys.search",
                 "args": {
                     "caseSensitive": true,
                     "acceptAfter": 1,
@@ -353,8 +331,8 @@ previous character. The `backwards` parameter switches the search direction.
 With <key>;</key> and <key>,</key> keys you can repeat the previous <key>f</key>
 or <key>F</key> commands either forwards or backwards.
 ```js
-        ";": "modaledit.nextMatch",
-        ",": "modaledit.previousMatch",
+        ";": "modalkeys.nextMatch",
+        ",": "modalkeys.previousMatch",
 ```
 > We omitted few useful jump commands, like <key>t</key>, <key>T</key>,
 > <key>{</key>, and <key>}</key> as there are no corresponding commands in
@@ -385,7 +363,7 @@ reason for this is that these commands are bound to <key>Ctrl</key>+<key>b</key>
 and <key>Ctrl</key>+<key>f</key> in Vim. Since these are "normal" VS Code
 shortcuts we cannot remap them in ModalKeys. If you want to use these shortcuts,
 you need to add the bindings to the VS Code's `keybindings.json` file. Below is
-an example that uses the `modaledit.normal` context to make the shortcuts work
+an example that uses the `modalkeys.normal` context to make the shortcuts work
 only in normal mode. Most of the Vim's standard <key>Ctrl</key>+key combinations
 are already in use, so you need to decide whether you want to remap the existing
 commands first.
@@ -395,12 +373,12 @@ commands first.
     {
         "key": "ctrl+b",
         "command": "cursorPageUp",
-        "when": "editorTextFocus && modaledit.normal"
+        "when": "editorTextFocus && modalkeys.normal"
     },
     {
         "key": "ctrl+f",
         "command": "cursorPageDown",
-        "when": "editorTextFocus && modaledit.normal"
+        "when": "editorTextFocus && modalkeys.normal"
     }
 }
 ```
@@ -428,7 +406,7 @@ and run an actual command. The number that was typed is stored in the `__keys`
 variable which is available to all JS expressions. In this case we use it to get
 the repeat count as a number. The JS expression in the `repeat` argument does
 just this. We also get the actual command from the last item of the `__keys`
-array and pass it to the `modaledit.typeNormalKeys` which runs the command
+array and pass it to the `modalkeys.typeNormalKeys` which runs the command
 mapped to the key.
 ```js
         "1-9": {
@@ -436,7 +414,7 @@ mapped to the key.
             "help": "Enter count followed by [h,j,k,l,w,b,e]",
             "0-9": 1,
             "h,j,k,l,w,b,e": {
-                "command": "modaledit.typeNormalKeys",
+                "command": "modalkeys.typeNormalKeys",
                 "args": "{ keys: __keys[__keys.length - 1] }",
                 "repeat": "Number(__keys.slice(0, -1).join(''))"
             },
@@ -491,15 +469,15 @@ and <key>c</key><key>w</key> changes the end of the word. Three key sequnce
             "c": [
                 "deleteAllLeft",
                 "deleteAllRight",
-                "modaledit.enterInsert"
+                "modalkeys.enterInsert"
             ],
             "$": [
                 "deleteAllRight",
-                "modaledit.enterInsert"
+                "modalkeys.enterInsert"
             ],
             "w": [
                 "deleteWordEndRight",
-                "modaledit.enterInsert"
+                "modalkeys.enterInsert"
             ],
 ```
 ### Change Until/Around/Inside
@@ -512,7 +490,7 @@ marks. The cursor can be anywhere inside the quotation marks and the command
 still works.
 
 To help implement these type of operations version 1.6 included the
-[`modaledit.selectBetween` command][selectBetween]. It is a swiss army knife
+[`modalkeys.selectBetween` command][selectBetween]. It is a swiss army knife
 type of command that serves many use cases. We use it first to implement the
 "change until" commands: <key>c</key><key>t</key>_x_ changes the text from the
 cursor till the next occurrence of _x_. <key>c</key><key>f</key>_x_ does the
@@ -522,11 +500,11 @@ same and deletes _x_ too.
                 "help": "Change until _",
                 " -~": [
                     {
-                        "command": "modaledit.selectBetween",
+                        "command": "modalkeys.selectBetween",
                         "args": "{ to: __keys[2], inclusive: __keys[1] == 'f' }"
                     },
                     "deleteLeft",
-                    "modaledit.enterInsert"
+                    "modalkeys.enterInsert"
                 ]
             },
 ```
@@ -548,11 +526,11 @@ the characters that are not braces.
                 "help": "Change around/inside _",
                 " -/,:-@,[-`,{-~": [
                     {
-                        "command": "modaledit.selectBetween",
+                        "command": "modalkeys.selectBetween",
                         "args": "{ from: __keys[2], to: __keys[2], inclusive: __keys[1] == 'a' }"
                     },
                     "deleteLeft",
-                    "modaledit.enterInsert"
+                    "modalkeys.enterInsert"
                 ],
 ```
 The rather cryptic key range captures all visible non-alphanumeric ASCII
@@ -566,35 +544,35 @@ Now we can add the commands that change text inside braces, such as
 ```js
                 "(,)": [
                     {
-                        "command": "modaledit.selectBetween",
+                        "command": "modalkeys.selectBetween",
                         "args": "{ from: '(', to: ')', inclusive: __keys[1] == 'a' }"
                     },
                     "deleteLeft",
-                    "modaledit.enterInsert"
+                    "modalkeys.enterInsert"
                 ],
                 "{,}": [
                     {
-                        "command": "modaledit.selectBetween",
+                        "command": "modalkeys.selectBetween",
                         "args": "{ from: '{', to: '}', inclusive: __keys[1] == 'a' }"
                     },
                     "deleteLeft",
-                    "modaledit.enterInsert"
+                    "modalkeys.enterInsert"
                 ],
                 "[,]": [
                     {
-                        "command": "modaledit.selectBetween",
+                        "command": "modalkeys.selectBetween",
                         "args": "{ from: '[', to: ']', inclusive: __keys[1] == 'a' }"
                     },
                     "deleteLeft",
-                    "modaledit.enterInsert"
+                    "modalkeys.enterInsert"
                 ],
                 "<,>": [
                     {
-                        "command": "modaledit.selectBetween",
+                        "command": "modalkeys.selectBetween",
                         "args": "{ from: '<', to: '>', inclusive: __keys[1] == 'a' }"
                     },
                     "deleteLeft",
-                    "modaledit.enterInsert"
+                    "modalkeys.enterInsert"
                 ],
 ```
 It is also useful to be able to change the current word the cursor is on. You
@@ -607,11 +585,11 @@ implement the operation, but this version works reliably in all scenarios.
 ```js
                 "w": [
                     {
-                        "command": "modaledit.selectBetween",
+                        "command": "modalkeys.selectBetween",
                         "args": "{ from: '\\\\W', to: '\\\\W', regex: true, inclusive: __keys[1] == 'a' }"
                     },
                     "deleteLeft",
-                    "modaledit.enterInsert"
+                    "modalkeys.enterInsert"
                 ]
             }
         },
@@ -624,7 +602,7 @@ A shorthand for  <key>c</key><key>$</key> command is <key>C</key>.
 ```js
         "C": [
             "deleteAllRight",
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
 ```
 _Substitution_ commands do  basically same things as change commands;
@@ -633,12 +611,12 @@ _Substitution_ commands do  basically same things as change commands;
 ```js
         "s": [
             "deleteRight",
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
         "S": [
             "deleteAllLeft",
             "deleteAllRight",
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
 ```
 ### Undo & Redo
@@ -648,7 +626,7 @@ copy Vim's operation.
 ```js
         "u": [
             "undo",
-            "modaledit.cancelSelection"
+            "modalkeys.cancelSelection"
         ],
 ```
 Since redo is mapped to <key>Ctrl</key>+<key>r</key> by default, we leave this
@@ -671,7 +649,7 @@ convention, we also clear the selection.
 ```js
         "y": [
             "editor.action.clipboardCopyAction",
-            "modaledit.cancelSelection"
+            "modalkeys.cancelSelection"
         ],
 ```
 
@@ -723,8 +701,8 @@ Code commands based on the expression. The command is bound to the tilde
 Marks or bookmarks, as they are more commonly known, provide a handy way to
 jump quickly inside documents. Surprisingly, VS Code does not contain this
 feature out-of-the-box. Since it is easy to implement, ModalKeys fills the gap
-and adds two simple commands: `modaledit.defineBookmark` and
-`modaledit.goToBookmark`. Using these we can implement Vim's mark commands.
+and adds two simple commands: `modalkeys.defineBookmark` and
+`modalkeys.goToBookmark`. Using these we can implement Vim's mark commands.
 
 We can support dozens of bookmarks with one mapping using a character range.
 To define a bookmark, you type <key>m</key><key>a</key>, for example, and to
@@ -732,13 +710,13 @@ jump to that mark, type <key>\`</key><key>a</key>.
 ```js
         "m": {
             "a-z": {
-                "command": "modaledit.defineBookmark",
+                "command": "modalkeys.defineBookmark",
                 "args": "{ bookmark: __keys[1] }"
             }
         },
         "`": {
             "a-z": {
-                "command": "modaledit.goToBookmark",
+                "command": "modalkeys.goToBookmark",
                 "args": "{ bookmark: __keys[1] }"
             }
         },
@@ -750,13 +728,13 @@ search command provided by ModalKeys for this. As in Vim, typing <key>/</key>
 starts an incremental search. <key>?</key> starts a search backwards.
 ```js
         "/": {
-            "command": "modaledit.search",
+            "command": "modalkeys.search",
             "args": {
                 "caseSensitive": true
             }
         },
         "?": {
-            "command": "modaledit.search",
+            "command": "modalkeys.search",
             "args": {
                 "caseSensitive": true,
                 "backwards": true
@@ -765,13 +743,13 @@ starts an incremental search. <key>?</key> starts a search backwards.
 ```
 Jumping to next previous match is done with keys <key>n</key> and <key>N</key>.
 ```js
-        "n": "modaledit.nextMatch",
-        "N": "modaledit.previousMatch",
+        "n": "modalkeys.nextMatch",
+        "N": "modalkeys.previousMatch",
 ```
 There are some subtle differences in the search functionality as well. Instead
 of just highlighting matches ModalKeys selects them. This is preferable
 anyway, as replacing needs to be done manually with selection commands. Finally,
-`modaledit.search` does not support regexes. Use VS Code's built-in find
+`modalkeys.search` does not support regexes. Use VS Code's built-in find
 command, if you need regex support.
 
 ## Conclusion
@@ -815,5 +793,5 @@ Happy Editing! 🦈😎
 [commands]: https://code.visualstudio.com/api/references/commands
 [Vim Cheat Sheet]: https://vim.rtorr.com/
 [extensions]: https://marketplace.visualstudio.com/
-[recursive keymaps]: https://johtela.github.io/vscode-modaledit/docs/README.html#defining-recursive-keymaps
-[selectBetween]: https://johtela.github.io/vscode-modaledit/docs/README.html#selecting-text-between-delimiters
+[recursive keymaps]: https://johtela.github.io/vscode-modalkeys.docs/README.html#defining-recursive-keymaps
+[selectBetween]: https://johtela.github.io/vscode-modalkeys.docs/README.html#selecting-text-between-delimiters
