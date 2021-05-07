@@ -185,7 +185,7 @@ let searchOldMode = Normal
 /**
  * Bookmarks are stored here.
  */
-let bookmarks: { [label: string]: Bookmark } = {}
+let bookmarks = new Map<string, Map<string, Bookmark>>()
 /**
  * Quick snippets are simply stored in an array of strings.
  */
@@ -375,7 +375,6 @@ async function onType(event: { text: string }) {
  */
 export function onTextChanged() {
      textChanged = true
-     updateBookmarkDecorators
 }
 
 /**
@@ -934,114 +933,7 @@ async function previousMatch(): Promise<void> {
             await typeKeys({ keys: searchTypeAfterPreviousMatch })
     }
 }
-/**
- * ## Bookmarks
- *
- * Defining a bookmark is simple. We just store the cursor location and file in
- * a `Bookmark` object, and store it in the `bookmarks` array.
- */
-function defineBookmark(args?: BookmarkArgs) {
-    let editor = vscode.window.activeTextEditor
-    if (editor) {
-        let label = args?.bookmark?.toString() || '1'
-        if(label === '1'){
-            let nums = Object.keys(bookmarks).
-                filter((k: string) => /[0-9]+/.test(k))
-            if(nums.length > 0){
-                let maxNum = nums.
-                    map(k => Number(k)).
-                    reduce((a,b) => a > b ? a : b)
-                label = (maxNum + 1).toString()
-            }
-        }
-        if(bookmarks[label]){
-            vscode.window.showWarningMessage("ModalKeys - Bookmark already defined. Clear it first.")
-            return
-        }
-        let document = editor.document
-        let position = editor.selection.active
-        bookmarks[label] = new Bookmark(label, document, position)
 
-        updateBookmarkDecorators(editor)
-    }
-}
-
-function updateBookmarkDecorators(editor: vscode.TextEditor){
-    let kv = Object.entries(bookmarks)
-    editor.setDecorations(bookMarkDecorator, kv.map(([label, mark]) => ({
-         range: new vscode.Range(
-            new vscode.Position(mark.position.line, 0),
-            new vscode.Position(mark.position.line, editor.document.lineAt(mark.position.line).range.end.character + 1),
-        ),
-        renderOptions: { after: {
-            margin: "0.5em",
-            contentText: "mark "+label,
-            color: new vscode.ThemeColor("editorLineNumber.foreground")
-        } }
-    })))
-}
-
-function clearBookmark(args?: BookmarkArgs){
-    let editor = vscode.window.activeTextEditor
-    if(editor){
-        let ed = editor
-        let label = args?.bookmark?.toString() || '1'
-        if(label === '1'){
-            let nearNum = Object.values(bookmarks).
-                filter(mark => mark.position.line === ed.selection.active.line)
-            if(nearNum.length > 0){
-                label = nearNum[0].label
-            }
-        }
-        delete bookmarks[label]
-        updateBookmarkDecorators(editor)
-    }
-}
-
-/**
- * Jumping to bookmark is also easy, just call the `changeSelection` function
- * we already defined. It makes sure that selection is visible.
- */
-async function goToBookmark(args?: BookmarkArgs): Promise<void> {
-    let label = args?.bookmark?.toString() || '1'
-    if(label === '1'){
-        let ed = vscode.window.activeTextEditor
-        let numBooks = Object.values(bookmarks).
-            filter(x => /[0-9]+/.test(x.label))
-        let nearNum = numBooks.
-            filter(mark => mark.position.line === ed?.selection?.active?.line)
-        let sorted = numBooks.sort((a,b) => Number(a.label) < Number(b.label) ? -1 : 1)
-        let i = nearNum.length > 0 ? sorted.indexOf(nearNum[0]) : 0
-        if(i < sorted.length-1){
-            label = sorted[i+1].label.toString()
-        }else{
-            label = sorted[0].label.toString()
-        }
-    }
-    let bm = bookmarks[label]
-    if (bm) {
-        await vscode.window.showTextDocument(bm.document)
-        let editor = vscode.window.activeTextEditor
-        if (editor) {
-            if (args?.select)
-                changeSelection(editor, editor.selection.anchor, bm.position)
-            else
-                changeSelection(editor, bm.position, bm.position)
-        }
-    }
-}
-/**
- * To show the list of bookmarks in the command menu, we provide a new command.
- */
-async function showBookmarks(): Promise<void> {
-    let items = Object.getOwnPropertyNames(bookmarks).map(name => bookmarks[name])
-    let selected = await vscode.window.showQuickPick(items, {
-        placeHolder: "Visual bookmark to jump to",
-        matchOnDescription: true
-    })
-    if (selected)
-        await goToBookmark({ bookmark: selected.label })
-}
 /**
  * This helper function changes the selection range in the active editor. It
  * also makes sure that the selection is visible.
@@ -1051,45 +943,7 @@ function changeSelection(editor: vscode.TextEditor, anchor: vscode.Position,
     editor.selection = new vscode.Selection(anchor, active)
     editor.revealRange(editor.selection)
 }
-/**
- * ## Quick Snippets
- *
- * Supporting quick snippets is also a pleasantly simple job. First we implement
- * the `modalkeys.fillSnippetArgs` command, which replaces (multi-)selection
- * ranges with `$1`, `$2`, ...
- */
-async function fillSnippetArgs(): Promise<void> {
-    let editor = vscode.window.activeTextEditor
-    if (editor) {
-        let sel = editor.selections
-        await editor.edit(eb => {
-            for (let i = 0; i < sel.length; i++)
-                eb.replace(sel[i], "$" + (i + 1))
-        })
-    }
-}
-/**
- * Defining a snippet just puts the selection into an array.
- */
-function defineQuickSnippet(args?: QuickSnippetArgs) {
-    let editor = vscode.window.activeTextEditor
-    if (editor)
-        quickSnippets[args?.snippet || 0] =
-            editor.document.getText(editor.selection)
-}
-/**
- * Inserting a snippet is done as easily with the built-in command. We enter
- * insert mode automatically before snippet is expanded.
- */
-async function insertQuickSnippet(args?: QuickSnippetArgs): Promise<void> {
-    let i = args?.snippet || 0
-    let snippet = quickSnippets[i]
-    if (snippet) {
-        enterMode(Insert)
-        await vscode.commands.executeCommand("editor.action.insertSnippet",
-            { snippet })
-    }
-}
+
 /**
  * ## Invoking Commands via Key Bindings
  *
@@ -1109,121 +963,7 @@ async function typeKeys(args: TypeKeysArgs): Promise<void> {
     }
     if(keyMode !== startMode) enterMode(startMode)
 }
-/**
- * ## Advanced Selection Command
- *
- * For selecting ranges of text between two characters (inside parenthesis, for
- * example) we add the `modalkeys.selectBetween` command. See the
- * [instructions](../README.html#selecting-text-between-delimiters) for the list
- * of parameters this command provides.
- */
-function selectBetween(args: SelectBetweenArgs) {
-    let editor = vscode.window.activeTextEditor
-    if (!editor)
-        return
-    if (typeof args !== 'object')
-        throw Error(`${selectBetweenId}: Invalid args: ${JSON.stringify(args)}`)
-    let doc = editor.document
-    /**
-     * Get position of cursor and anchor. These positions might be in "reverse"
-     * order (cursor lies before anchor), so we need to sort them into `lowPos`
-     * and `highPos` variables and corresponding offset variables. These are
-     * used to determine the search range later on.
-     *
-     * Since `to` or `from` parameter might be missing, we initialize the
-     * `fromOffs` and `toOffs` variables to low and high offsets. They delimit
-     * the range to be selected at the end.
-     */
-    let cursorPos = editor.selection.active
-    let anchorPos = editor.selection.anchor
-    let [highPos, lowPos] = cursorPos.isAfterOrEqual(anchorPos) ?
-        [cursorPos, anchorPos] : [anchorPos, cursorPos]
-    let highOffs = doc.offsetAt(highPos)
-    let lowOffs = doc.offsetAt(lowPos)
-    let fromOffs = lowOffs
-    let toOffs = highOffs
-    /**
-     * Next we determine the search range. The `startOffs` marks the starting
-     * offset and `endOffs` the end. Depending on the specified scope these
-     * variables are either set to start/end of the current line or the whole
-     * document.
-     *
-     * In the actual search, we have two main branches: one for the case when
-     * regex search is used and another for the normal text search.
-     */
-    let startPos = new vscode.Position(args.docScope ? 0 : lowPos.line, 0)
-    let endPos = doc.lineAt(args.docScope ? doc.lineCount - 1 : highPos.line)
-        .range.end
-    let startOffs = doc.offsetAt(startPos)
-    let endOffs = doc.offsetAt(endPos)
-    if (args.regex) {
-        if (args.from) {
-            /**
-             * This branch searches for regex in the `from` parameter starting
-             * from `startPos` continuing until `lowPos`. We need to find the
-             * last occurrence of the regex, so we have to add a global modifier
-             * `g` and iterate through all the matches. In case there are no
-             * matches `fromOffs` gets the same offset as `startOffs` meaning
-             * that the selection will extend to the start of the search scope.
-             */
-            fromOffs = startOffs
-            let text = doc.getText(new vscode.Range(startPos, lowPos))
-            let re = new RegExp(args.from, args.caseSensitive ? "g" : "gi")
-            let match: RegExpExecArray | null = null
-            while ((match = re.exec(text)) != null)
-                fromOffs = startOffs + match.index +
-                    (args.inclusive ? 0 : match[0].length)
-        }
-        if (args.to) {
-            /**
-             * This block finds the regex in the `to` parameter starting from
-             * the range `[highPos, endPos]`. Since we want to find the first
-             * occurrence, we don't need to iterate over the matches in this
-             * case.
-             */
-            toOffs = endOffs
-            let text = doc.getText(new vscode.Range(highPos, endPos))
-            let re = new RegExp(args.to, args.caseSensitive ? undefined : "i")
-            let match = re.exec(text)
-            if (match)
-                toOffs = highOffs + match.index +
-                    (args.inclusive ? match[0].length : 0)
-        }
-    }
-    else {
-        /**
-         * This branch does the regular text search. We retrieve the whole
-         * search range as string and use `indexOf` and `lastIndexOf` methods
-         * to find the strings in `to` and `from` parameters. Case insensitivity
-         * is done by converting both the search range and search string to
-         * lowercase.
-         */
-        let text = doc.getText(new vscode.Range(startPos, endPos))
-        if (!args.caseSensitive)
-            text = text.toLowerCase()
-        if (args.from) {
-            fromOffs = text.lastIndexOf(args.caseSensitive ?
-                args.from : args.from.toLowerCase(), lowOffs - startOffs)
-            fromOffs = fromOffs < 0 ? startOffs :
-                startOffs + fromOffs + (args.inclusive ? 0 : args.from.length)
-        }
-        if (args.to) {
-            toOffs = text.indexOf(args.caseSensitive ?
-                args.to : args.to.toLowerCase(), highOffs - startOffs)
-            toOffs = toOffs < 0 ? endOffs :
-                startOffs + toOffs + (args.inclusive ? args.to.length : 0)
-        }
-    }
-    if (cursorPos.isAfterOrEqual(anchorPos))
-        /**
-         * The last thing to do is to select the range from `fromOffs` to
-         * `toOffs`. We want to preserve the direction of the selection. If
-         * it was reserved when this command was called, we flip the variables.
-         */
-        changeSelection(editor, doc.positionAt(fromOffs), doc.positionAt(toOffs))
-    else
-        changeSelection(editor, doc.positionAt(toOffs), doc.positionAt(fromOffs))
-}
+
 /**
  * ## Repeat Last Change Command
  *
