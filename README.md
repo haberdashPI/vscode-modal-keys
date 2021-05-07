@@ -19,20 +19,32 @@ ModalKeys is a fork of [ModalEdit](https://github.com/johtela/vscode-modaledit);
 debt to the hard and thoughtful work put into that extension. There are some important features that
 differ between the two extensions.
 
-1. Revised keymap format: I personally find ModalEdit's keymaps to be needlessly cumbersome.
-   I've tried to increase the succinctness and ease of use of the keymap format.
+1. Revised keymap format: I personally find ModalEdit's keymap format to be a little cumbersome.
+   I've tried to increase its succinctness and ease of use.
 2. Customized modes: ModalEdit only allows for a 'normal' and 'visual' mode, ModalKeys
    allows for any number of custom "normal-like" modes.
-3. Search term highlighting: ModalEdit does not highlight text that is part of a search
+3. Search term highlighting: ModalEdit does not highlight text that is part of its custom search feature
    (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19) for this
-   feature), ModalKeys allows search text to be highlighted.
-4. Kakoune-like 'repeat-selection': if you are designing a modal editing experience around
+   feature), ModalKeys highlights searched text by default (but you can turn this feature off).
+4. Kakoune-like 'repeat-selection': if you are creating a modal editing experience around
    kakoune's noun-verb model (compared to vim's verb-noun model), it is useful to be able to
    repeat the last selection (e.g. noun) that occurred before a verb. ModalKeys provides a
    `repateLastUsedSelection` for this purpose.
-5. Visual bookmarking: when you [place bookmarks](#Bookmarks), there is a visual indication of the bookmark at its location.
 
-**TODO**: keyboard macros
+There are a few things ModalKeys removes in functionality from ModalEdit that I did not want
+to maintain. These are features for which there are alternatives I prefer.
+
+1. Bookmarks - ModalEdit has basic implementation of bookmarking. I personally find that the
+   existing extensions focused on just implementing bookmarks do a better job of
+   implementing this feature, and they are easily interfaced with ModalKeys.
+2. Quick Snippets - I prefer keyboard macros and VSCode's built in snippets. There are also
+   good, dedicated extensions for various snippet features you might want.
+3. Select between - this operator was buggy (it did not handle recursive brakcets with
+   quotes properly), and there are several extensions (and built in commands) that already
+   provide the necessary behavior.
+
+My re-organizing of this project is also part of my plans to pave the way for fully
+functional keyboard macros.
 
 ## Getting Started
 
