@@ -7,10 +7,11 @@
  */
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
-import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, log } from './actions'
+import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command } from './actions'
 import { TextDecoder } from 'util'
 import { IHash } from './util'
 import { markAsUntransferable } from 'node:worker_threads'
+import { executionAsyncResource } from 'node:async_hooks'
 //#endregion
 /**
  * ## Command Arguments
@@ -30,6 +31,7 @@ interface SearchArgs {
     acceptAfter?: number
     selectTillMatch?: boolean
     offset?: string
+    executeAfter?: Command
 }
 
 /**
@@ -176,6 +178,7 @@ let searchSelectTillMatch = false
 let searchOffset: string
 let searchOldMode = Normal
 let searchAtStart: boolean
+let searchExecuteAfter: Command | undefined
 /**
  * Bookmarks are stored here.
  */
@@ -605,6 +608,7 @@ async function search(args: SearchArgs | string): Promise<void> {
         searchAcceptAfter = args.acceptAfter || Number.POSITIVE_INFINITY
         searchSelectTillMatch = args.selectTillMatch || false
         searchOffset = args.offset || 'inclusive'
+        searchExecuteAfter = args.executeAfter
     }
     else if (args == "\n")
         /**
@@ -861,6 +865,9 @@ async function acceptSearch(editor: vscode.TextEditor, len: number) {
     await enterMode(mode)
     searchLength = len
     positionSearch(editor, len, !searchBackwards)
+    if(searchExecuteAfter){
+        keyState.execute(searchExecuteAfter, Normal)
+    }
 }
 
 /**
