@@ -218,15 +218,7 @@ const cancelSearchId = "modalkeys.cancelSearch"
 const deleteCharFromSearchId = "modalkeys.deleteCharFromSearch"
 const nextMatchId = "modalkeys.nextMatch"
 const previousMatchId = "modalkeys.previousMatch"
-const defineBookmarkId = "modalkeys.defineBookmark"
-const goToBookmarkId = "modalkeys.goToBookmark"
-const clearBookmarkId = "modalkeys.clearBookmark"
-const showBookmarksId = "modalkeys.showBookmarks"
-const fillSnippetArgsId = "modalkeys.fillSnippetArgs"
-const defineQuickSnippetId = "modalkeys.defineQuickSnippet"
-const insertQuickSnippetId = "modalkeys.insertQuickSnippet"
 const typeKeysId = "modalkeys.typeKeys"
-const selectBetweenId = "modalkeys.selectBetween"
 const repeatLastChangeId = "modalkeys.repeatLastChange"
 const repeatLastUsedSelectionId = "modalkeys.repeatLastUsedSelection"
 const touchDocumentId = 'modalkeys.touchDocument'
@@ -255,15 +247,7 @@ export function register(context: vscode.ExtensionContext) {
             deleteCharFromSearch),
         vscode.commands.registerCommand(nextMatchId, nextMatch),
         vscode.commands.registerCommand(previousMatchId, previousMatch),
-        vscode.commands.registerCommand(defineBookmarkId, defineBookmark),
-        vscode.commands.registerCommand(goToBookmarkId, goToBookmark),
-        vscode.commands.registerCommand(clearBookmarkId, clearBookmark),
-        vscode.commands.registerCommand(showBookmarksId, showBookmarks),
-        vscode.commands.registerCommand(fillSnippetArgsId, fillSnippetArgs),
-        vscode.commands.registerCommand(defineQuickSnippetId, defineQuickSnippet),
-        vscode.commands.registerCommand(insertQuickSnippetId, insertQuickSnippet),
         vscode.commands.registerCommand(typeKeysId, typeKeys),
-        vscode.commands.registerCommand(selectBetweenId, selectBetween),
         vscode.commands.registerCommand(repeatLastChangeId, repeatLastChange),
         vscode.commands.registerCommand(repeatLastUsedSelectionId, repeatLastUsedSelection),
         vscode.commands.registerCommand(touchDocumentId, touchDocument),
