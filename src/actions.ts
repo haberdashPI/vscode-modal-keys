@@ -530,21 +530,28 @@ export class KeyState {
      * defines some variables that can be used in the evaluated text.
      */
     evalString__(str: string, __mode: string): any {
-        let __file = undefined
-        let __line = undefined
-        let __col = undefined
-        let __char = undefined
-        let __selection = undefined
+        let __file
+        let __line
+        let __col
+        let __char
+        let __language
         let __count = this.argumentCount || 1
+        let __selections
+        let __selection
+        let __selectionstr
         let editor = vscode.window.activeTextEditor
         if (editor) {
             let cursor = editor.selection.active
+            __language = editor.document.languageId
             __file = editor.document.fileName
             __line = cursor.line
             __col = cursor.character
             __char = editor.document.getText(new vscode.Range(cursor,
                 cursor.translate({ characterDelta: 1 })))
-            __selection = editor.document.getText(editor.selection)
+
+            __selection = editor.selection
+            __selections = editor.selections
+            __selectionstr = editor.document.getText(editor.selection)
         }
         return eval(`(${str})`)
     }
