@@ -266,30 +266,26 @@ repeatedly by using <key>f</key> and <key>F</key> keys which move directly to a
 given character. VS Code provides no built-in command for this, but ModalKeys
 includes an incremental search command which can be customized to this purpose.
 
-> TODO: stop tutorial here, we need to first implement the clearner means of
-> handling serach before documenting it.
-
 ```js
         "f": {
-            "condition": "__selecting",
-            "true": {
-                "command": "modalkeys.search",
-                "args": {
+            "if": "__selecting",
+            "then": {
+                "modalkeys.search": {
                     "caseSensitive": true,
                     "acceptAfter": 1,
                     "selectTillMatch": true,
                 }
             },
-            "false": {
-                "command": "modalkeys.search",
-                "args": {
+            "else": {
+                "modalkeys.search": {
                     "caseSensitive": true,
                     "acceptAfter": 1,
-                    "typeAfterAccept": "h",
+                    "offset": "exclusive",
                 }
             },
         },
 ```
+
 The command is a bit involved, so let's explain what each argument does.
 
 - `caseSensitive` sets the search mode to case sensitive (as in Vim).
@@ -298,61 +294,62 @@ The command is a bit involved, so let's explain what each argument does.
   search or <key>Esc</key> to cancel it.
 - `selectTillMatch` argument controls whether selection is extended until the
   searched character. This depends on whether we have selection mode on or not.
-- `typeAfterAccept` argument allows you to run other commands (using their key
-  bindings) after the search is done. By default, `modalEdit.search` command
-  selects the found character(s). With <key>h</key> command we move the cursor
-  over the searched character.
+- `offset` argument allows determine where the cursor should land at each match of the
+  search. By default, `modalEdit.search` uses an "inclusive" offset, meaning the cursor ends
+  after the match when moving foward and before it when moving backward. When set to
+  exclusive, the opposite is true: the cursor lands before when moving forward and after
+  the match when moving backward (the offset can also be set to "start" or "end" to
+  always end at the start or end of a match, regardless of search direction).
 
 Now we can implement the opposite <key>F</key> command which searches for the
 previous character. The `backwards` parameter switches the search direction.
+
 ```js
         "F": {
-            "condition": "__selecting",
-            "true": {
-                "command": "modalkeys.search",
-                "args": {
+            "if": "__selecting",
+            "then": {
+                "modalkeys.search": {
                     "caseSensitive": true,
                     "acceptAfter": 1,
                     "selectTillMatch": true,
                     "backwards": true,
                 }
             },
-            "false": {
-                "command": "modalkeys.search",
-                "args": {
+            "else": {
+                "modalkeys.search": {
                     "caseSensitive": true,
                     "acceptAfter": 1,
-                    "typeAfterAccept": "h",
+                    "offset": "exclusive",
                     "backwards": true
                 }
             },
         },
 ```
+
 With <key>;</key> and <key>,</key> keys you can repeat the previous <key>f</key>
 or <key>F</key> commands either forwards or backwards.
+
 ```js
         ";": "modalkeys.nextMatch",
         ",": "modalkeys.previousMatch",
 ```
-> We omitted few useful jump commands, like <key>t</key>, <key>T</key>,
-> <key>{</key>, and <key>}</key> as there are no corresponding commands in
-> available in VS Code. You can always look for other [extensions][] that
-> provide similar functionality.
+
+> We omitted a few useful jump commands, like <key>t</key>, <key>T</key>,
+> <key>{</key>, and <key>}</key>.  The t and T commands could be implemented
+> using the "exclusive" offset. The paragraph operators, require an extension, like
+> [selection-utilities](https://github.com/haberdashPI/vscode-selection-utilities) to implement.
 
 ### Center Cursor on Screen
 
 The last movement command we add is <key>z</key><key>z</key> that scrolls the
 screen so that cursor is at the center. Again, the ability to use JS expression
-in arguments comes in handy. We use the `__line` parameter to get the line where
+in arguments comes in handy: WE use the `__line` parameter to get the line where
 the cursor is.
+
 ```js
-        "z": {
-            "z": {
-                "command": "revealLine",
-                "args": "{ lineNumber: __line, at: 'center' }"
-            }
-        },
+        "zz": { "revealLine": { lineNumber: '__line', at: 'center' } }
 ```
+
 Let's test some of the movement commands. We should be able to navigate now
 without using arrow keys or <key>Home</key> and <key>End</key> keys.
 
@@ -373,54 +370,51 @@ commands first.
     {
         "key": "ctrl+b",
         "command": "cursorPageUp",
-        "when": "editorTextFocus && modalkeys.normal"
+        "when": "editorTextFocus && modalkeys.mode == normal"
     },
     {
         "key": "ctrl+f",
         "command": "cursorPageDown",
-        "when": "editorTextFocus && modalkeys.normal"
+        "when": "editorTextFocus && modalkeys.mode == normal"
     }
 }
 ```
+
 ## Commands with Counts
 
 Some commands allow repeating them by typing first a number. For example,
-<key>3</key><key>j</key> moves the cursor down three lines. Implementing these
-kind of commands is possible starting from ModalKeys version 1.5 which
-introduced key ranges and [recursive keymaps][].
+<key>3</key><key>j</key> moves the cursor down three lines. When you type numbers
+as part of a key sequence, ModalKeys stores these as a number, which you can access using the `__count` variable.
 
-First of all, we define a keymap that is activated when pressing a number key
-<key>1</key>-<key>9</key>. We give the keymap an unique `id` which we can then
-recursively "call". We also add a `help` string that is shown in the status when
-the keymap is active (after user has pressed a number key).
+To make use of counts, we need to update some of the commands above.
+Below are shown the updated cursor movements that use the `__count` variable.
 
-Then we define the recursive part; we want to stay in the same keymap as long
-as user presses another number key. We implement this by defining inner key
-range <key>0</key>-<key>9</key> which maps to the `id` 1. Whenever you specify a
-number as the target for a mapping, ModalKeys treats it as an `id` that has to
-be assigned to a previously defined keymap. In this case we map back to the same
-keymap, but you can also jump to other keymaps too.
-
-When the user presses some other than numeric key, we break out from the loop
-and run an actual command. The number that was typed is stored in the `__keys`
-variable which is available to all JS expressions. In this case we use it to get
-the repeat count as a number. The JS expression in the `repeat` argument does
-just this. We also get the actual command from the last item of the `__keys`
-array and pass it to the `modalkeys.typeNormalKeys` which runs the command
-mapped to the key.
 ```js
-        "1-9": {
-            "id": 1,
-            "help": "Enter count followed by [h,j,k,l,w,b,e]",
-            "0-9": 1,
-            "h,j,k,l,w,b,e": {
-                "command": "modalkeys.typeNormalKeys",
-                "args": "{ keys: __keys[__keys.length - 1] }",
-                "repeat": "Number(__keys.slice(0, -1).join(''))"
-            },
+    "::using::cursorMove": {
+        "h": { to: 'left', select: '__selecting', value: '__count' },
+        "j": { to: 'down', select: '__selecting', value: '__count' },
+        "k": { to: 'up', select: '__selecting', value: '__count' },
+        "l": { to: 'right', select: '__selecting', value: '__count' },
+    }
+    "w": {
+        "if": "__selecting",
+        "then": { "cursorWordStartRightSelect": {}, repeat: '__count' },
+        "else": { "cursorWordStartRight": {}, repeat: '__count' },
+    },
+    "b": {
+        "if": "__selecting",
+        "then": { "cursorWordStartLeftSelect",: {}, repeat: '__count' },
+        "else": { "cursorWordStartLeft": {}, repeat: '__count' },
+    },
+    "e": {
+        "if": "__selecting",
+        "then": { "cursorWordEndRightSelect",: {}, repeat: '__count' },
+        "else": { "cursorWordEndRight": {}, repeat: '__count' },
+    },
+
 ```
-With this one reletively simply mapping we can implement the repeating
-functionality for any command that we have already defined.
+
+Some commands can internally repeat (e.g. `value` for `cursorMove`), and this is generally better, as it execute faster. If a command does not take a parameter like this however, you can make use of the `repeat` parameter, as shown above. This will simply call the command multiple times.
 
 ### Jumping to Line
 
@@ -431,21 +425,14 @@ need to use two commands to do the jumping. First we move the target line to the
 top of the screen, and then we move the cursor to the same line. Unfortunately
 the built-in command `workbench.action.gotoLine` does not take any arguments, so
 we have to reinvent the wheel.
+
 ```js
-            "G": [
-                {
-                    "command": "revealLine",
-                    "args": "{ lineNumber: Number(__keys.slice(0, -1).join('')) - 1, at: 'top' }"
-                },
-                {
-                    "command": "cursorMove",
-                    "args": {
-                        "to": "viewPortTop"
-                    }
-                }
-            ]
-        },
+    "G": [
+        { "revealLine": { lineNumber: '__count', at: 'top' } },
+        { "cursorMove": { "to": "viewPortTop" } }
+    ]
 ```
+
 ## Editing
 
 Now we'll implement Vim's common editing commands. We only add the ones that
@@ -465,21 +452,21 @@ _Change_ commands delete some text and then enter insert mode.
 and <key>c</key><key>w</key> changes the end of the word. Three key sequnce
 <key>c</key><key>i</key><key>w</key> changes the whole word under the cursor.
 ```js
-        "c": {
-            "c": [
-                "deleteAllLeft",
-                "deleteAllRight",
-                "modalkeys.enterInsert"
-            ],
-            "$": [
-                "deleteAllRight",
-                "modalkeys.enterInsert"
-            ],
-            "w": [
-                "deleteWordEndRight",
-                "modalkeys.enterInsert"
-            ],
+    "cc": [
+        "deleteAllLeft",
+        "deleteAllRight",
+        "modalkeys.enterInsert"
+    ],
+    "c$": [
+        "deleteAllRight",
+        "modalkeys.enterInsert"
+    ],
+    "cw": [
+        "deleteWordEndRight",
+        "modalkeys.enterInsert"
+    ],
 ```
+
 ### Change Until/Around/Inside
 
 Very useful variants of change commands are those which allow changing text
@@ -489,111 +476,81 @@ upto a given character or between given characters. For example,
 marks. The cursor can be anywhere inside the quotation marks and the command
 still works.
 
-To help implement these type of operations version 1.6 included the
-[`modalkeys.selectBetween` command][selectBetween]. It is a swiss army knife
-type of command that serves many use cases. We use it first to implement the
-"change until" commands: <key>c</key><key>t</key>_x_ changes the text from the
-cursor till the next occurrence of _x_. <key>c</key><key>f</key>_x_ does the
-same and deletes _x_ too.
-```js
-            "t,f": {
-                "help": "Change until _",
-                " -~": [
-                    {
-                        "command": "modalkeys.selectBetween",
-                        "args": "{ to: __keys[2], inclusive: __keys[1] == 'f' }"
-                    },
-                    "deleteLeft",
-                    "modalkeys.enterInsert"
-                ]
-            },
-```
-We exploit key ranges to capture all visible ASCII character from spacebar to
-tilde. We find the next occurrence of the character typed last (found in
-`__keys[2]`) and select the range. Note that `selectBetween` only searches till
-the end of the current line by default. If you want to search till the end of
-the whole document, set the `docScope` flag to `true`. When only the `to`
-argument is specified, the selection starts from the cursor position.
-
-If the user pressed <key>f</key> instead of <key>t</key> as the second key in
-the sequence, we set the `inclusive` flag to true. That extends the selection
-over the searched character.
-
-Next we add the change around/inside commands. The first variant takes care of
-the characters that are not braces.
-```js
-            "a,i": {
-                "help": "Change around/inside _",
-                " -/,:-@,[-`,{-~": [
-                    {
-                        "command": "modalkeys.selectBetween",
-                        "args": "{ from: __keys[2], to: __keys[2], inclusive: __keys[1] == 'a' }"
-                    },
-                    "deleteLeft",
-                    "modalkeys.enterInsert"
-                ],
-```
-The rather cryptic key range captures all visible non-alphanumeric ASCII
-characters. The rest of the command is exactly same as in the previous example.
-The only difference is that we store the character to be searched into both
-`from` and `to` arguments.
-
-Now we can add the commands that change text inside braces, such as
-<key>c</key><key>i</key><key>{</key> or <key>c</key><key>a</key><key>]</key>.
+First, we use the `executeAfter` option of the search command to
+implement changing all characters up until the given letter.
 
 ```js
-                "(,)": [
-                    {
-                        "command": "modalkeys.selectBetween",
-                        "args": "{ from: '(', to: ')', inclusive: __keys[1] == 'a' }"
-                    },
-                    "deleteLeft",
-                    "modalkeys.enterInsert"
-                ],
-                "{,}": [
-                    {
-                        "command": "modalkeys.selectBetween",
-                        "args": "{ from: '{', to: '}', inclusive: __keys[1] == 'a' }"
-                    },
-                    "deleteLeft",
-                    "modalkeys.enterInsert"
-                ],
-                "[,]": [
-                    {
-                        "command": "modalkeys.selectBetween",
-                        "args": "{ from: '[', to: ']', inclusive: __keys[1] == 'a' }"
-                    },
-                    "deleteLeft",
-                    "modalkeys.enterInsert"
-                ],
-                "<,>": [
-                    {
-                        "command": "modalkeys.selectBetween",
-                        "args": "{ from: '<', to: '>', inclusive: __keys[1] == 'a' }"
-                    },
-                    "deleteLeft",
-                    "modalkeys.enterInsert"
-                ],
+    "ct": {
+        "modalkeys.search": {
+            caseSensitive: true,
+            acceptAfter: 1,
+            backwards: false,
+            selectTillMatch: true,
+            offset: 'exclusive',
+            wrapAround: false,
+            executeAfter: [
+                "deleteLeft",
+                "modalkeys.enterInsert"
+            ]
+        }
+    }
+    "cf": {
+        "modalkeys.search": {
+            caseSensitive: true,
+            acceptAfter: 1,
+            backwards: false,
+            selectTillMatch: true,
+            offset: 'inclusive',
+            wrapAround: false,
+            executeAfter: [
+                "deleteLeft",
+                "modalkeys.enterInsert"
+            ]
+        }
+    }
 ```
+
+Next, we add commands to change the text inside or around various brackets, using an extension which [implements this behavior](https://github.com/dbankier/vscode-quick-select/).
+
+```js
+    "ci(": [ "modalkeys.cancelMultipleSelections", "extension.selectParenthesis", "deleteLeft", "modalkeys.enterInsert" ],
+    "ca(": [ "modalkeys.cancelMultipleSelections", "extension.selectParenthesis", "extension.selectParenthesis", "deleteLeft", "modalkeys.enterInsert" ],
+    "ci[": [ "modalkeys.cancelMultipleSelections", "extension.selectSquareBrackets", "deleteLeft", "modalkeys.enterInsert" ],
+    "ca[": [ "modalkeys.cancelMultipleSelections", "extension.selectSquareBrackets", "extension.selectSquareBrackets", "deleteLeft", "modalkeys.enterInsert" ],
+    "ci{": [ "modalkeys.cancelMultipleSelections", "extension.selectAngleBrackets", "deleteLeft", "modalkeys.enterInsert" ],
+    "ca{": [ "modalkeys.cancelMultipleSelections", "extension.selectAngleBrackets", "extension.selectAngleBrackets", "deleteLeft", "modalkeys.enterInsert" ],
+```
+
+For each of these commands we first clear the selection, while leaving multiple cursors intact, to ensure the subsequent commands behave properly. Then we use the extension to select the appropriate region of text, delete it, and enter insert mode.
+
 It is also useful to be able to change the current word the cursor is on. You
 can do this by typing <key>c</key><key>i</key><key>w</key> (preserves separators)
-or <key>c</key><key>a</key><key>w</key>. We use regular expressions as the
-delimiters in this case. The `\W` regular expression matches all
+or <key>c</key><key>a</key><key>w</key>. We the bulit in `selectBetween` command for this operation. The `\W` regular expression matches all
 non-alphanumeric characters (except underscore). Note the double escaping
 needed to enter the `\` character. There are other commands we could use to
 implement the operation, but this version works reliably in all scenarios.
+
 ```js
-                "w": [
-                    {
-                        "command": "modalkeys.selectBetween",
-                        "args": "{ from: '\\\\W', to: '\\\\W', regex: true, inclusive: __keys[1] == 'a' }"
-                    },
-                    "deleteLeft",
-                    "modalkeys.enterInsert"
-                ]
-            }
-        },
+        "ciw": [
+            {
+                "command": "modalkeys.selectBetween",
+                "args": "{ from: '\\\\W', to: '\\\\W', regex: true, inclusive: false }"
+            },
+            "deleteLeft",
+            "modalkeys.enterInsert"
+        ],
+        "ciw": [
+            {
+                "command": "modalkeys.selectBetween",
+                "args": "{ from: '\\\\W', to: '\\\\W', regex: true, inclusive: true }"
+            },
+            "deleteLeft",
+            "modalkeys.enterInsert"
+        ]
 ```
+
+Note that `selectBetween` could be used to select a poor man's version of bracket selection, but these commands will not work properly when brackets interact with quotes.
+
 > We could also implement delete commands <key>d</key><key>i</key><key>w</key>,
 > <key>d</key><key>t</key><key>-</key>, etc. in the similar fashion. But for the
 > sake of keeping the tutorial short, we'll leave those as an exercise.
@@ -605,20 +562,7 @@ A shorthand for  <key>c</key><key>$</key> command is <key>C</key>.
             "modalkeys.enterInsert"
         ],
 ```
-_Substitution_ commands do  basically same things as change commands;
-<key>s</key> changes the character under cursor, and <key>S</key> is same as
-<key>c</key><key>c</key>.
-```js
-        "s": [
-            "deleteRight",
-            "modalkeys.enterInsert"
-        ],
-        "S": [
-            "deleteAllLeft",
-            "deleteAllRight",
-            "modalkeys.enterInsert"
-        ],
-```
+
 ### Undo & Redo
 
 You can undo the last change with <key>u</key>. We also clear the selection to
@@ -683,6 +627,7 @@ before.
         ],
         "P": "editor.action.clipboardPasteAction",
 ```
+
 ### Switching Case
 
 Switching selected text to upper or lower case is done with a nifty trick.
