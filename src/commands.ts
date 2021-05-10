@@ -29,11 +29,7 @@ interface SearchArgs {
     wrapAround?: boolean
     acceptAfter?: number
     selectTillMatch?: boolean
-    typeAfterAccept?: string
-    typeBeforeNextMatch?: string
-    typeAfterNextMatch?: string
-    typeBeforePreviousMatch?: string
-    typeAfterPreviousMatch?: string
+    offset?: string
 }
 
 /**
@@ -160,6 +156,7 @@ let searchString: string
 let searchStartSelections: vscode.Selection[]
 let searchInfo: string | null = null
 let searchChanged: boolean = false;
+let searchLength: number = 0
 /**
  * Search text decoration (to highlight the current and any other visible matches)
  */
@@ -176,12 +173,9 @@ let searchCaseSensitive = false
 let searchWrapAround = false
 let searchAcceptAfter = Number.POSITIVE_INFINITY
 let searchSelectTillMatch = false
-let searchTypeAfterAccept: string | undefined
-let searchTypeBeforeNextMatch: string | undefined
-let searchTypeAfterNextMatch: string | undefined
-let searchTypeBeforePreviousMatch: string | undefined
-let searchTypeAfterPreviousMatch: string | undefined
+let searchOffset: string
 let searchOldMode = Normal
+let searchAtStart: boolean
 /**
  * Bookmarks are stored here.
  */
@@ -610,17 +604,13 @@ async function search(args: SearchArgs | string): Promise<void> {
         searchWrapAround = args.wrapAround || false
         searchAcceptAfter = args.acceptAfter || Number.POSITIVE_INFINITY
         searchSelectTillMatch = args.selectTillMatch || false
-        searchTypeAfterAccept = args.typeAfterAccept
-        searchTypeBeforeNextMatch = args.typeBeforeNextMatch
-        searchTypeAfterNextMatch = args.typeAfterNextMatch
-        searchTypeBeforePreviousMatch = args.typeBeforePreviousMatch
-        searchTypeAfterPreviousMatch = args.typeAfterPreviousMatch
+        searchOffset = args.offset || 'inclusive'
     }
     else if (args == "\n")
         /**
          * If we get an enter character we accept the search.
          */
-        await acceptSearch()
+        await acceptSearch(editor, searchString.length-1)
     else {
         /**
          * Otherwise we just add the character to the search string and find
@@ -630,9 +620,10 @@ async function search(args: SearchArgs | string): Promise<void> {
         searchString += args
         highlightMatches(editor, searchStartSelections)
         if (searchString.length >= searchAcceptAfter)
-            await acceptSearch()
+            await acceptSearch(editor, searchString.length)
     }
 }
+
 /**
  * The actual search functionality is located in this helper function. It is
  * used by the actual search command plus the commands that jump to next and
@@ -823,17 +814,53 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
     }
 }
 
+async function unpositionSearch(editor: vscode.TextEditor, forward: boolean){
+    let offset = searchAtStart === forward ? (forward ? searchLength : -searchLength) : 0
+
+    if(offset !== 0){
+        editor.selections = editor.selections.map(x => {
+            let newpos = x.active.translate(0, offset)
+            return new vscode.Selection(searchSelectTillMatch ? x.anchor : newpos, newpos)
+        })
+    }
+}
+
+async function positionSearch(editor: vscode.TextEditor, len: number, forward: boolean){
+    let offset = 0;
+    if(searchOffset === 'exclusive'){
+        offset = forward ? -len : len
+        searchAtStart = forward
+    }else if(searchOffset === 'start'){
+        if(forward){ offset = -len }
+        searchAtStart = true
+    }else if(searchOffset === 'end'){
+        if(!forward){ offset = len }
+        searchAtStart = false
+    }else if(searchOffset !== 'inclusive'){
+        vscode.window.showErrorMessage(`Unexpected search offset "${searchOffset}"`)
+    }else{
+        searchAtStart = !forward
+    }
+
+    if(offset !== 0){
+        editor.selections = editor.selections.map(x => {
+            let newpos = x.active.translate(0, offset)
+            return new vscode.Selection(searchSelectTillMatch ? x.anchor : newpos, newpos)
+        })
+    }
+}
+
 /**
  * ### Accepting Search
  *
  * Accepting the search resets the mode variables. Additionally, if
  * `typeAfterAccept` argument is set we run the given normal mode commands.
  */
-async function acceptSearch() {
+async function acceptSearch(editor: vscode.TextEditor, len: number) {
     let mode = searchOldMode
     await enterMode(mode)
-    if (searchTypeAfterAccept)
-        await typeKeys({ keys: searchTypeAfterAccept, mode: mode })
+    searchLength = len
+    positionSearch(editor, len, !searchBackwards)
 }
 
 /**
@@ -894,11 +921,10 @@ function deleteCharFromSearch() {
 async function nextMatch(): Promise<void> {
     let editor = vscode.window.activeTextEditor
     if (editor && searchString) {
-        if (searchTypeBeforeNextMatch)
-            await typeKeys({ keys: searchTypeBeforeNextMatch })
+        unpositionSearch(editor, !searchBackwards)
         highlightMatches(editor, editor.selections)
-        if (searchTypeAfterNextMatch)
-            await typeKeys({ keys: searchTypeAfterNextMatch })
+        positionSearch(editor, searchLength, !searchBackwards)
+        editor.revealRange(editor.selection)
     }
 }
 /**
@@ -908,13 +934,12 @@ async function nextMatch(): Promise<void> {
 async function previousMatch(): Promise<void> {
     let editor = vscode.window.activeTextEditor
     if (editor && searchString) {
-        if (searchTypeBeforePreviousMatch)
-            await typeKeys({ keys: searchTypeBeforePreviousMatch })
         searchBackwards = !searchBackwards
+        unpositionSearch(editor, !searchBackwards)
         highlightMatches(editor, editor.selections)
+        positionSearch(editor, searchLength, !searchBackwards)
+        editor.revealRange(editor.selection)
         searchBackwards = !searchBackwards
-        if (searchTypeAfterPreviousMatch)
-            await typeKeys({ keys: searchTypeAfterPreviousMatch })
     }
 }
 
