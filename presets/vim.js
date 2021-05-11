@@ -459,6 +459,49 @@ motion in visual mode selecting a range of text, and then running the command
 on the selection. It does not matter which editing command we run, all of them
 can be mapped the same way.
         */
+       // TODO: implement the `operators` function
+       ...operators({
+        operators: {
+            "d": "editor.action.clipboardCutAction",
+            "y": [ "editor.action.clipboardCopyAction", "modalkeys.cancelMultipleSelections" ],
+            "c": [
+                "deleteRight",
+                { if: "!__selection.isSingleLine", then: "editor.action.insertLineBefore" },
+                "modalkeys.enterInsert"
+            ],
+            "<": ["editor.action.outdentLines", "modalkeys.cancelMultipleSelections" ],
+            ">": ["editor.action.indentLines", "modalkeys.cancelMultipleSelections" ]
+        },
+        objects: {
+            "w": ["modalkeys.cancelMultipleSelections", "cursorWordRightSelect"],
+            "b": ["modalkeys.cancelMultipleSelections", "cursorWordLeftSelect"],
+            "j": [
+                "modalkeys.cancelMultipleSelections",
+                {
+                    "cursorMove": {
+                        to: 'down',
+                        by: 'wrappedLine',
+                        select: true,
+                        value: '__count'
+                    }
+                },
+                "expandLineSelection",
+            ],
+            "k": [
+                "modalkeys.cancelMultipleSelections",
+                {
+                    "cursorMove": {
+                        to: 'up',
+                        by: 'wrappedLine',
+                        select: true,
+                        value: '__count'
+                    }
+                },
+                "expandLineSelection",
+            ]
+        }
+       }),
+
         "d,y,c,<,>,=": {
             "id": 2,
             "help": "Edit with motion",
