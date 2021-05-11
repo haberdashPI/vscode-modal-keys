@@ -524,32 +524,16 @@ Next, we add commands to change the text inside or around various brackets, usin
 For each of these commands we first clear the selection, while leaving multiple cursors intact, to ensure the subsequent commands behave properly. Then we use the extension to select the appropriate region of text, delete it, and enter insert mode.
 
 It is also useful to be able to change the current word the cursor is on. You
-can do this by typing <key>c</key><key>i</key><key>w</key> (preserves separators)
-or <key>c</key><key>a</key><key>w</key>. We the bulit in `selectBetween` command for this operation. The `\W` regular expression matches all
-non-alphanumeric characters (except underscore). Note the double escaping
-needed to enter the `\` character. There are other commands we could use to
-implement the operation, but this version works reliably in all scenarios.
+can do this by typing <key>c</key><key>i</key><key>w</key>.
 
 ```js
         "ciw": [
-            {
-                "command": "modalkeys.selectBetween",
-                "args": "{ from: '\\\\W', to: '\\\\W', regex: true, inclusive: false }"
-            },
+            "modalkeys.cancelMultipleSelections",
+            "editor.action.smartSelect.expand",
             "deleteLeft",
             "modalkeys.enterInsert"
         ],
-        "ciw": [
-            {
-                "command": "modalkeys.selectBetween",
-                "args": "{ from: '\\\\W', to: '\\\\W', regex: true, inclusive: true }"
-            },
-            "deleteLeft",
-            "modalkeys.enterInsert"
-        ]
 ```
-
-Note that `selectBetween` could be used to select a poor man's version of bracket selection, but these commands will not work properly when brackets interact with quotes.
 
 > We could also implement delete commands <key>d</key><key>i</key><key>w</key>,
 > <key>d</key><key>t</key><key>-</key>, etc. in the similar fashion. But for the
@@ -636,22 +620,19 @@ Code commands based on the expression. The command is bound to the tilde
 <key>~</key> character.
 ```js
         "~": {
-            "condition": "__selection == __selection.toUpperCase()",
+            "condition": "__selectionstr == __selection.toUpperCase()",
             "true": "editor.action.transformToLowercase",
             "false": "editor.action.transformToUppercase"
         },
 ```
+
 ## Marks
 
 Marks or bookmarks, as they are more commonly known, provide a handy way to
-jump quickly inside documents. Surprisingly, VS Code does not contain this
-feature out-of-the-box. Since it is easy to implement, ModalKeys fills the gap
-and adds two simple commands: `modalkeys.defineBookmark` and
-`modalkeys.goToBookmark`. Using these we can implement Vim's mark commands.
+jump quickly inside documents.
 
-We can support dozens of bookmarks with one mapping using a character range.
-To define a bookmark, you type <key>m</key><key>a</key>, for example, and to
-jump to that mark, type <key>\`</key><key>a</key>.
+TODO:
+
 ```js
         "m": {
             "a-z": {
@@ -667,6 +648,8 @@ jump to that mark, type <key>\`</key><key>a</key>.
         },
 ```
 ## Searching
+
+TODO:
 
 The last category of commands we implement is searching. We use the incremental
 search command provided by ModalKeys for this. As in Vim, typing <key>/</key>

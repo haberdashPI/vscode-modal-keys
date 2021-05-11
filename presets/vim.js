@@ -83,7 +83,7 @@ The list of available cursor motion commands is shown below.
 
 Now, lets implement all the keybindings listed above.
 */
-{
+return {
     "keybindings": {
         /**
 Cursor can be advanced in a file with with enter and space. These are not
@@ -91,138 +91,46 @@ technically motion commands but included for compatibility.
         */
         "\n": [
             "cursorDown",
-            {
-                "command": "cursorMove",
-                "args": {
-                    "to": "wrappedLineFirstNonWhitespaceCharacter"
-                }
-            }
+            { "cursorMove": { "to": "wrappedLineFirstNonWhitespaceCharacter" } }
         ],
         " ": "cursorRight",
         /**
 Move cursor up/down/left/right.
         */
-        "h": "cursorLeft",
-        "j": "cursorDown",
-        "k": "cursorUp",
-        "l": "cursorRight",
-        /**
+        "::using::cursorMove": {
+            "h": { to: 'left', select: '__selecting', value: '__count' },
+            "j": { to: 'down', select: '__selecting', value: '__count' },
+            "k": { to: 'up', select: '__selecting', value: '__count' },
+            "l": { to: 'right', select: '__selecting', value: '__count' },
+        },
+            /**
 Move to first/last character on line. These work also in visual mode.
         */
-        "0": {
-            "command": "cursorMove",
-            "args": "{ to: 'wrappedLineStart', select: __selecting }"
-        },
-        "$": {
-            "command": "cursorMove",
-            "args": "{ to: 'wrappedLineEnd', select: __selecting }"
-        },
+        "0": { "cursorMove": { to: 'wrappedLineStart', select: '__selecting' } },
+        "$": { "cursorMove": { to: 'wrappedLineEnd', select: '__selecting' } },
         /**
 Move to first/last non-blank character on line. Also these ones use the
 `__selecting` flag to check whether we are in visual mode.
         */
-        "^": {
-            "command": "cursorMove",
-            "args": "{ to: 'wrappedLineFirstNonWhitespaceCharacter', select: __selecting }"
-        },
-        "g": {
-            "_": {
-                "command": "cursorMove",
-                "args": "{ to: 'wrappedLineLastNonWhitespaceCharacter', select: __selecting }"
-            },
+        "^": { "cursorMove": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__selecting' } },
+        "g_": { "cursorMove": { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__selecting' } },
             /**
 Moving to the beginning of file is defined as a conditional command to make
 it work in visual mode.
             */
-            "g": {
-                "condition": "__selecting",
-                "true": "cursorTopSelect",
-                "false": "cursorTop"
-            },
-            /**
-## Other Commands Starting with <key>g</key>
+        "gg": {
+            "if": "__selecting",
+            "then": "cursorTopSelect",
+            "else": "cursorTop"
+        },
 
-Commands starting with <key>g</key> key are bit inconsistent in Vim. Some of
-them are basic motion commands, such as <key>g</key><key>_</key> and
-<key>g</key><key>g</key>, some are editing commands like <key>g</key><key>J</key>
-and <key>g</key><key>U</key>, and some switch between tabs 🤷‍♂️. Since we have to
-define all bindings with the same prefix in same place, we take a detour and add
-these commands before continuing with rest of the motion commands.
-
-| Keys              | Command
-| ----------------- | --------------------------------------
-| `gJ`              | Join lines without space in between
-| `gu`<_motion_>    | Convert text specified by <_motion_> to lowercase
-| `gU`<_motion_>    | Convert text specified by <_motion_> to uppercase
-| `gt`              | Go to next tab
-| `gT`              | Go to previous tab
-
-Joining lines without space is done by deleting a character after the join
-command.
-            */
-            "J": [
-                "editor.action.joinLines",
-                "deleteRight"
-            ],
-            /**
-The lower/uppercase transition works with any motion, but since we have not
-defined all of them yet, we explain the command structure
-[later in the document](#editing-with-motions).
-The structure we use here is exactly the same as with <key>d</key> command, for
-example.
-            */
-            "u,U": {
-                "id": 1,
-                "help": "Change case with motion",
-                "u,U": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: __cmd.slice(0, -3) + 'V' + __rcmd[0] }"
-                },
-                "h,j,k,l,w,e,b,W,B,%": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: 'v' + __cmd.slice(0, -3) + __rcmd[0] + __rcmd[1] }"
-                },
-                "^,$,0,G,H,M,L": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: 'v' + __rcmd[0] + __rcmd[1] }"
-                },
-                "g": {
-                    "g,_": {
-                        "command": "modaledit.typeNormalKeys",
-                        "args": "{ keys: 'v' + __rcmd[1] + __rcmd[0] + __rcmd[2] }"
-                    }
-                },
-                "f,t,F,T": {
-                    "help": "Do until _",
-                    " -~": {
-                        "command": "modaledit.typeNormalKeys",
-                        "args": "{ keys: 'v' + __rcmd[1] + __rcmd[0] + __rcmd[2] }"
-                    }
-                },
-                "a,i": {
-                    "help": "Do around/inside _",
-                    "w,p,b,B,t, -/,:-@,[-`,{-~": {
-                        "command": "modaledit.typeNormalKeys",
-                        "args": "{ keys: 'v' + __rcmd[1] + __rcmd[0] + __rcmd[2] }"
-                    }
-                },
-                "`,'": {
-                    "help": "Do until mark _",
-                    "a-z": {
-                        "command": "modaledit.typeNormalKeys",
-                        "args": "{ keys: 'v' + __rcmd[1] + __rcmd[0] + __rcmd[2] }"
-                    }
-                }
-            },
-            /**
+    /**
 <key>g</key><key>t</key> and <key>g</key><key>T</key> switch to next/previous
 tab.
-            */
-            "t": "workbench.action.nextEditor",
-            "T": "workbench.action.previousEditor"
-        },
+        */
+        "gt": "workbench.action.nextEditor",
+        "gT": "workbench.action.previousEditor",
         /**
-## Rest of the Motion Commands
 
 Now we can complete the list of basic motion commands. This one movest the
 cursor at the end of the file and selects the range, if visual mode is on.
@@ -235,36 +143,49 @@ cursor at the end of the file and selects the range, if visual mode is on.
         /**
 The logic of separating words is bit different in VS Code and Vim, so we will
 not try to imitate Vim behavior here. These keys are mapped to the most similar
-motion available. The <key>W</key> and <key>B</key> commands skip separator
-characters, and move to the start of the next/previous alphanumeric word.
+motion available. The <key>W</key> and <key>B</key> move past all non-space characters,
+and are implemented using the search command, with appropriate options. To allow
+motion across multiple words, we use the 'repeat' option.
         */
-        "w": "cursorWordStartRight",
-        "e": "cursorWordEndRight",
-        "b": "cursorWordStartLeft",
+        "w": { "cursorWordStartRight": {}, "repeat": "__count" },
+        "e": { "cursorWordEndRight": {}, "repeat": "__count" },
+        "b": { "cursorWordStartLeft": {}, "repeat": "__count" },
         "W": {
-            "command": "cursorWordStartRight",
-            "repeat": "__char.match(/\\W/)"
+            "modaledit.search": {
+                "text": "\\W+",
+                "offset": 'inclusive',
+                "regex": true,
+                "selectTillMatch": '__selecting',
+                "highlightMatches": false,
+            },
+            "repeat": '__count',
         },
         "B": {
-            "command": "cursorWordStartLeft",
-            "repeat": "__char.match(/\\W/)"
+            "modaledit.search": {
+                "text": "\\W+",
+                "offset": 'inclusive',
+                "regex": true,
+                "backwards": true,
+                "selectTillMatch": '__selecting',
+                "highlightMatches": false,
+            },
+            "repeat": '__count',
         },
         /**
 Moving cursor to the top, middle, and bottom of the screen is mapped to
-<key>H</key> (high), <key>M</key> (middle), and <key>L</key> (low) keys. These
-mappings also work in visual mode.
+<key>H</key> (high), <key>M</key> (middle), and <key>L</key> (low) keys.
         */
         "H": {
             "command": "cursorMove",
-            "args": "{ to: 'viewPortTop', select: __selecting }"
+            "args": { to: 'viewPortTop', select: '__selecting' }
         },
         "M": {
             "command": "cursorMove",
-            "args": "{ to: 'viewPortCenter', select: __selecting }"
+            "args": { to: 'viewPortCenter', select: '__selecting' }
         },
         "L": {
             "command": "cursorMove",
-            "args": "{ to: 'viewPortBottom', select: __selecting }"
+            "args": { to: 'viewPortBottom', select: '__selecting' }
         },
         /**
 Move to matching bracket command is somewhat challenging to implement
@@ -285,12 +206,11 @@ diverging from Vim's functionality.
         /**
 ## Jump to a Character
 
-Advanced cursor motions in Vim include jump to character, which is especially
-powerful in connection with editing commands. With this motion, we can apply
-edits upto or including a specified character. The same motions work also as
-jump commands in normal mode. We have to provide separate implementations for
-normal and visual mode, since we need to provide different parameters to the
-`modaledit.search` command we are utilizing.
+Advanced cursor motions in Vim include jump to character, which is especially powerful in
+connection with editing commands. With this motion, we can apply edits upto or including a
+specified character. The same motions work also as jump commands in normal mode. We have to
+provide separate implementations for normal and visual mode, since we need to provide
+different parameters to the `modaledit.search` command we are utilizing.
 
 | Keys          | Cursor Motion
 | ------------- | ---------------------------------------------
@@ -301,61 +221,38 @@ normal and visual mode, since we need to provide different parameters to the
 | `;`           | Repeat previous f, t, F or T motion
 | `,`           | Repeat previous f, t, F or T motion in opposite direction
 
-All of these keybindings are implemented using the
-[incremental search](../README.html#incremental-search) command, just the
-parameters are different for each case. Basically we just perform either a
-forward or backward search and adjust the cursor position after the character
-has been selected. We also need to adjust cursor position before repeating the
-search.
-
-The adjustment is done by invoking key bindings <key>h</key> (left) or
-<key>l</key> (right), or sometimes by clearing the selection with <key>v</key>
-key.
+All of these keybindings are implemented using the [incremental
+search](../README.html#incremental-search) command, just the parameters are different for
+each case. Basically we just perform either a forward or backward search and use the
+"offset" option to determine where the cursor should land.
         */
         "f": {
-            "command": "modaledit.search",
-            "args": {
+            "modaledit.search": {
                 "acceptAfter": 1,
-                "typeAfterAccept": "hv",
-                "typeBeforeNextMatch": "l",
-                "typeAfterNextMatch": "hv",
-                "typeAfterPreviousMatch": "v"
+                "offset": "inclusive",
             }
         },
         "F": {
-            "command": "modaledit.search",
-            "args": {
+            "modaledit.search": {
                 "acceptAfter": 1,
                 "backwards": true,
-                "typeAfterAccept": "v",
-                "typeAfterNextMatch": "v",
-                "typeBeforePreviousMatch": "l",
-                "typeAfterPreviousMatch": "hv"
+                "offset": "inclusive",
             }
         },
         "t": {
-            "command": "modaledit.search",
-            "args": {
+            "modaledit.search": {
                 "acceptAfter": 1,
-                "typeAfterAccept": "hhv",
-                "typeBeforeNextMatch": "ll",
-                "typeAfterNextMatch": "hhv",
-                "typeBeforePreviousMatch": "h",
-                "typeAfterPreviousMatch": "lv"
+                "offset": "exclusive",
             }
         },
         "T": {
-            "command": "modaledit.search",
-            "args": {
+            "modaledit.search": {
                 "acceptAfter": 1,
                 "backwards": true,
-                "typeAfterAccept": "lv",
-                "typeBeforeNextMatch": "h",
-                "typeAfterNextMatch": "lv",
-                "typeBeforePreviousMatch": "ll",
-                "typeAfterPreviousMatch": "hhv"
+                "offset": "exclusive",
             }
         },
+
         /**
 Repeating the motions can be done simply by calling `nextMatch` or
 `previousMatch`.
@@ -363,47 +260,7 @@ Repeating the motions can be done simply by calling `nextMatch` or
         ";": "modaledit.nextMatch",
         ",": "modaledit.previousMatch",
         /**
-## Bookmarks
-
-You can also combine jump to bookmark motions with editing commands in Vim.
-Therefore, we define them along with the other motions. We use the
-[bookmark commands](../README.html#bookmarks) provided by ModalKeys to implement
-these keybindings:
-
-| Keys              | Cursor Motion
-| ----------------- | -----------------------------------------------
-| `m`<_char_>       | Define a bookmark and bind it to key <_char_>
-| `` ` ``<_char_>   | Jump to bookmark bound to key <_char_>
-| `'`<_char_>       | Jump to the first non-blank character of the line where bookmark <_char_> resides
-
-Jump commands also work in visual mode.
-        */
-        "m": {
-            "help": "Define mark _",
-            "a-z": {
-                "command": "modaledit.defineBookmark",
-                "args": "{ bookmark: __rcmd[0] }"
-            }
-        },
-        "`": {
-            "a-z": {
-                "command": "modaledit.goToBookmark",
-                "args": "{ bookmark: __rcmd[0], select: __selecting }"
-            }
-        },
-        "'": {
-            "a-z": [
-                {
-                    "command": "modaledit.goToBookmark",
-                    "args": "{ bookmark: __rcmd[0], select: __selecting }"
-                },
-                {
-                    "command": "cursorMove",
-                    "args": "{ to: 'wrappedLineFirstNonWhitespaceCharacter', select: __selecting }"
-                }
-            ]
-        },
-        /**
+         *
 ## Switching between Modes
 
 Next, we define keybindings that switch between normal, insert, and visual mode:
@@ -498,26 +355,6 @@ line, or expect a motion key sequence at the end which specifies the scope of
         */
         "x": "deleteRight",
         "X": "deleteLeft",
-        /**
-<key>r</key> and <key>s</key> commands delete character under cursor and enter
-insert mode. In Vim <key>r</key> and <key>R</key> keys swith momentarily or
-permanently to overwrite mode. Since this mode does not exist in VS Code, we
-settle on mapping both keys to the same sequence.
-        */
-        "r,s": [
-            "deleteRight",
-            "modaledit.enterInsert"
-        ],
-        /**
-<key>S</key> substitutes the whole line. We don't need to implement the command
-here as we can reuse the <key>c</key><key>c</key> command that we define later.
-        */
-        "S": {
-            "command": "modaledit.typeNormalKeys",
-            "args": {
-                "keys": "cc"
-            }
-        },
         /**
 Deleting in Vim always copies the deleted text into clipboard, so we do that
 as well. If you are wondering why we don't use VS Code's cut command, it has a
