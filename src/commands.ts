@@ -30,8 +30,11 @@ interface SearchArgs {
     wrapAround?: boolean
     acceptAfter?: number
     selectTillMatch?: boolean
+    highlightMatches?: boolean
     offset?: string
     executeAfter?: Command
+    text?: string
+    regex?: boolean
 }
 
 /**
@@ -179,6 +182,9 @@ let searchOffset: string
 let searchOldMode = Normal
 let searchAtStart: boolean
 let searchExecuteAfter: Command | undefined
+let searchRegex: boolean
+let searchHighlightMatches: boolean
+let searchMatchLength: number = 0
 /**
  * Bookmarks are stored here.
  */
@@ -578,6 +584,79 @@ function isSelecting(editor: vscode.TextEditor | undefined = vscode.window.activ
     keyMode = Normal
 }
 
+function* mapIter<T, R>(iter: Iterable<T>, fn: (x: T) => R){
+    for(const x of iter){
+        yield fn(x)
+    }
+}
+
+function* linesOf(doc: vscode.TextDocument, pos: vscode.Position,
+    wrap: boolean, forward: boolean): Generator<[string, number]>{
+
+    yield [doc.lineAt(pos).text, pos.line]
+    let line = pos.line + (forward ? 1 : -1)
+    while(forward ? line < doc.lineCount : line >= 0){
+        yield [doc.lineAt(line).text, line]
+        line += (forward ? 1 : -1)
+    }
+    if(wrap){
+        pos = new vscode.Position(forward ? 0 : doc.lineCount - 1, 0)
+        while(forward ? line < doc.lineCount : line > doc.lineCount){
+            yield [doc.lineAt(line).text, line]
+            line += (forward ? 1 : -1)
+        }
+    }
+}
+function* searchMatches(doc: vscode.TextDocument, start: vscode.Position, end: vscode.Position | undefined,
+    target: string, regex: boolean, matchCase: boolean, forward: boolean, wrap: boolean){
+
+    let matchesFn: (line: string, offset: number | undefined) => Generator<[number, number]>
+    if(regex){
+        let matcher = RegExp(target, "g" + (!matchCase ? "i" : ""))
+        matchesFn = (line, offset) => regexMatches(matcher, line, forward, offset)
+    }else{
+        let matcher = matchCase ? target : target.toLowerCase()
+        matchesFn = (line, offset) => stringMatches(matcher, matchCase, line, forward, offset)
+    }
+
+    let offset: number | undefined = start.character
+    for(const [line, i] of linesOf(doc, start, wrap, forward)){
+        if(end && i > end.line){ return }
+
+        let matchesItr = matchesFn(line, offset)
+        let matches = forward ? matchesItr : Array.from(matchesItr).reverse()
+
+        yield* mapIter(matches, ([start, len]) => new vscode.Range(
+            new vscode.Position(i, start),
+            new vscode.Position(i, start+len)
+        ))
+        offset = undefined
+    }
+}
+
+function* regexMatches(matcher: RegExp, line: string, forward: boolean, offset: number | undefined): Generator<[number, number]>{
+    matcher.lastIndex = 0
+    let match = matcher.exec(line)
+    while(match){
+        if(offset && !forward && match.index > offset){ return }
+        if(offset === undefined || !forward || match.index > offset)
+            yield [match.index, match[0].length]
+        match = matcher.exec(line)
+    }
+}
+
+function* stringMatches(matcher: string, matchCase: boolean, line: string, forward: boolean, offset: number | undefined): Generator<[number, number]>{
+    let searchme = offset === undefined ? line :
+        (forward ? line.substring(offset) : line.substring(0, offset - 1))
+    let fromOffset = offset === undefined ? 0 : (forward ? offset : 0)
+    if(!matchCase) searchme.toLowerCase()
+    let from = searchme.indexOf(matcher, 0)
+    while(from >= 0){
+        yield [from + fromOffset, matcher.length]
+        from = searchme.indexOf(matcher, from+1)
+    }
+}
+
 /**
  * This is the main command that not only initiates the search, but also handles
  * the key presses when search is active. That is why its argument is defined
@@ -600,7 +679,7 @@ async function search(args: SearchArgs | string): Promise<void> {
          * in the module level variables.
          */
         enterMode(Search)
-        searchString = ""
+        searchString = args.text || ""
         searchStartSelections = editor.selections
         searchBackwards = args.backwards || false
         searchCaseSensitive = args.caseSensitive || false
@@ -609,12 +688,23 @@ async function search(args: SearchArgs | string): Promise<void> {
         searchSelectTillMatch = args.selectTillMatch || false
         searchOffset = args.offset || 'inclusive'
         searchExecuteAfter = args.executeAfter
+        searchRegex = args.regex || false
+        searchHighlightMatches = args.highlightMatches === undefined ? true : args.highlightMatches
+
+        /**
+         * If we've been passed text to search as part of the command, immediately find
+         * and accept the matches
+         */
+        if(searchString.length > 0){
+            highlightMatches(editor, searchStartSelections)
+            await acceptSearch(editor, searchMatchLength)
+        }
     }
     else if (args == "\n")
         /**
          * If we get an enter character we accept the search.
          */
-        await acceptSearch(editor, searchString.length-1)
+        await acceptSearch(editor, searchMatchLength)
     else {
         /**
          * Otherwise we just add the character to the search string and find
@@ -624,7 +714,7 @@ async function search(args: SearchArgs | string): Promise<void> {
         searchString += args
         highlightMatches(editor, searchStartSelections)
         if (searchString.length >= searchAcceptAfter)
-            await acceptSearch(editor, searchString.length)
+            await acceptSearch(editor, searchMatchLength)
     }
 }
 
@@ -657,14 +747,7 @@ function highlightMatches(editor: vscode.TextEditor,
          * case-insensitive search, we transform the text to lower case.
          */
         let doc = editor.document
-        let docText = searchCaseSensitive ?
-            doc.getText() : doc.getText().toLowerCase()
-        /**
-         * Next we determine the search target. It is also transformed to
-         * lower case, if search is case-insensitive.
-         */
-        let target = searchCaseSensitive ?
-            searchString : searchString.toLowerCase()
+
         /**
          * searchRanges keeps track of where the searches land
          * (so we can highlight them later on)
@@ -672,109 +755,52 @@ function highlightMatches(editor: vscode.TextEditor,
         let searchRanges: vscode.Range[] = [];
 
         editor.selections = selections.map(sel => {
-            /**
-             * This is the actual search that is performed for each cursor
-             * position. The lambda function returns a new selection for each
-             * active cursor.
-             */
-            let startOffs = doc.offsetAt(sel.active)
-            /**
-             * Depending on the search direction we find either the
-             * first or the last match from the start offset.
-             */
-            let offs = searchBackwards ?
-                docText.lastIndexOf(target, startOffs - 1) :
-                docText.indexOf(target, startOffs)
-            if (offs < 0) {
-                if (searchWrapAround)
-                    /**
-                     * If search string was not found but `wrapAround` argument
-                     * was set, we try to find the search string from beginning
-                     * or end of the document. If that fails too, we return
-                     * the original selection and the cursor will not move.
-                     */
-                    offs = searchBackwards ?
-                        docText.lastIndexOf(target) :
-                        docText.indexOf(target)
-                if (offs < 0) {
-                    searchInfo = "Pattern not found"
-                    return sel
-                }
-                let limit = (bw: boolean) => bw ? "TOP" : "BOTTOM"
-                searchInfo =
-                    `Search hit ${limit(searchBackwards)} continuing at ${
-                    limit(!searchBackwards)}`
+            let matches = searchMatches(doc, sel.active, undefined, searchString,
+                searchRegex, searchCaseSensitive, !searchBackwards, searchWrapAround)
+            let result = matches.next()
+            if(result.done){
+                searchInfo = "Pattern not found"
+                return sel
+            }else{
+                searchRanges.push(result.value)
+
+                let [active, anchor] = searchBackwards ?
+                    [result.value.start, result.value.end] :
+                    [result.value.end, result.value.start]
+                if (searchSelectTillMatch)
+                    anchor = sel.anchor
+                searchMatchLength = result.value.end.character - result.value.start.character
+                return new vscode.Selection(anchor, active)
             }
-            /**
-             * If search was successful, we return a new selection to highlight
-             * it. First, we find the start and end position of the match.
-             */
-            let len = searchString.length
-            let start = doc.positionAt(offs)
-            let end = doc.positionAt(offs + len)
-
-            /**
-             * We save the start and end positions, so that search decorators
-             * can be appropriately colored (later on)
-             */
-            searchRanges.push(new vscode.Range(start, end))
-
-            /**
-             * If the search direction is backwards, we flip the active and
-             * anchor positions. Normally, the anchor is set to the start and
-             * cursor to the end. Finally, we check if the `selectTillMatch`
-             * argument is set. If so, we move only the active cursor position
-             * and leave the selection start (anchor) as-is.
-             */
-            let [active, anchor] = searchBackwards ?
-                [start, end] :
-                [end, start]
-            if (searchSelectTillMatch)
-                anchor = sel.anchor
-            return new vscode.Selection(anchor, active)
         })
 
         editor.revealRange(editor.selection)
 
         /**
-         * Finally, we highlight all search matches to make them stand out
-         * in the document.
+         * Finally, we highlight all search matches to make them stand out in the document.
+         * To accomplish this, we look for any matches that are currently visible and mark
+         * them; we want to mark those that aren't a "current" match (found above)
+         * differently so we make sure that they are not part of `searchRanges`
          */
-
-        let searchOtherRanges: vscode.Range[] = [];
-        function selectionMatchRange(x: vscode.Selection, range: vscode.Range){
-            return x.start.isEqual(range.start) && x.end.isEqual(range.end);
-        }
-
-        /**
-         * To accomplish this, we look for any matches that are currently
-         * visible and mark them; we want to mark those that aren't
-         * a "current" match (found above) differently so we make
-         * sure that they are not part of `searchRanges`
-         */
-        editor.visibleRanges.forEach(range => {
-            let text = searchCaseSensitive ? doc.getText(range) :
-                doc.getText(range).toLowerCase();
-            let baseOffset = doc.offsetAt(range.start);
-            let offset = text.indexOf(target);
-
-            while(offset > 0){
-                let start = doc.positionAt(offset + baseOffset);
-                let range = new vscode.Range(start, start.translate(0,target.length));
-                if(!searchRanges.find(x =>
-                    x.start.isEqual(range.start) && x.end.isEqual(range.end))){
-                    searchOtherRanges.push(range);
+         if(searchHighlightMatches){
+            let searchOtherRanges: vscode.Range[] = [];
+            editor.visibleRanges.forEach(range => {
+                let matches = searchMatches(doc, range.start, range.end, searchString,
+                    searchRegex, searchCaseSensitive, true, searchWrapAround)
+                for(const matchRange of matches){
+                    if(!searchRanges.find(x =>
+                        x.start.isEqual(matchRange.start) && x.end.isEqual(matchRange.end))){
+                        searchOtherRanges.push(matchRange);
+                    }
                 }
+            });
 
-                offset = text.indexOf(target,offset+1);
-            }
-        });
-
-        /**
-         * Now, we have the search ranges; so highlight them appropriately
-         */
-        editor.setDecorations(searchDecorator, searchRanges);
-        editor.setDecorations(searchOtherDecorator, searchOtherRanges);
+            /**
+             * Now, we have the search ranges; so highlight them appropriately
+             */
+            editor.setDecorations(searchDecorator, searchRanges);
+            editor.setDecorations(searchOtherDecorator, searchOtherRanges);
+        }
         searchChanged = true;
     }
 }
