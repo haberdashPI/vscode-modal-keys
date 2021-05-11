@@ -625,7 +625,7 @@ export class KeyState {
                 val === '__count' ? this.argumentCount || 1 :
                 val === '-__count' ? -(this.argumentCount || 1) :
                 val === '__mode' ? mode :
-                isString(val) && /[+-/*]|__/.test(val) ? this.evalStringOrText(val, mode) :
+                isString(val) && /[+-/*=]|__/.test(val) ? this.evalStringOrText(val, mode) :
                 val
             result[key] = val
         }
