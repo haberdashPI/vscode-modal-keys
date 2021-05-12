@@ -486,6 +486,8 @@ function isKeymap(x: any): x is Keymap {
     return x && (x.__keymap || (isObject(x) && !isParameterized(x) && !isConditional(x) && !isCommandSequence(x) && Object.values(x).every(isAction)))
 }
 
+const MAX_REPEAT = 1000
+
 export class KeyState {
     argumentCount?: number
     countFinalized: boolean = false
@@ -535,7 +537,7 @@ export class KeyState {
         let __col
         let __char
         let __language
-        let __count = this.argumentCount || 1
+        let __count = this.argumentCount
         let __selections
         let __selection
         let __selectionstr
@@ -590,15 +592,43 @@ export class KeyState {
      */
     async executeParameterized(action: Parameterized, mode: string) {
         let this_ = this
-        let repeat: number = 1
+        let repeat: boolean | number
+        let repeatStr: string = ""
         async function exec(args?: any) {
             let cont = true
-            for (let i = 0; i < repeat; i++)
-                await this_.executeVSCommand(action.command, args)
+            if(typeof(repeat) === 'number'){
+                for (let i = 0; i < repeat; i++)
+                    await this_.executeVSCommand(action.command, args)
+            }else{
+                for(let i = 0; i < MAX_REPEAT; i++){
+                    await this_.executeVSCommand(action.command, args)
+                    repeat = this_.evalString__(repeatStr, mode)
+                    if(!repeat) break
+                }
+                if(repeat){
+                    vscode.window.showErrorMessage(`Repeat evaluated to true for ${MAX_REPEAT} cycles. Stopping prematurely.`)
+                }
+            }
         }
         if (action.repeat) {
-            if (action.repeat == '__count'){
+            if(typeof(action.repeat) === 'number'){
+                repeat = action.repeat
+            }else if (action.repeat === '__count' || /^\(\s*__count\s*\|\|\s*1\s*\)$/.test(action.repeat)){
                 repeat = this.argumentCount || 1
+            }else{
+                try {
+                    let result: any = this.evalString__(action.repeat, mode)
+                    if(typeof(result) === 'boolean'){
+                        repeat = result
+                        repeatStr = action.repeat
+                    }else{
+                        vscode.window.showErrorMessage(`Repeat does not evaluate to number or boolean: '${action.repeat}'.`)
+                        repeat = 1
+                    }
+                }catch{
+                    repeat = 1
+                    vscode.window.showErrorMessage(`Error evaluating repeat argument: '${action.repeat}'.`)
+                }
             }
         }
         if (action.args) {
@@ -621,13 +651,17 @@ export class KeyState {
         let result: any = {}
         for(const entry of Object.entries(args)){
             let [key, val] = entry
-            val = val === '__line' ? editor?.selection?.active?.line :
-                val === '__count' ? this.argumentCount || 1 :
-                val === '-__count' ? -(this.argumentCount || 1) :
+            // we evaluate the value: we special some of these, because it is likely faster
+            // using a full javascript evaluation
+            let eval_val = val === '__line' ? editor?.selection?.active?.line :
+                val === '__count' ? this.argumentCount :
+                val === '-__count' ? -(this.argumentCount || NaN) :
                 val === '__mode' ? mode :
-                isString(val) && /[+-/*=]|__/.test(val) ? this.evalStringOrText(val, mode) :
+                /^\(\s*__count\s* \|\| 1\)$/.test(val) ? (this.argumentCount || 1) :
+                /^-\s*\(\s*__count\s* \|\| 1\)$/.test(val) ? -(this.argumentCount || 1) :
+                /[+-/*=]|__|editor\./.test(val) ? this.evalStringOrText(val, mode) :
                 val
-            result[key] = val
+            result[key] = eval_val
         }
 
         return result
