@@ -198,10 +198,6 @@
                 "modalkeys.searchOtherMatchesBorder": {
                     "type": "string",
                     "description": "A html format color styling for the border of other search matches (if left blank defaults to built-in search style)."
-                },
-                "modalkeys.bookmarkColor": {
-                    "type": "string",
-                    "description": "An html format color styling for bookmarked locations."
                 }
             }
         },
@@ -221,18 +217,6 @@
             {
                 "command": "modalkeys.enterInsert",
                 "title": "ModalKeys: Insert mode"
-            },
-            {
-                "command": "modalkeys.defineBookmark",
-                "title": "ModalKeys: Define bookmark"
-            },
-            {
-                "command": "modalkeys.goToBookmark",
-                "title": "ModalKeys: Go to bookmark"
-            },
-            {
-                "command": "modalkeys.showBookmarks",
-                "title": "ModalKeys: Show bookmarks"
             },
             {
                 "command": "modalkeys.cancelSearch",
