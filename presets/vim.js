@@ -1,3 +1,40 @@
+const { result } = require("lodash")
+
+function aroundEntry(key, bounds){
+    return {
+        from: typeof(bounds) === 'string' ? bounds : bounds.value || bounds.from,
+        to: typeof(bounds) === 'string' ? bounds : bounds.value || bounds.to,
+        regex: bounds.regex !== undefined
+    }
+}
+function aroundObjects(mappings){
+    Object.fromEntries(Object.entries(mappings).map(([key, bounds]) => {
+        return [
+            ["a"+key, { "modaledit.selectBetween": {
+                ...aroundEntry(key, bounds),
+                inclusive: true
+            }}],
+            ["i"+key,  { "modaledit.selectBetween": {
+                ...aroundEntry(key, bounds),
+                inclusive: false
+            }}]
+        ]
+    }).flat())
+}
+
+function operators(params){
+    let result = {}
+    for(const [opkey, opcom] of Object.entries(params.operators)){
+        for(const [objkey, objcom] of Object.entries(params.objects)){
+            result["normal::"+opkey + objkey] = [opcom, objcom]
+            result["normal::"+opkey+opkey] =
+                ["modalkeys.cancelMultipleSelections", "expandLineSelection", opcom]
+            result["visual::"+opkey] = opcom
+        }
+    }
+    return result
+}
+
 /**
 # New Vimproved ModalKeys 2.0
 
@@ -98,28 +135,28 @@ technically motion commands but included for compatibility.
 Move cursor up/down/left/right.
         */
         "::using::cursorMove": {
-            "h": { to: 'left', select: '__selecting', value: '__count' },
-            "j": { to: 'down', select: '__selecting', value: '__count' },
-            "k": { to: 'up', select: '__selecting', value: '__count' },
-            "l": { to: 'right', select: '__selecting', value: '__count' },
+            "h": { to: 'left', select: '__mode == "visual"', value: '__count' },
+            "j": { to: 'down', select: '__mode == "visual"', value: '__count' },
+            "k": { to: 'up', select: '__mode == "visual"', value: '__count' },
+            "l": { to: 'right', select: '__mode == "visual"', value: '__count' },
         },
             /**
 Move to first/last character on line. These work also in visual mode.
         */
-        "0": { "cursorMove": { to: 'wrappedLineStart', select: '__selecting' } },
-        "$": { "cursorMove": { to: 'wrappedLineEnd', select: '__selecting' } },
+        "0": { "cursorMove": { to: 'wrappedLineStart', select: '__mode == "visual"' } },
+        "$": { "cursorMove": { to: 'wrappedLineEnd', select: '__mode == "visual"' } },
         /**
 Move to first/last non-blank character on line. Also these ones use the
 `__selecting` flag to check whether we are in visual mode.
         */
-        "^": { "cursorMove": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__selecting' } },
-        "g_": { "cursorMove": { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__selecting' } },
+        "^": { "cursorMove": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__mode == "visual"' } },
+        "g_": { "cursorMove": { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__mode == "visual"' } },
             /**
 Moving to the beginning of file is defined as a conditional command to make
 it work in visual mode.
             */
         "gg": {
-            "if": "__selecting",
+            "if": "__mode == 'visual'",
             "then": "cursorTopSelect",
             "else": "cursorTop"
         },
@@ -136,7 +173,7 @@ Now we can complete the list of basic motion commands. This one movest the
 cursor at the end of the file and selects the range, if visual mode is on.
         */
         "G": {
-            "condition": "__selecting",
+            "condition": "__mode == 'visual'",
             "true": "cursorBottomSelect",
             "false": "cursorBottom"
         },
@@ -155,7 +192,7 @@ motion across multiple words, we use the 'repeat' option.
                 "text": "\\W+",
                 "offset": 'inclusive',
                 "regex": true,
-                "selectTillMatch": '__selecting',
+                "selectTillMatch": '__mode == "visual"',
                 "highlightMatches": false,
             },
             "repeat": '__count',
@@ -166,7 +203,7 @@ motion across multiple words, we use the 'repeat' option.
                 "offset": 'inclusive',
                 "regex": true,
                 "backwards": true,
-                "selectTillMatch": '__selecting',
+                "selectTillMatch": '__mode == "visual"',
                 "highlightMatches": false,
             },
             "repeat": '__count',
@@ -177,15 +214,15 @@ Moving cursor to the top, middle, and bottom of the screen is mapped to
         */
         "H": {
             "command": "cursorMove",
-            "args": { to: 'viewPortTop', select: '__selecting' }
+            "args": { to: 'viewPortTop', select: '__mode == "visual"' }
         },
         "M": {
             "command": "cursorMove",
-            "args": { to: 'viewPortCenter', select: '__selecting' }
+            "args": { to: 'viewPortCenter', select: '__mode == "visual"' }
         },
         "L": {
             "command": "cursorMove",
-            "args": { to: 'viewPortBottom', select: '__selecting' }
+            "args": { to: 'viewPortBottom', select: '__mode == "visual"' }
         },
         /**
 Move to matching bracket command is somewhat challenging to implement
@@ -199,7 +236,7 @@ motion than jumping to a matching bracket, but using it means that we are
 diverging from Vim's functionality.
         */
         "%": {
-            "condition": "__selecting",
+            "condition": "__mode == 'visual'",
             "true": "editor.action.smartSelect.expand",
             "false": "editor.action.jumpToBracket"
         },
@@ -230,6 +267,7 @@ each case. Basically we just perform either a forward or backward search and use
             "modaledit.search": {
                 "acceptAfter": 1,
                 "offset": "inclusive",
+                "selectTillMatch": "__mode == 'visual'",
             }
         },
         "F": {
@@ -237,12 +275,14 @@ each case. Basically we just perform either a forward or backward search and use
                 "acceptAfter": 1,
                 "backwards": true,
                 "offset": "inclusive",
+                "selectTillMatch": "__mode == 'visual'",
             }
         },
         "t": {
             "modaledit.search": {
                 "acceptAfter": 1,
                 "offset": "exclusive",
+                "selectTillMatch": "__mode == 'visual'",
             }
         },
         "T": {
@@ -250,6 +290,7 @@ each case. Basically we just perform either a forward or backward search and use
                 "acceptAfter": 1,
                 "backwards": true,
                 "offset": "exclusive",
+                "selectTillMatch": "__mode == 'visual'",
             }
         },
 
@@ -473,8 +514,6 @@ can be mapped the same way.
             ">": ["editor.action.indentLines", "modalkeys.cancelMultipleSelections" ]
         },
         objects: {
-            "w": ["modalkeys.cancelMultipleSelections", "cursorWordRightSelect"],
-            "b": ["modalkeys.cancelMultipleSelections", "cursorWordLeftSelect"],
             "j": [
                 "modalkeys.cancelMultipleSelections",
                 {
@@ -498,234 +537,26 @@ can be mapped the same way.
                     }
                 },
                 "expandLineSelection",
-            ]
+            ],
+            ...(Object.fromEntries(["f", "F", "t", "T", "w", "b", "e", "W", "B", "E", "^", "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
+                map(k => [k, { "typeKeys": { keys: "v"+k } } ]))),
+            ...aroundObjects({
+                "w": { value: "\\\\W", regex: true },
+                "p": { value: "(?<=\\\\r?\\\\n)\\\\s*\\\\r?\\\\n", regex: true },
+                "(": { from: "(", to: ")" },
+                "{": { from: "{", to: "}" },
+                "[": { from: "[", to: "]" },
+                "<": { from: "<", to: ">" },
+                ")": { from: "(", to: ")" },
+                "}": { from: "{", to: "}" },
+                "]": { from: "[", to: "]" },
+                ">": { from: "<", to: ">" },
+                ...(Object.fromEntries(["'", "\"", "`"].map(c => [c, c])))
+            }),
         }
        }),
 
-        "d,y,c,<,>,=": {
-            "id": 2,
-            "help": "Edit with motion",
-            /**
-The motions can be also divided to two categories: repeatable and non-repeatable.
-Some motions we can repeat, such as move to next character/word/line, but some
-we can only do once, such as move to end of line, beginning of file, or to a
-bookmark. Later on we make it possible to run repeatable motions _n_ times by
-typing number _n_ before a motion command or an editing command.
-
-We can run all editing commands on the current line by repeating the command
-key. For example <key>y</key><key>y</key> yanks current line, and
-<key><</key><key><</key> outdents current line. By prefixing these commands
-with a number, we repeat the command _n_ times. To extract the number _n_ we
-slice all but last 2 characters of the key sequence. Then we append `V` command
-to it and lastly the actual editing command. The whole logic resides in the JS
-expression in the `args` property below.
-
-If you are wondering where the number prefix comes from as we don't have any
-numbers in the path to our keybinding block, notice that we defined an `id` for
-our block above. We can use this `id` to jump to the block from other keybinding
-blocks. The entered key sequence `__cmd` contains the full sequence entered by
-the user, not just immediate sequence that lead to the block. So, we can extract
-the number from the start of the `__cmd` string.
-            */
-            "d,y,c,<,>,=": {
-                "command": "modaledit.typeNormalKeys",
-                "args": "{ keys: __cmd.slice(0, -2) + 'V' + (__rcmd[0] =='c' ? 'dO' : __rcmd[0]) }"
-            },
-            /**
-Another thing to note is that we actually have some logic when choosing what
-command to run; we transform the <key>c</key> key to <key>d</key><key>O</key>
-sequence, which deletes the selected range and then inserts a new line above
-cursor. As an example command <key>2</key><key>c</key><key>c</key> actually
-maps to command <key>2</key><key>V</key><key>d</key><key>O</key>.
-
-All the other repeatable commands can be defined in almost identical way. For
-example the command to yank three words <key>3</key><key>y</key><key>w</key> is
-converted to a sequence <key>v</key><key>3</key><key>w</key><key>y</key>.
-            */
-            "h,j,k,l,w,e,b,W,B,%": {
-                "command": "modaledit.typeNormalKeys",
-                "args": "{ keys: 'v' + __cmd.slice(0, -2) + __rcmd[0] + __rcmd[1] }"
-            },
-            /**
-Non-repeatable motions are even easier. We just basically rearrange the key
-sequence and add <key>v</key> key in front.
-            */
-            "^,$,0,G,H,M,L": {
-                "command": "modaledit.typeNormalKeys",
-                "args": "{ keys: 'v' + __rcmd[0] + __rcmd[1] }"
-            },
-            "g": {
-                "g,_": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: 'v' + __rcmd[1] + __rcmd[0] + __rcmd[2] }"
-                }
-            },
-            /**
-Next motions jump to a character. They are handy when you want to edit text
-until a specified character. For example the command
-<key>d</key><key>t</key><key>"</key> deletes text until the next quotation mark.
-The implementation is exactly same as above, so the command would map to key
-sequence <key>v</key><key>t</key><key>"</key><key>d</key>.
-            */
-            "f,t,F,T": {
-                "help": "Do until _",
-                " -~": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: 'v' + __rcmd[1] + __rcmd[0] + __rcmd[2] }"
-                }
-            },
-            /**
-Doing an edit inside set of delimiters like braces, parenthesis or quotation
-marks can be done with the <key>a</key> or <key>i</key> movement. The difference
-between them is that <key>a</key> includes the delimiters in the edit whereas
-<key>i</key> does not. The desired delimiter is the last key in the sequence.
-Special delimiters <key>w</key>, <key>p</key>, <key>b</key>, <key>B</key>, and
-<key>t</key> apply the edit inside word, paragraph, parenthesis, curly braces,
-and angle brackets respectively.
-            */
-            "a,i": {
-                "help": "Do around/inside _",
-                "w,p,b,B,t, -/,:-@,[-`,{-~": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: 'v' + __rcmd[1] + __rcmd[0] + __rcmd[2] }"
-                }
-            },
-            /**
-The last motion you can combine with editing commands is jump to tag. It is
-convenient when you want to edit long ranges of text that can't fit on screen.
-We have two variants of the motion: <key>`</key> edits until the exact mark
-location, <key>'</key> until the beginning of line where the mark specified as
-the last key resides. Key sequence is rearranged exactly as above.
-            */
-            "`,'": {
-                "help": "Do until mark _",
-                "a-z": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: 'v' + __rcmd[1] + __rcmd[0] + __rcmd[2] }"
-                }
-            }
-        },
-        /**
-## Commands Prefixed by Number
-
-As stated above, you can repeat many motions and edit commands by prefixing
-them with number(s). All of the repeatable commands are listed below. We use a
-[recursive keymap](../README.html#defining-recursive-keymaps) that loops in the
-same mapping while you type number keys. After you type letter(s), we invoke the
-command designated by the letters <_num_> times, or perform a jump command to
-line <_num_>.
-
-| Keys                          | Command
-| ----------------------------- | -----------------------------------
-| <_num_>`h|j|k|l|w|e|b|W|B|%`  | Repeat motion <_num_> times
-| <_num_>`u`                    | Undo <_num_> times
-| <_num_>`v|V`                  | Select <_num_> characters/lines
-| <_num_>`s|S`                  | Substitute (replace) <_num_> characters/lines
-| <_num_>`J`                    | Join <_num_> lines
-| <_num_>`gJ`                   | Join <_num_> lines without space in between
-| <_num_>`G|gg`                 | Jump to line <_num_>
-| <_num_>`gu`<_motion_>         | Convert the range specified by <_motion_> repeated <_num_> times to lowercase
-| <_num_>`gU`<_motion_>         | Convert the range specified by <_motion_> repeated <_num_> times to uppercase
-| <_num_>`d`<_motion_>          | Delete the range specified by <_motion_> repeated <_num_> times
-| <_num_>`c`<_motion_>          | Change the range specified by <_motion_> repeated <_num_> times
-| <_num_>`y`<_motion_>          | Yank the range specified by <_motion_> repeated <_num_> times
-| <_num_>`>`<_motion_>          | Indent the range specified by <_motion_> repeated <_num_> times
-| <_num_>`<`<_motion_>          | Outdent the range specified by <_motion_> repeated <_num_> times
-| <_num_>`=`<_motion_>          | Reformat the range specified by <_motion_> repeated <_num_> times
-
-The recursive part of the keymap defined below.
-        */
-        "1-9": {
-            "id": 3,
-            "help": "Repeat / go to line",
-            "0-9": 3,
-            /**
-If any of the repeatable motions is typed after a number, we just do that motion
-<_num_> times. The `parseInt` function extracts the number from the beginning of
-the key sequence.
-            */
-            "h,j,k,l,w,e,b,W,B,u,%": {
-                "command": "modaledit.typeNormalKeys",
-                "args": "{ keys: __rcmd[0] }",
-                "repeat": "parseInt(__cmd)"
-            },
-            /**
-Repeating <key>v</key> or <key>V</key> command will select <_num_> characters or
-lines.
-            */
-            "v": {
-                "command": "cursorRightSelect",
-                "repeat": "parseInt(__cmd)"
-            },
-            "V": {
-                "command": "expandLineSelection",
-                "repeat": "parseInt(__cmd)"
-            },
-            /**
-Also substitution commands can be repeated. In this case we just remap the
-key sequence with the parsed number in front.
-            */
-            "s": {
-                "command": "modaledit.typeNormalKeys",
-                "args": "{ keys: parseInt(__cmd) + 'vc' }"
-            },
-            "S": {
-                "command": "modaledit.typeNormalKeys",
-                "args": "{ keys: parseInt(__cmd) + 'cc' }"
-            },
-            /**
-We can join multiple lines at once, too. This works because the
-`editor.action.joinLines` joins all selected lines. We just have to clear the
-selection afterwards.
-            */
-            "J": [
-                {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: parseInt(__cmd) + 'VJ' }"
-                },
-                "modaledit.cancelSelection"
-            ],
-            /**
-Jumping to a line in Vim is also done by entering first a number and then eiter
-<key>G</key> or <key>g</key><key>g</key>. The first keybinding we actually
-implement, and the second one just remaps to the first one. Implementing jump
-to line in VS Code requires two commands
-            */
-            "G": [
-                {
-                    "command": "revealLine",
-                    "args": "{ lineNumber: parseInt(__cmd) - 1, at: 'top' }"
-                },
-                {
-                    "command": "cursorMove",
-                    "args": {
-                        "to": "viewPortTop"
-                    }
-                }
-            ],
-            "g": {
-                "g": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: parseInt(__cmd) + 'G' }"
-                },
-                /**
-Joining lines without space in between is implemented by repeating the command.
-                */
-                "J": {
-                    "command": "modaledit.typeNormalKeys",
-                    "args": "{ keys: __cmd.slice(-2) }",
-                    "repeat": "parseInt(__cmd)"
-                },
-                /**
-Repeating the complex editing commands is just a matter of jumping to their
-keymap blocks. If <key>u</key> or <key>U</key> is pressed we jump to block `1`.
-The rest of the editing commands are implemented in block `2`.
-*/
-                "u,U": 1
-            },
-            "d,c,y,<,>,=": 2
-        },
-        /**
+               /**
 ## Searching
 
 Searching introduces a pseudo-mode that captures the keyboard and suspends other
@@ -919,51 +750,6 @@ expressions, and selects the range between these delimiters. The scope of the
 search is by default the current line, but for some variants we specify the
 `docScope` parameter which causes the search to consider the whole file.
         */
-        "a,i": {
-            "help": "Select around/inside _",
-            "w": [
-                {
-                    "command": "modaledit.selectBetween",
-                    "args": "{ from: '\\\\W', to: '\\\\W', regex: true, inclusive: __rcmd[1] == 'a' }"
-                }
-            ],
-            "p": [
-                {
-                    "command": "modaledit.selectBetween",
-                    "args": "{ from: '(?<=\\\\r?\\\\n)\\\\s*\\\\r?\\\\n', to: '(?<=\\\\r?\\\\n)\\\\s*\\\\r?\\\\n', regex: true, inclusive: __rcmd[1] == 'a', docScope: true }"
-                }
-            ],
-            " -/,:-@,[-`,{-~": [
-                {
-                    "command": "modaledit.selectBetween",
-                    "args": "{ from: __rcmd[0], to: __rcmd[0], inclusive: __rcmd[1] == 'a' }"
-                }
-            ],
-            "(,),b": [
-                {
-                    "command": "modaledit.selectBetween",
-                    "args": "{ from: '(', to: ')', inclusive: __rcmd[1] == 'a', docScope: true }"
-                }
-            ],
-            "{,},B": [
-                {
-                    "command": "modaledit.selectBetween",
-                    "args": "{ from: '{', to: '}', inclusive: __rcmd[1] == 'a', docScope: true }"
-                }
-            ],
-            "[,]": [
-                {
-                    "command": "modaledit.selectBetween",
-                    "args": "{ from: '[', to: ']', inclusive: __rcmd[1] == 'a', docScope: true }"
-                }
-            ],
-            "<,>,t": [
-                {
-                    "command": "modaledit.selectBetween",
-                    "args": "{ from: '<', to: '>', inclusive: __rcmd[1] == 'a' }"
-                }
-            ]
-        },
         /**
 ## Editing Commands in Visual Mode
 

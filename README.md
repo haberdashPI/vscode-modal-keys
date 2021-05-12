@@ -39,9 +39,6 @@ to maintain. These are features for which there are alternatives I prefer.
    implementing this feature, and they are easily interfaced with ModalKeys.
 2. Quick Snippets - I prefer keyboard macros and VSCode's built in snippets. There are also
    good, dedicated extensions for various snippet features you might want.
-3. Select between - this operator was buggy (it did not handle recursive brakcets with
-   quotes properly), and there are several extensions (and built in commands) that already
-   provide the necessary behavior.
 
 My re-organizing of this project is also part of my plans to pave the way for fully
 functional keyboard macros.
