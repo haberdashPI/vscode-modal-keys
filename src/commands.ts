@@ -38,6 +38,36 @@ interface SearchArgs {
 }
 
 /**
+ * ### Select Between Arguments
+ *
+ * The `selectBetween` command takes as arguments the strings/regular
+ * expressions which delimit the text to be selected. Both of them are optional,
+ * but in order for the command to do anything one of them needs to be defined.
+ * If the `from` argument is missing, the selection goes from the cursor
+ * position forwards to the `to` string. If the `to` is missing the selection
+ * goes backwards till the `from` string.
+ *
+ * If the `regex` flag is on, `from` and `to` strings are treated as regular
+ * expressions in the search.
+ *
+ * The `inclusive` flag tells if the delimiter strings are included in the
+ * selection or not. By default the delimiter strings are not part of the
+ * selection. Last, the `caseSensitive` flag makes the search case sensitive.
+ * When this flag is missing or false the search is case insensitive.
+ *
+ * By default the search scope is the current line. If you want search inside
+ * the whole document, set the `docScope` flag.
+ */
+ interface SelectBetweenArgs {
+    from: string
+    to: string
+    regex: boolean
+    inclusive: boolean
+    caseSensitive: boolean
+    docScope: boolean
+}
+
+/**
  * ### Enter Mode Arguments
  *
  * Arguments for entering specific typing modes, both standard and custom modes.
@@ -224,6 +254,7 @@ const previousMatchId = "modalkeys.previousMatch"
 const typeKeysId = "modalkeys.typeKeys"
 const repeatLastChangeId = "modalkeys.repeatLastChange"
 const repeatLastUsedSelectionId = "modalkeys.repeatLastUsedSelection"
+const selectBetweenId = "modaledit.selectBetween"
 const touchDocumentId = 'modalkeys.touchDocument'
 const untouchDocumentId = 'modalkeys.untouchDocument'
 const importPresetsId = "modalkeys.importPresets"
@@ -253,6 +284,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(typeKeysId, typeKeys),
         vscode.commands.registerCommand(repeatLastChangeId, repeatLastChange),
         vscode.commands.registerCommand(repeatLastUsedSelectionId, repeatLastUsedSelection),
+        vscode.commands.registerCommand(selectBetweenId, selectBetween),
         vscode.commands.registerCommand(touchDocumentId, touchDocument),
         vscode.commands.registerCommand(untouchDocumentId, untouchDocument),
         vscode.commands.registerCommand(importPresetsId, importPresets)
@@ -1047,6 +1079,123 @@ async function repeatLastUsedSelection(): Promise<void> {
         currentWord = lastWord
         if(keyMode !== startMode) enterMode(startMode)
     }
+}
+
+// TODO: use the new searchMatch command to perform the select between
+/**
+ * ## Advanced Selection Command
+ *
+ * For selecting ranges of text between two characters (inside parenthesis, for
+ * example) we add the `modalkeys.selectBetween` command. See the
+ * [instructions](../README.html#selecting-text-between-delimiters) for the list
+ * of parameters this command provides.
+ */
+ function selectBetween(args: SelectBetweenArgs) {
+    let editor = vscode.window.activeTextEditor
+    if (!editor)
+        return
+    if (typeof args !== 'object')
+        throw Error(`${selectBetweenId}: Invalid args: ${JSON.stringify(args)}`)
+    let doc = editor.document
+    /**
+     * Get position of cursor and anchor. These positions might be in "reverse"
+     * order (cursor lies before anchor), so we need to sort them into `lowPos`
+     * and `highPos` variables and corresponding offset variables. These are
+     * used to determine the search range later on.
+     *
+     * Since `to` or `from` parameter might be missing, we initialize the
+     * `fromOffs` and `toOffs` variables to low and high offsets. They delimit
+     * the range to be selected at the end.
+     */
+    let cursorPos = editor.selection.active
+    let anchorPos = editor.selection.anchor
+    let [highPos, lowPos] = cursorPos.isAfterOrEqual(anchorPos) ?
+        [cursorPos, anchorPos] : [anchorPos, cursorPos]
+    let highOffs = doc.offsetAt(highPos)
+    let lowOffs = doc.offsetAt(lowPos)
+    let fromOffs = lowOffs
+    let toOffs = highOffs
+    /**
+     * Next we determine the search range. The `startOffs` marks the starting
+     * offset and `endOffs` the end. Depending on the specified scope these
+     * variables are either set to start/end of the current line or the whole
+     * document.
+     *
+     * In the actual search, we have two main branches: one for the case when
+     * regex search is used and another for the normal text search.
+     */
+    let startPos = new vscode.Position(args.docScope ? 0 : lowPos.line, 0)
+    let endPos = doc.lineAt(args.docScope ? doc.lineCount - 1 : highPos.line)
+        .range.end
+    let startOffs = doc.offsetAt(startPos)
+    let endOffs = doc.offsetAt(endPos)
+    if (args.regex) {
+        if (args.from) {
+            /**
+             * This branch searches for regex in the `from` parameter starting
+             * from `startPos` continuing until `lowPos`. We need to find the
+             * last occurrence of the regex, so we have to add a global modifier
+             * `g` and iterate through all the matches. In case there are no
+             * matches `fromOffs` gets the same offset as `startOffs` meaning
+             * that the selection will extend to the start of the search scope.
+             */
+            fromOffs = startOffs
+            let text = doc.getText(new vscode.Range(startPos, lowPos))
+            let re = new RegExp(args.from, args.caseSensitive ? "g" : "gi")
+            let match: RegExpExecArray | null = null
+            while ((match = re.exec(text)) != null)
+                fromOffs = startOffs + match.index +
+                    (args.inclusive ? 0 : match[0].length)
+        }
+        if (args.to) {
+            /**
+             * This block finds the regex in the `to` parameter starting from
+             * the range `[highPos, endPos]`. Since we want to find the first
+             * occurrence, we don't need to iterate over the matches in this
+             * case.
+             */
+            toOffs = endOffs
+            let text = doc.getText(new vscode.Range(highPos, endPos))
+            let re = new RegExp(args.to, args.caseSensitive ? undefined : "i")
+            let match = re.exec(text)
+            if (match)
+                toOffs = highOffs + match.index +
+                    (args.inclusive ? match[0].length : 0)
+        }
+    }
+    else {
+        /**
+         * This branch does the regular text search. We retrieve the whole
+         * search range as string and use `indexOf` and `lastIndexOf` methods
+         * to find the strings in `to` and `from` parameters. Case insensitivity
+         * is done by converting both the search range and search string to
+         * lowercase.
+         */
+        let text = doc.getText(new vscode.Range(startPos, endPos))
+        if (!args.caseSensitive)
+            text = text.toLowerCase()
+        if (args.from) {
+            fromOffs = text.lastIndexOf(args.caseSensitive ?
+                args.from : args.from.toLowerCase(), lowOffs - startOffs)
+            fromOffs = fromOffs < 0 ? startOffs :
+                startOffs + fromOffs + (args.inclusive ? 0 : args.from.length)
+        }
+        if (args.to) {
+            toOffs = text.indexOf(args.caseSensitive ?
+                args.to : args.to.toLowerCase(), highOffs - startOffs)
+            toOffs = toOffs < 0 ? endOffs :
+                startOffs + toOffs + (args.inclusive ? args.to.length : 0)
+        }
+    }
+    if (cursorPos.isAfterOrEqual(anchorPos))
+        /**
+         * The last thing to do is to select the range from `fromOffs` to
+         * `toOffs`. We want to preserve the direction of the selection. If
+         * it was reserved when this command was called, we flip the variables.
+         */
+        changeSelection(editor, doc.positionAt(fromOffs), doc.positionAt(toOffs))
+    else
+        changeSelection(editor, doc.positionAt(toOffs), doc.positionAt(fromOffs))
 }
 
 /**
