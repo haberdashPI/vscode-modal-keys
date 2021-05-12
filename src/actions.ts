@@ -600,13 +600,18 @@ export class KeyState {
                 for (let i = 0; i < repeat; i++)
                     await this_.executeVSCommand(action.command, args)
             }else{
-                for(let i = 0; i < MAX_REPEAT; i++){
+                if(!action.repeat){
                     await this_.executeVSCommand(action.command, args)
-                    repeat = this_.evalString__(repeatStr, mode)
-                    if(!repeat) break
                 }
-                if(repeat){
-                    vscode.window.showErrorMessage(`Repeat evaluated to true for ${MAX_REPEAT} cycles. Stopping prematurely.`)
+                else {
+                    for(let i = 0; i < MAX_REPEAT; i++){
+                        await this_.executeVSCommand(action.command, args)
+                        repeat = this_.evalString__(repeatStr, mode)
+                        if(!repeat) break
+                    }
+                    if(repeat){
+                        vscode.window.showErrorMessage(`Repeat evaluated to true for ${MAX_REPEAT} cycles. Stopping prematurely.`)
+                    }
                 }
             }
         }
