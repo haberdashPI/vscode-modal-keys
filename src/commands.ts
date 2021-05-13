@@ -632,7 +632,7 @@ function* linesOf(doc: vscode.TextDocument, pos: vscode.Position,
         line += (forward ? 1 : -1)
     }
     if(wrap){
-        pos = new vscode.Position(forward ? 0 : doc.lineCount - 1, 0)
+        line = forward ? 0 : doc.lineCount - 1
         while(forward ? line < doc.lineCount : line > doc.lineCount){
             yield [doc.lineAt(line).text, line]
             line += (forward ? 1 : -1)
