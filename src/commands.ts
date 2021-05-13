@@ -681,7 +681,7 @@ function* stringMatches(matcher: string, matchCase: boolean, line: string, forwa
     let searchme = offset === undefined ? line :
         (forward ? line.substring(offset) : line.substring(0, offset - 1))
     let fromOffset = offset === undefined ? 0 : (forward ? offset : 0)
-    if(!matchCase) searchme.toLowerCase()
+    if(!matchCase) searchme = searchme.toLowerCase()
     let from = searchme.indexOf(matcher, 0)
     while(from >= 0){
         yield [from + fromOffset, matcher.length]
