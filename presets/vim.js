@@ -155,11 +155,8 @@ Move to first/last non-blank character on line. Also these ones use the
 Moving to the beginning of file is defined as a conditional command to make
 it work in visual mode.
             */
-        "gg": {
-            "if": "__mode == 'visual'",
-            "then": "cursorTopSelect",
-            "else": "cursorTop"
-        },
+        "gg": "cursorTop",
+        "visual::gg": "cursorTopSelect",
 
     /**
 <key>g</key><key>t</key> and <key>g</key><key>T</key> switch to next/previous
@@ -212,18 +209,9 @@ motion across multiple words, we use the 'repeat' option.
 Moving cursor to the top, middle, and bottom of the screen is mapped to
 <key>H</key> (high), <key>M</key> (middle), and <key>L</key> (low) keys.
         */
-        "H": {
-            "command": "cursorMove",
-            "args": { to: 'viewPortTop', select: '__mode == "visual"' }
-        },
-        "M": {
-            "command": "cursorMove",
-            "args": { to: 'viewPortCenter', select: '__mode == "visual"' }
-        },
-        "L": {
-            "command": "cursorMove",
-            "args": { to: 'viewPortBottom', select: '__mode == "visual"' }
-        },
+        "H": { "cursorMove": { to: 'viewPortTop', select: '__mode == "visual"' } },
+        "M": { "cursorMove": { to: 'viewPortCenter', select: '__mode == "visual"' } },
+        "L": { "cursorMove": { to: 'viewPortBottom', select: '__mode == "visual"' } },
         /**
 Move to matching bracket command is somewhat challenging to implement
 consistently in VS Code. This is due to the problem that there are no commands
@@ -235,11 +223,8 @@ syntactic scope is above the current selection. In many cases, it is more useful
 motion than jumping to a matching bracket, but using it means that we are
 diverging from Vim's functionality.
         */
-        "%": {
-            "condition": "__mode == 'visual'",
-            "true": "editor.action.smartSelect.expand",
-            "false": "editor.action.jumpToBracket"
-        },
+        "%": "editor.action.jumpToBracket",
+        "visual::%": "editor.action.smartSelect.expand",
         /**
 ## Jump to a Character
 
@@ -350,23 +335,11 @@ right because that would move to next line.
             "modaledit.enterInsert"
         ],
         /**
-Note that visual mode is not really a mode. Basically we just set the
-`__selecting` flag that changes the behavior of normal mode commands. Nor is
-there a separate line selection mode. We just mimic Vim's behavior using
-VS Code's builtin commands that select ranges of text, when the `__selecting`
-flag is on.
+Note that visual mode works a little differently than in vim. We don't
+seek to mimc visual mode particularly. Basically, we just toggle a switch that allows the
+motion commands to extend and create selections.
         */
         "v": "modaledit.toggleSelection",
-        "V": [
-            {
-                "command": "cursorMove",
-                "args": {
-                    "to": "wrappedLineStart"
-                }
-            },
-            "modaledit.toggleSelection",
-            "cursorDownSelect"
-        ],
         /**
 ## Editing in Normal Mode
 
@@ -415,12 +388,7 @@ rest of line.
 Again, we utilize existing mappings to implement the <key>C</key> command. It
 does same thing as keys <key>D</key><key>i</key> together.
         */
-        "C": {
-            "command": "modaledit.typeNormalKeys",
-            "args": {
-                "keys": "Di"
-            }
-        },
+        "C": { "modaledit.typeNormalKeys": { "keys": "Di" } },
         /**
 Yanking or copying is always done on selected range. So, we make sure that only
 rest of line is selected before copying the range to clipboard. Afterwards we
@@ -538,7 +506,8 @@ can be mapped the same way.
                 },
                 "expandLineSelection",
             ],
-            ...(Object.fromEntries(["f", "F", "t", "T", "w", "b", "e", "W", "B", "E", "^", "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
+            ...(Object.fromEntries(["f", "F", "t", "T", "w", "b", "e", "W", "B", "E", "^",
+                    "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
                 map(k => [k, { "typeKeys": { keys: "v"+k } } ]))),
             ...aroundObjects({
                 "w": { value: "\\\\W", regex: true },
@@ -574,16 +543,14 @@ wraps around if top or bottom of file is encountered.
         */
         "/": [
             {
-                "command": "modaledit.search",
-                "args": {
+                "modaledit.search": {
                     "caseSensitive": true,
                     "wrapAround": true
                 }
             }
         ],
         "?": {
-            "command": "modaledit.search",
-            "args": {
+            "modaledit.search": {
                 "backwards": true,
                 "caseSensitive": true,
                 "wrapAround": true
@@ -609,10 +576,7 @@ it has been changed. There is no way to get around this in VS Code.
         */
         ":": "workbench.action.showCommands",
         "z": {
-            "z": {
-                "command": "revealLine",
-                "args": "{ lineNumber: __line, at: 'center' }"
-            }
+            "z": { "revealLine": { lineNumber: __line, at: 'center' } }
         },
         "Z": {
             "help": "Z - Close and save, Q - Close without saving",
@@ -623,196 +587,12 @@ it has been changed. There is no way to get around this in VS Code.
             "Q": "workbench.action.closeActiveEditor"
         }
     },
-    /**
-## Motions in Visual Mode
-
-ModalKeys 2.0 adds a new configuration section called `selectbidings` that has
-the same structure as the `keybindings` section. With it you can now map keys
-that act as the lead key of a normal mode sequence to run a commands when
-pressed in visual mode. For example keys <key>d</key>, <key>c</key>, and
-<key>y</key> work this way. In normal mode they must be followed by a motion
-command to specify the range that they are applied, but in visual mode they
-run on the selected text.
-
-`selectbindings` section is always checked first when ModalKeys looks for a
-mapping for a keypress. If there is no binding defined in `selectbindings`
-then it checks the `keybindings` section. Note that you can still define normal
-mode commands that work differently when selection is active. You can use either
-a conditional or parameterized command to check the `__selecting` flag, and
-perform a different action based on that.
-
-We define all the motions that do not yet work correctly in visual mode. The
-full list is below:
-
-| Keys              | Command
-| ----------------- | -----------------------------------------
-| `h|j|k|l`         | Select text to left/down/up/right
-| `w`               | Select until beginning of next word
-| `e`               | Select until end of word
-| `b`               | Select until beginning of previous word
-| `W`               | Select until beginning of next alphanumeric word
-| `B`               | Select unting beginning of previous alphanumeric word
-| `f`<_char_>       | Select until next occurrence of <_char_> including it
-| `F`<_char_>       | Select until previous occurrence of <_char_> including it
-| `t`<_char_>       | Select until next occurrence of <_char_> but not including it
-| `T`<_char_>       | Select until previous occurrence of <_char_> but not including it
-| `a`<_char_>       | Select text inside <_char_> including it
-| `i`<_char_>       | Select text inside <_char_> but not including it
-| `aw`              | Select current word including the whitespace around it
-| `iw`              | Select current word not including the whitespace around it
-| `ap`              | Select current paragraph including the whitespace around it
-| `ip`              | Select current paragraph not including the whitespace around it
-| `a( | a) | ab`    | Select text inside parenthesis including them
-| `i( | i) | ib`    | Select text inside parenthesis not including them
-| `a{ | a} | aB`    | Select text inside curly braces including them
-| `i{ | i} | iB`    | Select text inside curly braces not including them
-| `a[ | a]`         | Select text inside brackets including them
-| `i[ | i]`         | Select text inside brackets not including them
-| `a< | a> | at`    | Select text inside ange brackets (tag) including them
-| `i[ | i] | at`    | Select text inside angle brackets (tag) not including them
-
-The basic movement commands are otherwise identical to normal mode defintions,
-but the actual commands invoked are different. Roughly speaking, we just add
-`Select` at the end of each command.
-    */
-    "selectbindings": {
-        "l": "cursorRightSelect",
-        "h": "cursorLeftSelect",
-        "j": "cursorDownSelect",
-        "k": "cursorUpSelect",
-        "w": "cursorWordStartRightSelect",
-        "e": "cursorWordEndRightSelect",
-        "b": "cursorWordStartLeftSelect",
-        "W": {
-            "command": "cursorWordStartRightSelect",
-            "repeat": "__char.match(/\\W/)"
-        },
-        "B": {
-            "command": "cursorWordStartLeftSelect",
-            "repeat": "__char.match(/\\W/)"
-        },
-        /**
-Selecting forwards/backwards until a character is found can be implemented with
-the `modaledit.search` command as in normal mode. The difference is in what
-parameters we use; we include the `selectTillMatch` flag, and provide different
-`typeBefore...` and `typeAfter...` key sequences.
-        */
-        "f": {
-            "command": "modaledit.search",
-            "args": {
-                "acceptAfter": 1,
-                "selectTillMatch": true
-            }
-        },
-        "F": {
-            "command": "modaledit.search",
-            "args": {
-                "acceptAfter": 1,
-                "backwards": true,
-                "selectTillMatch": true
-            }
-        },
-        "t": {
-            "command": "modaledit.search",
-            "args": {
-                "acceptAfter": 1,
-                "typeAfterAccept": "h",
-                "typeBeforeNextMatch": "l",
-                "typeAfterNextMatch": "h",
-                "typeBeforePreviousMatch": "h",
-                "typeAfterPreviousMatch": "l",
-                "selectTillMatch": true
-            }
-        },
-        "T": {
-            "command": "modaledit.search",
-            "args": {
-                "acceptAfter": 1,
-                "backwards": true,
-                "typeAfterAccept": "l",
-                "typeBeforeNextMatch": "h",
-                "typeAfterNextMatch": "l",
-                "typeBeforePreviousMatch": "l",
-                "typeAfterPreviousMatch": "h",
-                "selectTillMatch": true
-            }
-        },
-        /**
-Selecting text inside/around delimiters are motions that are only defined in
-visual mode. The motions can be used along with editing commands in normal mode,
-but obviously cannot be performed by themselves as they select ranges of text
-thus entering visual mode automatically.
-
-All variants of these motions are implemented with the
-[`modaledit.selectBetween` command](../README.html#selecting-text-between-delimiters).
-The command takes start and end delimiters, which can be also regular
-expressions, and selects the range between these delimiters. The scope of the
-search is by default the current line, but for some variants we specify the
-`docScope` parameter which causes the search to consider the whole file.
-        */
-        /**
-## Editing Commands in Visual Mode
-
-The last pieces of puzzle are editing commands that operate on selected text in
-visual mode. They are the same editing operations we already defined in normal
-mode, but remarkable simpler in this context. Since VS Code's operations already
-work on selected text, we only need to call the built-in commands and clear the
-selection afterwards.
-
-| Keys      | Command
-| --------- | -------------------------
-| `>`       | Indent selection
-| `<`       | Outdent selection
-| `=`       | Reindent (reformat) selection
-| `d | x`   | Delete (cut) selection
-| `c`       | Change selection (cut and enter insert mode)
-| `y`       | Yank (copy) selection
-| `u`       | Transorm selection to lowercase
-| `U`       | Transorm selection to upppercase
-
-Here are the implementations.
-        */
-        ">": [
-            "editor.action.indentLines",
-            "modaledit.cancelSelection"
-        ],
-        "<": [
-            "editor.action.outdentLines",
-            "modaledit.cancelSelection"
-        ],
-        "=": [
-            "editor.action.formatSelection",
-            "modaledit.cancelSelection"
-        ],
-        "d,x": [
-            "editor.action.clipboardCopyAction",
-            "deleteRight",
-            "modaledit.cancelSelection"
-        ],
-        "c": [
-            "editor.action.clipboardCopyAction",
-            "deleteRight",
-            "modaledit.enterInsert"
-        ],
-        "y": [
-            "editor.action.clipboardCopyAction",
-            "modaledit.cancelSelection"
-        ],
-        "u": [
-            "editor.action.transformToLowercase",
-            "modaledit.cancelSelection"
-        ],
-        "U": [
-            "editor.action.transformToUppercase",
-            "modaledit.cancelSelection"
-        ]
-    }
 }
 /**
 ## Conclusion
 
 The list of commands we provided is by no means exhaustive but still contains
-literally thousands of key combinations that cover the most commonly used Vim
+literally thousands of key combinations that cover the many commonly used Vim
 operations. This is quite a nice achievement considering that we only wrote
 about 600 lines of configuration, and most of it is pretty trivial. This
 demonstrates that ModalKeys's functionality is powerful enough to build all
