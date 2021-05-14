@@ -139,18 +139,19 @@ Move cursor up/down/left/right.
             "j": { to: 'down', select: '__mode == "visual"', value: '__count' },
             "k": { to: 'up', select: '__mode == "visual"', value: '__count' },
             "l": { to: 'right', select: '__mode == "visual"', value: '__count' },
-        },
             /**
 Move to first/last character on line. These work also in visual mode.
         */
-        "0": { "cursorMove": { to: 'wrappedLineStart', select: '__mode == "visual"' } },
-        "$": { "cursorMove": { to: 'wrappedLineEnd', select: '__mode == "visual"' } },
+            "0": { to: 'wrappedLineStart', select: '__mode == "visual"' },
+            "$": { to: 'wrappedLineEnd', select: '__mode == "visual"' },
         /**
 Move to first/last non-blank character on line. Also these ones use the
 `__selecting` flag to check whether we are in visual mode.
         */
-        "^": { "cursorMove": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__mode == "visual"' } },
-        "g_": { "cursorMove": { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__mode == "visual"' } },
+            "^": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__mode == "visual"' },
+            "g_": { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__mode == "visual"' },
+        },
+
             /**
 Moving to the beginning of file is defined as a conditional command to make
 it work in visual mode.
@@ -369,6 +370,7 @@ line, or expect a motion key sequence at the end which specifies the scope of
         */
         "x": "deleteRight",
         "X": "deleteLeft",
+        "r": "modalkeys.replaceChar",
         /**
 Deleting in Vim always copies the deleted text into clipboard, so we do that
 as well. If you are wondering why we don't use VS Code's cut command, it has a
@@ -468,7 +470,6 @@ motion in visual mode selecting a range of text, and then running the command
 on the selection. It does not matter which editing command we run, all of them
 can be mapped the same way.
         */
-       // TODO: implement the `operators` function
        ...operators({
         operators: {
             "d": "editor.action.clipboardCutAction",
