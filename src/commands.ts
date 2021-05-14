@@ -82,6 +82,7 @@ interface EnterModeArgs {
  */
 const Normal = 'normal'
 const Search = 'search'
+const Replace = 'replace'
 const Insert = 'insert'
 const Visual = 'visual'
 let visualFlag = false // visual mode is a special version of normal mode
@@ -258,6 +259,8 @@ const selectBetweenId = "modaledit.selectBetween"
 const touchDocumentId = 'modalkeys.touchDocument'
 const untouchDocumentId = 'modalkeys.untouchDocument'
 const importPresetsId = "modalkeys.importPresets"
+const replaceCharId = "modalkeys.replaceChar"
+
 /**
  * ## Registering Commands
  *
@@ -287,6 +290,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(selectBetweenId, selectBetween),
         vscode.commands.registerCommand(touchDocumentId, touchDocument),
         vscode.commands.registerCommand(untouchDocumentId, untouchDocument),
+        vscode.commands.registerCommand(replaceCharId, replaceChar),
         vscode.commands.registerCommand(importPresetsId, importPresets)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
@@ -299,7 +303,7 @@ export function register(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
 }
 
-let keyState = new KeyState({[Search]: searchId})
+let keyState = new KeyState({[Search]: searchId, [Replace]: replaceCharId})
 
 interface KeyCommand {
     command: string
@@ -411,6 +415,26 @@ function touchDocument() {
  */
 function untouchDocument() {
     ignoreChangedText = true
+}
+
+let replaceModeReturn = Normal
+function replaceChar(char: string = ""){
+    if(char === ""){
+        replaceModeReturn = keyMode
+        enterMode(Replace)
+    }else{
+        let editor = vscode.window.activeTextEditor
+        if(editor){
+            let sels = editor.selections
+            editor.edit((e: vscode.TextEditorEdit) => {
+                sels.map(sel => {
+                    let curchar = new vscode.Range(sel.active, sel.active.translate(0, 1))
+                    e.replace(curchar, char)
+                })
+            })
+        }
+        enterMode(replaceModeReturn)
+    }
 }
 
 export function onSelectionChanged(e: vscode.TextEditorSelectionChangeEvent){
