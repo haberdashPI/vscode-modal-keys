@@ -19,29 +19,19 @@ ModalKeys is a fork of [ModalEdit](https://github.com/johtela/vscode-modaledit);
 debt to the hard and thoughtful work put into that extension. There are some important features that
 differ between the two extensions.
 
-1. Revised keymap format: I personally find ModalEdit's keymap format to be a little cumbersome.
-   I've tried to increase its succinctness and ease of use.
-2. Customized modes: ModalEdit only allows for a 'normal' and 'visual' mode, ModalKeys
-   allows for any number of custom "normal-like" modes.
-3. Search term highlighting: ModalEdit does not highlight text that is part of its custom search feature
-   (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19) for this
-   feature), ModalKeys highlights searched text by default (but you can turn this feature off).
-4. Kakoune-like 'repeat-selection': if you are creating a modal editing experience around
-   kakoune's noun-verb model (compared to vim's verb-noun model), it is useful to be able to
-   repeat the last selection (e.g. noun) that occurred before a verb. ModalKeys provides a
-   `repateLastUsedSelection` for this purpose.
+Features that ModalKeys has, which ModalEdit lacks.
 
-There are a few things ModalKeys removes in functionality from ModalEdit that I did not want
-to maintain. These are features for which there are alternatives I prefer.
+1. Concise keymap format: I've designed a terser, simplified keymap format;
+2. Customized modes: You can define your own key modes, to expand the keymap more easily
+3. Search term highlighting: ModalKeys highlights search terms by default (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19).
+4. Search with regex: The `search` command can optional use regex expressions
+4. Kakoune-like 'repeat-selection': ModalKeys provides a
+   `repateLastUsedSelection` to make implementing kakoune noun-verb workflows repeatable (in contrast with vim's verb-noun workflows)
 
-1. Bookmarks - ModalEdit has basic implementation of bookmarking. I personally find that the
-   existing extensions focused on just implementing bookmarks do a better job of
-   implementing this feature, and they are easily interfaced with ModalKeys.
-2. Quick Snippets - I prefer keyboard macros and VSCode's built in snippets. There are also
-   good, dedicated extensions for various snippet features you might want.
+ModalKeys is missing a few features I did not want to maintain from ModalEdit. These features are well covered by multiple existing extensions in VSCode.
 
 My re-organizing of this project is also part of my plans to pave the way for fully
-functional keyboard macros.
+functional keyboard macros and
 
 ## Getting Started
 
@@ -221,12 +211,12 @@ true, `<command1>` will be executed, if false, `<command2>` will be run. Command
 of any kind: a single command, sequence, or command with arguments.
 
 Below is an example that moves cursor one word forward with `w` key. We use
-the `__selecting` variable to determine if a selection is active. If so, we
+the `__mode` variable to determine if we're in visual mode. If so, we
 extend the selection using `cursorWordStartRightSelect` command, otherwise we
 just jump to next word with `cursorWordStartRight`.
 ```js
 "w": {
-    "if": "__selecting",
+    "if": "__mode == 'visual'",
     "then": "cursorWordStartRightSelect",
     "else": "cursorWordStartRight"
 },
@@ -351,12 +341,6 @@ a modal editor, as it opens a dialog which takes you out of the editor. To achie
 fluid searching experience ModalKeys provides incremental search commands that mimic Vim's
 corresponding operations.
 
-**TODO**: simplify these arguments to a single command `repeatSearchOnStuckPosition`
-> There are lot of new parameters in the `search` command that were added in
-> version 2.0. Specifically, `typeAfter...` and `typeBefore...` arguments might
-> seem odd at first glance. Please see the [change log](CHANGELOG.html) to
-> understand the rationale why they are needed.
-
 #### `modalkeys.search`
 
 Starts incremental search. The cursor is changed to indicate that editor is in
@@ -375,11 +359,11 @@ The command takes following arguments. All of them are optional.
 | `wrapAround`              | `boolean` | `false`     | Search wraps around to top/bottom depending on search direction. Default is off.
 | `acceptAfter`             | `number`  | `undefined` | Accept search automatically after _x_ characters has been entered. This helps implementing quick one or two character search operations.
 | `selectTillMatch`         | `boolean` | `false`     | Select the range from current position till the match instead of just the match. Useful with `acceptAfter` to quickly extend selection till the specified character(s).
-| `typeAfterAccept`         | `string`  | `undefined` | Allows to run normal mode commands through key bindings (see `modalkeys.typeNormalKeys` command) after successful search. The argument can be used to enter insert mode, or clear selection after search, for example.
-| `typeBeforeNextMatch`     | `string`  | `undefined` | Run the specified key commands *before* searhing for the next match.
-| `typeAfterNextMatch`      | `string`  | `undefined` | Run the specified key commands *after* the next match command is executed.
-| `typeBeforePreviousMatch` | `string`  | `undefined` | Run the specified key commands *before* searhing for the previous match.
-| `typeAfterPreviousMatch`  | `string`  | `undefined` | Run the specified key commands *after* the previous match command executed.
+| `highlightMatches`        | `boolean` | `true`      | If true, use the search highlight colors to highlight all matches
+| `offset`                  | `string`  | `"inclusive"` | Where the cursor should lad after searching: "inclusive" of match, "exclusive" of match string, at the "start" or at the "end" of the match.
+| `executeAfter`            | `<command>` |           | The given commands are run after accepting a search
+| `text`                    | `string`  | ""          | If non-empty, run a non-interactive search using the given text
+| `regex`                   | `boolean` | `false`     | If true, interpret search query as a regular expression
 
 #### `modalkeys.cancelSearch`
 
@@ -401,26 +385,9 @@ search direction.
 Moves to the previous match and selectes it. Which way to search depends on the
 search direction.
 
-### Bookmarks
+#### `modalkeys.enterMode`
 
-To quickly jump inside documents ModalKeys provides two bookmark commands:
-
-- `modalkeys.defineBookmark` stores the current position in a bookmark, and
-- `modalkeys.goToBookmark` jumps to the given bookmark.
-- `modalkeys.showBookmarks` shows the defined bookmarks in the command bar and
-  allows jumping to them by selecting one.
-
-The first two commands take one argument which contains the bookmark name. It
-can be any string (or number), so you can define unlimited number of bookmarks.
-If the argument is omitted, default value `0` is assumed.
-```js
-{
-    "command": "modaledit.defineBookmark",
-    "args": {
-        "bookmark": "0"
-    }
-}
-```
+This command takes a single argument `mode` and allows you to enter any mode you desire.
 
 ### Invoking Key Bindings
 
@@ -449,7 +416,7 @@ in Vim. The command takes no arguments.
 ### Repeat Last Used Selection
 
 `modalkeys.repeatLastUsedSelection` repeats the last command (sequence) that cased the
-selected to change *just before* the last change occurred. This is useful for implementing a
+selection to change *just before* the last change occurred. This is useful for implementing a
 kakaune-like workflow, where selections are applied and then followed by actions: this is in
 contrast to the vim-like approach of specifying actions followed by objects (which are kind
 of like selections, but are not visually displayed). E.g. `wd` in a kakaune-like workflow might select a word (`w`) and then delete it (`d`), whereas, in vim, you would type `dw` to delete a word. By repeating the last used selection, you could repeat `w` and repeating the last change, you could repeat `d`. Or you could have both repeat commands occur with a single stroke, like below.
