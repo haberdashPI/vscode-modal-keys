@@ -1,5 +1,4 @@
 - revise tutorials and vim presets
-- implement regex search
 - display visual layout of keyboard
 - add folder to list presets
 - add macro recording
