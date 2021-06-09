@@ -1,6 +1,6 @@
 - revise tutorials and vim presets
-- display visual layout of keyboard
 - add folder to list presets
+- display visual layout of keyboard
 - add macro recording
     - non-insert only
     - manage insert mode too (using document modified events)
