@@ -1,6 +1,5 @@
 import { sortBy, mergeWith, mapValues, flatten, uniq } from 'lodash'
 import { IHash } from './util'
-import { exec } from 'node:child_process'
 
 /**
  * # Converting Keybinding Definitions to Actions
@@ -312,6 +311,23 @@ const normalFirst = (x: [string, any]) =>
     x[0].match(/(^[a-z\|]*normal[a-z\|]*:)|^[^:]*$/) ? -1 : 0
 
 function expandCommands(x: any): Command {
+    try{
+        return expandCommands__(x)
+    }catch(e){
+        log("ERROR: "+e.message)
+    }
+    return "UNKNOWN_COMMAND_FORM"
+}
+
+export function expandOneCommand(x: Command): Command | undefined {
+    try{
+        return expandCommands__(x)
+    }catch(e){
+        vscode.window.showErrorMessage(e.message)
+    }
+    return undefined
+}
+function expandCommands__(x: any): Command {
     if(x?.if){
         let result: any = { "if": x.if }
         if(x['else'] !== undefined)
@@ -326,13 +342,12 @@ function expandCommands(x: any): Command {
     }else if(isObject(x)){
         let keys = Object.keys(x).filter(x => x !== 'repeat')
         if(keys.length > 1){
-            log(`ERROR: command has multiple heads: ${keys.join(", ")}`)
+            throw new Error(`ERROR: command has multiple heads: ${keys.join(", ")}`)
         }
         return { command: keys[0], args: x[keys[0]], repeat: x.repeat }
     }else {
-        log(`ERROR: command is of unknown form (displaying value below).`)
-        log(JSON.stringify(x, null, 2))
-        return 'UNKNOWN_COMMAND_FORM'
+        throw new Error(`ERROR: command is of unknown form (displaying value below).`+
+            JSON.stringify(x, null, 2))
     }
 }
 
@@ -531,7 +546,7 @@ export class KeyState {
      * `evalString` function evaluates JavaScript expressions. Before doing so, it
      * defines some variables that can be used in the evaluated text.
      */
-    evalString__(str: string, __mode: string): any {
+    evalString__(str: string, __mode: string, __captured: string | undefined): any {
         let __file
         let __line
         let __col
@@ -557,9 +572,9 @@ export class KeyState {
         }
         return eval(`(${str})`)
     }
-    evalString(str: string, __mode: string): any {
+    evalString(str: string, __mode: string, __captured: string | undefined): any {
         try {
-            return this.evalString__(str, __mode)
+            return this.evalString__(str, __mode, __captured)
         }
         catch (error) {
             vscode.window.showErrorMessage("Evaluation error: " + error.message)
@@ -572,12 +587,12 @@ export class KeyState {
      * condition is evaluated and if a key is found that matches the result, it is
      * executed.
      */
-    async executeConditional(cond: Conditional, mode: string): Promise<void> {
-        let res = this.evalString(cond.if, mode)
+    async executeConditional(cond: Conditional, mode: string, captured: string | undefined): Promise<void> {
+        let res = this.evalString(cond.if, mode, captured)
         if (res && isAction(cond.then)){
-            await this.execute(cond.then, mode)
+            await this.execute(cond.then, mode, captured)
         }else if(!res && isAction(cond.else)){
-            await this.execute(cond.else, mode)
+            await this.execute(cond.else, mode, captured)
         }
     }
     /**
@@ -590,7 +605,7 @@ export class KeyState {
      * times or as long as the expression in the `repeat` property returns a truthy
      * value.
      */
-    async executeParameterized(action: Parameterized, mode: string) {
+    async executeParameterized(action: Parameterized, mode: string, captured: string | undefined) {
         let this_ = this
         let repeat: boolean | number
         let repeatStr: string = ""
@@ -606,7 +621,7 @@ export class KeyState {
                 else {
                     for(let i = 0; i < MAX_REPEAT; i++){
                         await this_.executeVSCommand(action.command, args)
-                        repeat = this_.evalString__(repeatStr, mode)
+                        repeat = this_.evalString__(repeatStr, mode, captured)
                         if(!repeat) break
                     }
                     if(repeat){
@@ -622,7 +637,7 @@ export class KeyState {
                 repeat = this.argumentCount || 1
             }else{
                 try {
-                    let result: any = this.evalString__(action.repeat, mode)
+                    let result: any = this.evalString__(action.repeat, mode, captured)
                     if(typeof(result) === 'boolean'){
                         repeat = result
                         repeatStr = action.repeat
@@ -637,21 +652,21 @@ export class KeyState {
             }
         }
         if (action.args) {
-            await exec(this.replaceVars(action.args, mode))
+            await exec(this.replaceVars(action.args, mode, captured))
         }
         else
             await exec()
     }
 
-    evalStringOrText(val: string, mode: string){
+    evalStringOrText(val: string, mode: string, captured: string | undefined){
         try{
-            return this.evalString__(val, mode)
+            return this.evalString__(val, mode, captured)
         }catch {
             return val
         }
     }
 
-    replaceVars(args: object, mode: string){
+    replaceVars(args: object, mode: string, captured: string | undefined){
         let editor = vscode.window.activeTextEditor
         let result: any = {}
         for(const entry of Object.entries(args)){
@@ -662,9 +677,10 @@ export class KeyState {
                 val === '__count' ? this.argumentCount :
                 val === '-__count' ? -(this.argumentCount || NaN) :
                 val === '__mode' ? mode :
+                val === '__captured' ? captured :
                 /^\(\s*__count\s* \|\| 1\)$/.test(val) ? (this.argumentCount || 1) :
                 /^-\s*\(\s*__count\s* \|\| 1\)$/.test(val) ? -(this.argumentCount || 1) :
-                /[+-/*=]|__|editor\./.test(val) ? this.evalStringOrText(val, mode) :
+                /[+-/*=]|__|editor\./.test(val) ? this.evalStringOrText(val, mode, captured) :
                 val
             result[key] = eval_val
         }
@@ -681,18 +697,18 @@ export class KeyState {
      * referenences in `validateAndResolveKeymaps`, an action has to be a keymap
      * object at this point. We set the new keymap as the active one.
      */
-    async execute(action: Action, mode: string) {
+    async execute(action: Action, mode: string, captured?: string) {
         if (isString(action)){
             await this.executeVSCommand(action)
             return true
         }else if (isCommandSequence(action)){
-            for (const command of action) await this.execute(command, mode)
+            for (const command of action) await this.execute(command, mode, captured)
             return true
         }else if (isConditional(action)){
-            await this.executeConditional(action, mode)
+            await this.executeConditional(action, mode, captured)
             return true
         }else if (isParameterized(action)){
-            await this.executeParameterized(action, mode)
+            await this.executeParameterized(action, mode, captured)
             return true
         }else{
             this.update(<Keymap>action)

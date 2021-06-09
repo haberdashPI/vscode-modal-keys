@@ -7,11 +7,10 @@
  */
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
-import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command } from './actions'
+import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand } from './actions'
 import { TextDecoder } from 'util'
 import { IHash } from './util'
-import { markAsUntransferable } from 'node:worker_threads'
-import { executionAsyncResource } from 'node:async_hooks'
+
 //#endregion
 /**
  * ## Command Arguments
@@ -37,34 +36,9 @@ interface SearchArgs {
     regex?: boolean
 }
 
-/**
- * ### Select Between Arguments
- *
- * The `selectBetween` command takes as arguments the strings/regular
- * expressions which delimit the text to be selected. Both of them are optional,
- * but in order for the command to do anything one of them needs to be defined.
- * If the `from` argument is missing, the selection goes from the cursor
- * position forwards to the `to` string. If the `to` is missing the selection
- * goes backwards till the `from` string.
- *
- * If the `regex` flag is on, `from` and `to` strings are treated as regular
- * expressions in the search.
- *
- * The `inclusive` flag tells if the delimiter strings are included in the
- * selection or not. By default the delimiter strings are not part of the
- * selection. Last, the `caseSensitive` flag makes the search case sensitive.
- * When this flag is missing or false the search is case insensitive.
- *
- * By default the search scope is the current line. If you want search inside
- * the whole document, set the `docScope` flag.
- */
- interface SelectBetweenArgs {
-    from: string
-    to: string
-    regex: boolean
-    inclusive: boolean
-    caseSensitive: boolean
-    docScope: boolean
+interface CaptureCharArgs {
+    acceptAfter?: number
+    executeAfter: Command
 }
 
 /**
@@ -83,6 +57,7 @@ interface EnterModeArgs {
 const Normal = 'normal'
 const Search = 'search'
 const Replace = 'replace'
+const Capture = 'capture'
 const Insert = 'insert'
 const Visual = 'visual'
 let visualFlag = false // visual mode is a special version of normal mode
@@ -255,11 +230,12 @@ const previousMatchId = "modalkeys.previousMatch"
 const typeKeysId = "modalkeys.typeKeys"
 const repeatLastChangeId = "modalkeys.repeatLastChange"
 const repeatLastUsedSelectionId = "modalkeys.repeatLastUsedSelection"
-const selectBetweenId = "modaledit.selectBetween"
+const selectBetweenId = "modalkeys.selectBetween"
 const touchDocumentId = 'modalkeys.touchDocument'
 const untouchDocumentId = 'modalkeys.untouchDocument'
 const importPresetsId = "modalkeys.importPresets"
 const replaceCharId = "modalkeys.replaceChar"
+const captureCharId = "modalkeys.captureChar"
 
 /**
  * ## Registering Commands
@@ -291,6 +267,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(touchDocumentId, touchDocument),
         vscode.commands.registerCommand(untouchDocumentId, untouchDocument),
         vscode.commands.registerCommand(replaceCharId, replaceChar),
+        vscode.commands.registerCommand(captureCharId, captureChar),
         vscode.commands.registerCommand(importPresetsId, importPresets)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
@@ -303,7 +280,11 @@ export function register(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
 }
 
-let keyState = new KeyState({[Search]: searchId, [Replace]: replaceCharId})
+let keyState = new KeyState({
+    [Search]: searchId, 
+    [Replace]: replaceCharId,
+    [Capture]: captureCharId
+})
 
 interface KeyCommand {
     command: string
@@ -434,6 +415,39 @@ function replaceChar(char: string = ""){
             })
         }
         enterMode(replaceModeReturn)
+    }
+}
+
+let captureModeReturn = Normal
+let captureModeAcceptAfter: number = Number.POSITIVE_INFINITY;
+let captureCommand: Command | undefined = undefined
+let capturedString = ""
+async function captureChar(char: string | CaptureCharArgs){
+    if(typeof(char) !== 'string'){
+        captureModeReturn = keyMode;
+        captureModeAcceptAfter = char.acceptAfter || Number.POSITIVE_INFINITY
+        capturedString = "";
+        captureCommand = char.executeAfter;
+        enterMode(Capture)
+    }else if(char == "\n"){
+        await runCapture(capturedString)
+    }else {
+        capturedString += char
+        if(capturedString.length >= captureModeAcceptAfter)
+            await runCapture(capturedString)
+    }
+}
+
+async function runCapture(str: string){
+    let nestedState = new KeyState({}, keyState)
+    if(captureCommand === undefined){
+        vscode.window.showErrorMessage("Unexpected missing command for capture string.")
+    }else{
+        let command = expandOneCommand(captureCommand)
+        if(command){
+            nestedState.execute(command, captureModeReturn, capturedString)
+        }
+        enterMode(captureModeReturn)
     }
 }
 
