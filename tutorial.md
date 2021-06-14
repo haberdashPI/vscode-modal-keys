@@ -111,14 +111,7 @@ about text selection.
 In Vim, there is a separate "visual" mode that you activate when you want to
 select text. Visual mode can be characterwise or linewise.
 
-The selection mode is not really a mode in the same sense as normal and insert mode are; you can
-select text both in normal mode and insert mode. Rather it is an additional flag that you
-can set when you want to select text as you move the cursor.
-
-Selection mode is also implicitly on whenever there is text selected. If you
-select text with mouse, for example, the selection mode is turned on (Vim
-behaves like this too). To turn off the selection mode, call
-`modalkeys.toggleSelection` again (or `modalkeys.clearSelection`).
+Seleciton mdoe is on whenver an additional flag is set (by issuing a `setMode` command) and whenver you select text in the usual way from VSCode (e.g. via `modealkeys.toggleSelection`).
 
 The end result is that selection mode works _almost_ like visual mode in Vim,
 the main difference being that selections are not automatically turned off
@@ -131,11 +124,9 @@ So, let's add a binding to toggle selections on or off. We use the familiar
 ```
 
 Now we can add commands for cursor movement. These commands use the generic
-[`cursorMove` command][commands] which takes arguments. The arguments we use
-are partly constant and partly dynamic. Therefore, we use ModalKeys's feature
-which allows us to define parameters as a JS expression. The `__selecting` flag
-in the expression indicates whether selection mode is on. The same effect could
-be achieved also with a conditional command, but this way is a bit simpler.
+[`cursorMove` command][commands] which takes arguments.  The `__selecting` flag
+in the expression indicates whether selection mode is on. 
+
 ```js
         "h": { "cursorMove": { to: 'left', select: '__selecting' } },
         "j": { "cursorMove": { to: 'down', select: '__selecting' } },
@@ -382,7 +373,7 @@ commands first.
 
 ## Commands with Counts
 
-Some commands allow repeating them by typing first a number. For example,
+In Vim, you can repeat commands by typing a number first. For example,
 <key>3</key><key>j</key> moves the cursor down three lines. When you type numbers
 as part of a key sequence, ModalKeys stores these as a number, which you can access using the `__count` variable.
 
@@ -414,9 +405,9 @@ Below are shown the updated cursor movements that use the `__count` variable.
 
 ```
 
-Some commands can internally repeat (e.g. `value` for `cursorMove`), and this is generally better, as it execute faster. If a command does not take a parameter like this however, you can make use of the `repeat` parameter, as shown above. This will simply call the command multiple times.
+Many command, like those shown above, can internally repeat (e.g. `value` for `cursorMove`), and this is generally better, as it execute faster. If a command does not take a parameter like this however, you can make use of the `repeat` parameter, shown above for the word motions. This will simply call the command multiple times.
 
-### Jumping to Line
+### Jumping to a Line
 
 Another command that has a number prefix is _x_<key>G</key> where _x_ is the
 line number you want to jump to. Let's add that as well in the same keymap.
@@ -620,33 +611,12 @@ Code commands based on the expression. The command is bound to the tilde
 <key>~</key> character.
 ```js
         "~": {
-            "condition": "__selectionstr == __selection.toUpperCase()",
-            "true": "editor.action.transformToLowercase",
-            "false": "editor.action.transformToUppercase"
+            "if": "__selectionstr == __selection.toUpperCase()",
+            "then": "editor.action.transformToLowercase",
+            "else": "editor.action.transformToUppercase"
         },
 ```
 
-## Marks
-
-Marks or bookmarks, as they are more commonly known, provide a handy way to
-jump quickly inside documents.
-
-TODO:
-
-```js
-        "m": {
-            "a-z": {
-                "command": "modalkeys.defineBookmark",
-                "args": "{ bookmark: __keys[1] }"
-            }
-        },
-        "`": {
-            "a-z": {
-                "command": "modalkeys.goToBookmark",
-                "args": "{ bookmark: __keys[1] }"
-            }
-        },
-```
 ## Searching
 
 TODO:
@@ -674,11 +644,11 @@ Jumping to next previous match is done with keys <key>n</key> and <key>N</key>.
         "n": "modalkeys.nextMatch",
         "N": "modalkeys.previousMatch",
 ```
+
 There are some subtle differences in the search functionality as well. Instead
-of just highlighting matches ModalKeys selects them. This is preferable
-anyway, as replacing needs to be done manually with selection commands. Finally,
-`modalkeys.search` does not support regexes. Use VS Code's built-in find
-command, if you need regex support.
+of just highlighting matches ModalKeys selects them. This is preferable anyway,
+as replacing needs to be done manually with selection commands. Use VS Code's
+built-in find command, if you need regex support.
 
 ## Conclusion
 
@@ -687,29 +657,14 @@ you can tweak in various ways to make it better. The point of this exercise was
 to show that you can significantly enhance VS Code's editing experience using
 just a simple extension and built-in commands.
 
-When writing ModalKeys my goal was not to provide a new Vim emulation. In fact,
-I don't use Vim-style key bindings myself. I find the countless keyboard
-combinations in Vim superfuous and inconsistent. I doubt that anybody knows, let
-alone _uses_ all the available commands. Using Vim is like working in a
-workshop where you have shelves full of bench planes but the only tool you
-really need is your trusty No 4 Stanley.
+The goal of ModalKeys is not to emulate Vim. My own bindings, for day-to-day use, do not match Vim's. I'd recommend you start with the pre-defined vim bindings, and then adapt them to your own purposes.
 
-![WTF?](../images/wood-planes.jpg)
-
-What I am trying to demonstrate is that you don't need to learn all the magical
-Vim facilities to become better at editing. Just keep an eye on what operations
-you repeat, and think how you could make them more efficient. Then add commands
-that will speed up those operations. Try to make the new commands as general as
-possible, and as easy as possible to use. Your text editor should adapt to your
-way of working, not the other way around.
-
-The thing that Vim got right, though, is modal editing. It is the laser beam
-on the great white shark's head that really makes it cool. Modal editing puts
-all the commands at your fingertips, and makes you faster. That is why Vim is
-still popular, even though there is lot of competition around. So, the obvious
-conclusion is to equip modern editors like VS Code with the same frickin'
-laser beam. It requires some training to operate, but when properly configured
-will cut through text at the speed of light.
+You don't need to learn all the magical Vim facilities to make efficient use of
+ModalKeys. Just keep an eye on what operations you repeat, and think how you
+could make them more efficient. Then add commands that will speed up those
+operations. Try to make the new commands as general as possible, and as easy as
+possible to use. Your text editor should adapt to your way of working, not the
+other way around.
 
 Happy Editing! 🦈😎
 
@@ -717,7 +672,6 @@ Happy Editing! 🦈😎
 [ModalKeys]: ../README.html
 [modal editing]: https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors
 [settings]: ../../.vscode/settings.json
-[LiTScript]: https://johtela.github.io/litscript/
 [commands]: https://code.visualstudio.com/api/references/commands
 [Vim Cheat Sheet]: https://vim.rtorr.com/
 [extensions]: https://marketplace.visualstudio.com/

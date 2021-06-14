@@ -1,5 +1,3 @@
-const { result } = require("lodash")
-
 function aroundEntry(key, bounds){
     return {
         from: typeof(bounds) === 'string' ? bounds : bounds.value || bounds.from,
@@ -8,13 +6,13 @@ function aroundEntry(key, bounds){
     }
 }
 function aroundObjects(mappings){
-    Object.fromEntries(Object.entries(mappings).map(([key, bounds]) => {
+    return Object.fromEntries(Object.entries(mappings).map(([key, bounds]) => {
         return [
-            ["a"+key, { "modaledit.selectBetween": {
+            ["a"+key, { "modalkeys.selectBetween": {
                 ...aroundEntry(key, bounds),
                 inclusive: true
             }}],
-            ["i"+key,  { "modaledit.selectBetween": {
+            ["i"+key,  { "modalkeys.selectBetween": {
                 ...aroundEntry(key, bounds),
                 inclusive: false
             }}]
@@ -120,7 +118,7 @@ The list of available cursor motion commands is shown below.
 
 Now, lets implement all the keybindings listed above.
 */
-return {
+module.exports = {
     "keybindings": {
         /**
 Cursor can be advanced in a file with with enter and space. These are not
@@ -170,10 +168,10 @@ tab.
 Now we can complete the list of basic motion commands. This one movest the
 cursor at the end of the file and selects the range, if visual mode is on.
         */
-        "G": {
-            "condition": "__mode == 'visual'",
-            "true": "cursorBottomSelect",
-            "false": "cursorBottom"
+        G: {
+            "if": "__mode == 'visual'",
+            "then": "cursorBottomSelect",
+            "else": "cursorBottom"
         },
         /**
 The logic of separating words is bit different in VS Code and Vim, so we will
@@ -183,10 +181,13 @@ and are implemented using the search command, with appropriate options. To allow
 motion across multiple words, we use the 'repeat' option.
         */
         "w": { "cursorWordStartRight": {}, "repeat": "__count" },
+        "visual::w": { "cursorWordStartRightSelect": {}, "repeat": "__count" },
         "e": { "cursorWordEndRight": {}, "repeat": "__count" },
+        "visual::e": { "cursorWordEndRightSelect": {}, "repeat": "__count" },
         "b": { "cursorWordStartLeft": {}, "repeat": "__count" },
+        "visual::b": { "cursorWordStartLeftSelect": {}, "repeat": "__count" },
         "W": {
-            "modaledit.search": {
+            "modalkeys.search": {
                 "text": "\\W+",
                 "offset": 'inclusive',
                 "regex": true,
@@ -196,7 +197,7 @@ motion across multiple words, we use the 'repeat' option.
             "repeat": '__count',
         },
         "B": {
-            "modaledit.search": {
+            "modalkeys.search": {
                 "text": "\\W+",
                 "offset": 'inclusive',
                 "regex": true,
@@ -233,7 +234,7 @@ Advanced cursor motions in Vim include jump to character, which is especially po
 connection with editing commands. With this motion, we can apply edits upto or including a
 specified character. The same motions work also as jump commands in normal mode. We have to
 provide separate implementations for normal and visual mode, since we need to provide
-different parameters to the `modaledit.search` command we are utilizing.
+different parameters to the `modalkeys.search` command we are utilizing.
 
 | Keys          | Cursor Motion
 | ------------- | ---------------------------------------------
@@ -250,14 +251,14 @@ each case. Basically we just perform either a forward or backward search and use
 "offset" option to determine where the cursor should land.
         */
         "f": {
-            "modaledit.search": {
+            "modalkeys.search": {
                 "acceptAfter": 1,
                 "offset": "inclusive",
                 "selectTillMatch": "__mode == 'visual'",
             }
         },
         "F": {
-            "modaledit.search": {
+            "modalkeys.search": {
                 "acceptAfter": 1,
                 "backwards": true,
                 "offset": "inclusive",
@@ -265,14 +266,14 @@ each case. Basically we just perform either a forward or backward search and use
             }
         },
         "t": {
-            "modaledit.search": {
+            "modalkeys.search": {
                 "acceptAfter": 1,
                 "offset": "exclusive",
                 "selectTillMatch": "__mode == 'visual'",
             }
         },
         "T": {
-            "modaledit.search": {
+            "modalkeys.search": {
                 "acceptAfter": 1,
                 "backwards": true,
                 "offset": "exclusive",
@@ -284,8 +285,8 @@ each case. Basically we just perform either a forward or backward search and use
 Repeating the motions can be done simply by calling `nextMatch` or
 `previousMatch`.
         */
-        ";": "modaledit.nextMatch",
-        ",": "modaledit.previousMatch",
+        ";": "modalkeys.nextMatch",
+        ",": "modalkeys.previousMatch",
         /**
          *
 ## Switching between Modes
@@ -307,10 +308,10 @@ These commands have more memorable names such as `i` = insert, `a` = append,
 and `o` = open, but above we describe what the commands do exactly instead
 of using these names.
         */
-        "i": "modaledit.enterInsert",
+        "i": "modalkeys.enterInsert",
         "I": [
             "cursorHome",
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
         /**
 The `a` has to check if the cursor is at the end of line. If so, we don't move
@@ -318,29 +319,29 @@ right because that would move to next line.
         */
         "a": [
             {
-                "condition": "__char == ''",
-                "false": "cursorRight"
+                "if": "__char == ''",
+                "else": "cursorRight"
             },
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
         "A": [
             "cursorEnd",
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
         "o": [
             "editor.action.insertLineAfter",
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
         "O": [
             "editor.action.insertLineBefore",
-            "modaledit.enterInsert"
+            "modalkeys.enterInsert"
         ],
         /**
 Note that visual mode works a little differently than in vim. We don't
 seek to mimc visual mode particularly. Basically, we just toggle a switch that allows the
 motion commands to extend and create selections.
         */
-        "v": "modaledit.toggleSelection",
+        "v": "modalkeys.toggleSelection",
         /**
 ## Editing in Normal Mode
 
@@ -380,27 +381,27 @@ random behavior that usually causes the whole line to disappear instead of the
 rest of line.
         */
         "D": [
-            "modaledit.cancelSelection",
+            "modalkeys.cancelSelection",
             "cursorEndSelect",
             "editor.action.clipboardCopyAction",
             "deleteRight",
-            "modaledit.cancelSelection"
+            "modalkeys.cancelSelection"
         ],
         /**
 Again, we utilize existing mappings to implement the <key>C</key> command. It
 does same thing as keys <key>D</key><key>i</key> together.
         */
-        "C": { "modaledit.typeNormalKeys": { "keys": "Di" } },
+        "C": { "modalkeys.typeNormalKeys": { "keys": "Di" } },
         /**
 Yanking or copying is always done on selected range. So, we make sure that only
 rest of line is selected before copying the range to clipboard. Afterwards we
 clear the selection again.
         */
         "Y": [
-            "modaledit.cancelSelection",
+            "modalkeys.cancelSelection",
             "cursorEndSelect",
             "editor.action.clipboardCopyAction",
-            "modaledit.cancelSelection"
+            "modalkeys.cancelSelection"
         ],
         /**
 Pasting text at cursor is done with <key>P</key> key. Following Vim convention
@@ -410,11 +411,11 @@ selection after paste, so that we don't accidently end up in visual mode.
         "p": [
             "cursorRight",
             "editor.action.clipboardPasteAction",
-            "modaledit.cancelSelection"
+            "modalkeys.cancelSelection"
         ],
         "P": [
             "editor.action.clipboardPasteAction",
-            "modaledit.cancelSelection"
+            "modalkeys.cancelSelection"
         ],
         /**
 <key>J</key> joins current and next lines together adding a space in between.
@@ -427,7 +428,7 @@ selection afterwards.
         */
         "u": [
             "undo",
-            "modaledit.cancelSelection"
+            "modalkeys.cancelSelection"
         ],
         /**
 The last "simple" keybinding we define is <key>`</key> that repeats the last
@@ -436,7 +437,7 @@ checks after each key sequence is typed whether it caused a change in file.
 If so, it stores the seqeuence as a change. The command just runs the stored
 keysequence again.
         */
-        ".": "modaledit.repeatLastChange",
+        ".": "modalkeys.repeatLastChange",
         /**
 ## Editing with Motions
 
@@ -544,21 +545,21 @@ wraps around if top or bottom of file is encountered.
         */
         "/": [
             {
-                "modaledit.search": {
+                "modalkeys.search": {
                     "caseSensitive": true,
                     "wrapAround": true
                 }
             }
         ],
         "?": {
-            "modaledit.search": {
+            "modalkeys.search": {
                 "backwards": true,
                 "caseSensitive": true,
                 "wrapAround": true
             }
         },
-        "n": "modaledit.nextMatch",
-        "N": "modaledit.previousMatch",
+        "n": "modalkeys.nextMatch",
+        "N": "modalkeys.previousMatch",
         /**
 ## Miscellaneous Commands
 
@@ -577,7 +578,7 @@ it has been changed. There is no way to get around this in VS Code.
         */
         ":": "workbench.action.showCommands",
         "z": {
-            "z": { "revealLine": { lineNumber: __line, at: 'center' } }
+            "z": { "revealLine": { lineNumber: '__line', at: 'center' } }
         },
         "Z": {
             "help": "Z - Close and save, Q - Close without saving",

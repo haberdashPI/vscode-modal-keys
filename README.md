@@ -7,7 +7,22 @@ ModalKeys is a simple extension for defining modal keybindings in VSCode. The mo
 [Vim](https://www.vim.org/) and ModalKeys includes presets that resemble Vim. While you can
 emulate existing modal editors like Vim or
 [Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html) with this extension, you can
-also build your keyboard layout from ground up and add exactly the features you need.
+also build your keyboard layout from the ground up and add exactly the features you need.
+
+As a little preview of what's possible, here are the movement commands in my configuration file:
+
+```typescript
+    "::using::cursorMove::": {
+        h: { to: 'left', select: "__mode !== 'normal'", value: '__count' },
+        j: { to: 'down', by: 'wrappedLine', select: "__mode !== 'normal'", value: '__count' },
+        k: { to: 'up', by: 'wrappedLine', select: "__mode !== 'normal'" , value: '__count' },
+        l: { to: 'right', select: "__mode !== 'normal'", value: '__count' },
+        gj: { to: 'down', by: 'line', select: "__mode !== 'normal'", value: '__count' },
+        gk: { to: 'up', by: 'line', select: "__mode !== 'normal'", value: '__count' },
+    },
+```
+
+These basically replicate the behavior of VIM's basic cursor motions. When these keys are pressed in normal mode the built-in VSCode command `cursorMove` will be called with the given arguments. If you don't know normal mode is, refer to the more detailed descriptions below. 
 
 Rather than attempt to reproduce all features of past editors, ModalKeys simply provides the
 means to easily define new keybindings for several pre-defined modes, and as many user defined
