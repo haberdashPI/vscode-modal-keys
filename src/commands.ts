@@ -824,19 +824,27 @@ function highlightMatches(editor: vscode.TextEditor,
             let matches = searchMatches(doc, sel.active, undefined, searchString,
                 searchRegex, searchCaseSensitive, !searchBackwards, searchWrapAround)
             let result = matches.next()
+            let newsel = sel
+            while(!result.done){
+                let [active, anchor] = searchBackwards ?
+                    [result.value.start, result.value.end] :
+                    [result.value.end, result.value.start]
+                if (!searchSelectTillMatch) anchor = active
+                newsel = positionSearch(new vscode.Selection(anchor, active), 
+                    result.value.end.character - result.value.start.character, 
+                    !searchBackwards)
+                if(!newsel.isEqual(sel)) break
+
+                result = matches.next()
+            }
             if(result.done){
                 searchInfo = "Pattern not found"
                 return sel
             }else{
                 searchRanges.push(result.value)
 
-                let [active, anchor] = searchBackwards ?
-                    [result.value.start, result.value.end] :
-                    [result.value.end, result.value.start]
-                if (searchSelectTillMatch)
-                    anchor = sel.anchor
                 searchMatchLength = result.value.end.character - result.value.start.character
-                return new vscode.Selection(anchor, active)
+                return newsel
             }
         })
 
@@ -910,40 +918,33 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
     }
 }
 
-async function unpositionSearch(editor: vscode.TextEditor, forward: boolean){
-    let offset = searchAtStart === forward ? (forward ? searchLength : -searchLength) : 0
-
-    if(offset !== 0){
-        editor.selections = editor.selections.map(x => {
-            let newpos = x.active.translate(0, offset)
-            return new vscode.Selection(searchSelectTillMatch ? x.anchor : newpos, newpos)
-        })
-    }
-}
-
-async function positionSearch(editor: vscode.TextEditor, len: number, forward: boolean){
+function positionSearch(sel: vscode.Selection, len: number, forward: boolean){
     let offset = 0;
     if(searchOffset === 'exclusive'){
         offset = forward ? -len : len
-        searchAtStart = forward
+        if(!searchSelectTillMatch) offset += forward ? -1 : 0
+        else searchAtStart = forward
     }else if(searchOffset === 'start'){
         if(forward){ offset = -len }
         searchAtStart = true
     }else if(searchOffset === 'end'){
         if(!forward){ offset = len }
         searchAtStart = false
-    }else if(searchOffset !== 'inclusive'){
-        vscode.window.showErrorMessage(`Unexpected search offset "${searchOffset}"`)
+    }else if(searchOffset === 'inclusive'){
+        if(!searchSelectTillMatch){
+            offset += forward ? -1 : 0
+            searchAtStart = true
+        }else searchAtStart = !forward 
     }else{
-        searchAtStart = !forward
+        vscode.window.showErrorMessage(`Unexpected search offset "${searchOffset}"`)
+        return sel
     }
 
     if(offset !== 0){
-        editor.selections = editor.selections.map(x => {
-            let newpos = x.active.translate(0, offset)
-            return new vscode.Selection(searchSelectTillMatch ? x.anchor : newpos, newpos)
-        })
+        let newpos = sel.active.translate(0, offset)
+        return new vscode.Selection(searchSelectTillMatch ? sel.anchor : newpos, newpos)
     }
+    return sel
 }
 
 /**
@@ -956,7 +957,6 @@ async function acceptSearch(editor: vscode.TextEditor, len: number) {
     let mode = searchOldMode
     await enterMode(mode)
     searchLength = len
-    positionSearch(editor, len, !searchBackwards)
     if(searchExecuteAfter){
         keyState.execute(searchExecuteAfter, Normal)
     }
@@ -1020,9 +1020,7 @@ function deleteCharFromSearch() {
 async function nextMatch(): Promise<void> {
     let editor = vscode.window.activeTextEditor
     if (editor && searchString) {
-        unpositionSearch(editor, !searchBackwards)
         highlightMatches(editor, editor.selections)
-        positionSearch(editor, searchLength, !searchBackwards)
         editor.revealRange(editor.selection)
     }
 }
@@ -1034,9 +1032,7 @@ async function previousMatch(): Promise<void> {
     let editor = vscode.window.activeTextEditor
     if (editor && searchString) {
         searchBackwards = !searchBackwards
-        unpositionSearch(editor, !searchBackwards)
         highlightMatches(editor, editor.selections)
-        positionSearch(editor, searchLength, !searchBackwards)
         editor.revealRange(editor.selection)
         searchBackwards = !searchBackwards
     }
