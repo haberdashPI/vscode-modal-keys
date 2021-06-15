@@ -391,7 +391,7 @@ rest of line.
 Again, we utilize existing mappings to implement the <key>C</key> command. It
 does same thing as keys <key>D</key><key>i</key> together.
         */
-        "C": { "modalkeys.typeNormalKeys": { "keys": "Di" } },
+        "C": { "modalkeys.typeKeys": { "keys": "Di" } },
         /**
 Yanking or copying is always done on selected range. So, we make sure that only
 rest of line is selected before copying the range to clipboard. Afterwards we
