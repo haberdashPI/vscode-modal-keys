@@ -626,6 +626,11 @@ function cancelMultipleSelections() {
  */
 async function toggleSelection(): Promise<void> {
     if(isSelecting()){
+        let editor = vscode.window.activeTextEditor
+        if(editor){
+            editor.selections = editor.selections.map(x => 
+                new vscode.Selection(x.active, x.active))
+        }
         enterMode(Normal)
     }else{
         enterMode(Visual)
