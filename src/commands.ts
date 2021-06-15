@@ -649,15 +649,6 @@ function isSelecting(editor: vscode.TextEditor | undefined = vscode.window.activ
     return keyMode === Normal && (visualFlag ||
         (editor ? editor.selections.some(s => !s.isEmpty) : false))
 }
-/**
- * Function that sets the selecting flag off. This function is called from one
- * event. The flag is resetted when the active editor changes. The function that
- * updates the status bar sets the flag on again, if there are any active
- * selections.
- */
- export function resetSelecting() {
-    keyMode = Normal
-}
 
 function* mapIter<T, R>(iter: Iterable<T>, fn: (x: T) => R){
     for(const x of iter){

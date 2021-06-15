@@ -33,7 +33,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		channel,
 		vscode.workspace.onDidChangeConfiguration(actions.updateFromConfig),
-		vscode.window.onDidChangeVisibleTextEditors(commands.resetSelecting),
 		vscode.window.onDidChangeActiveTextEditor(commands.restoreEditorMode),
 		vscode.window.onDidChangeTextEditorSelection(e => {
 			commands.onSelectionChanged(e)
