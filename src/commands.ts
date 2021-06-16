@@ -1256,7 +1256,7 @@ async function importPresets(folder?: string) {
     let config = vscode.workspace.getConfiguration("modalkeys")
 
     let userPresetsPath = folder || 
-        config.get<vscode.Uri>("userPresetsFolder")?.path
+        config.get<string>("userPresetsFolder")
     if(userPresetsPath){
         let userPresets = (await fs.readDirectory(vscode.Uri.file(userPresetsPath))).
             map(t => user+t[0]).
@@ -1283,6 +1283,7 @@ async function importPresets(folder?: string) {
             let dirUri = userPreset[0]
             config.update("userPresetsFolder", dirUri.path, true)
             await importPresets(dirUri.path)
+            return 
         }else if(choice == browse){
             let userPreset = await vscode.window.showOpenDialog({
                 openLabel: "Import presets",
