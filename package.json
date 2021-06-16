@@ -90,6 +90,11 @@
                         }
                     }
                 },
+                "modalkeys.userPresetsFolder": {
+                    "type": "string",
+                    "description": "A folder where modal-key presets can be found.",
+                    "scope": "machine"
+                },
                 "modalkeys.insertCursorStyle": {
                     "type": "string",
                     "enum": [

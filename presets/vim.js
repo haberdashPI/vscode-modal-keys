@@ -579,17 +579,12 @@ Note that <key>Z</key><key>Q</key> command still asks to save the file, if
 it has been changed. There is no way to get around this in VS Code.
         */
         ":": "workbench.action.showCommands",
-        "z": {
-            "z": { "revealLine": { lineNumber: '__line', at: 'center' } }
-        },
-        "Z": {
-            "help": "Z - Close and save, Q - Close without saving",
-            "Z": [
-                "workbench.action.files.save",
-                "workbench.action.closeActiveEditor"
-            ],
-            "Q": "workbench.action.closeActiveEditor"
-        }
+        "zz": { "revealLine": { lineNumber: '__line', at: 'center' } },
+        "ZZ": [
+            "workbench.action.files.save",
+            "workbench.action.closeActiveEditor"
+        ],
+        "ZQ": "workbench.action.closeActiveEditor"
     },
 }
 /**

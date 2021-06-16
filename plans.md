@@ -2,6 +2,7 @@
 - revise tutorials and vim presets
     - debug vim present:
         - in the middle of debuggin various vim sentences (operator/objects)
+        - after that, shoudl be basically done with vim presents
     - compile tutorials (pandoc?): should be a CI solution
       that doesn't create a lots of built html wihtin the
       main repo branch

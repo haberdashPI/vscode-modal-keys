@@ -1243,27 +1243,50 @@ async function repeatLastUsedSelection(): Promise<void> {
  * shebang in code, he/she just has to make sure that the code evaluates to an
  * object that has `keybindings` and/or `selectbindings` properties.
  */
-async function importPresets() {
-    const browse = "Browse..."
+async function importPresets(folder?: string) {
+    const browseFolder = "Select preset folder..."
+    const builtIn = "Built-in: "
+    const user = "User: "
+    const browse = "Browse for file..."
     let presetsPath = vscode.extensions.getExtension("haberdashpi.vscode-modal-keys")!
         .extensionPath + "/presets"
     let fs = vscode.workspace.fs
     let presets = (await fs.readDirectory(vscode.Uri.file(presetsPath)))
-        .map(t => t[0])
+        .map(t => builtIn+t[0])
+    let config = vscode.workspace.getConfiguration("modalkeys")
+
+    let userPresetsPath = folder || 
+        config.get<vscode.Uri>("userPresetsFolder")?.path
+    if(userPresetsPath){
+        let userPresets = (await fs.readDirectory(vscode.Uri.file(userPresetsPath))).
+            map(t => user+t[0]).
+            filter(x => x.match(/\.(js$)|(jsonc?$)/))
+        presets = presets.concat(userPresets)
+    }
+    presets.push(browseFolder)
     presets.push(browse)
     let choice = await vscode.window.showQuickPick(presets, {
         placeHolder: "Warning: Selecting a preset will override current " +
             "keybindings in global 'settings.json'"
     })
     if (choice) {
-        let uri = vscode.Uri.file(presetsPath + "/" + choice)
-        if (choice == browse) {
+        let uri = choice.startsWith(builtIn) ?
+            vscode.Uri.file(presetsPath + "/" + choice.slice(builtIn.length)) :
+            vscode.Uri.file(userPresetsPath + "/" + choice.slice(user.length))
+        if (choice == browseFolder) {
+            let userPreset = await vscode.window.showOpenDialog({
+                openLabel: "Select Folder",
+                canSelectFiles: false,
+                canSelectFolders: true,
+            })
+            if (!userPreset) return
+            let dirUri = userPreset[0]
+            config.update("userPresetsFolder", dirUri.path, true)
+            await importPresets(dirUri.path)
+        }else if(choice == browse){
             let userPreset = await vscode.window.showOpenDialog({
                 openLabel: "Import presets",
-                filters: {
-                    JavaScript: ["js"],
-                    JSON: ["json", "jsonc"],
-                },
+                filters: { Preset: ["json", "jsonc", "js"], },
                 canSelectFiles: true,
                 canSelectFolders: false,
                 canSelectMany: false
