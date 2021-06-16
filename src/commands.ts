@@ -830,6 +830,7 @@ function highlightMatches(editor: vscode.TextEditor,
                     [result.value.start, result.value.end] :
                     [result.value.end, result.value.start]
                 if (!searchSelectTillMatch) anchor = active
+                else anchor = sel.anchor
                 newsel = positionSearch(new vscode.Selection(anchor, active), 
                     result.value.end.character - result.value.start.character, 
                     !searchBackwards)
