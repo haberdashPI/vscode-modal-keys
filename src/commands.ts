@@ -1059,13 +1059,11 @@ async function typeKeys(args: TypeKeysArgs): Promise<void> {
         throw Error(`${typeKeysId}: Invalid args: ${JSON.stringify(args)}`)
 
     let typeKeyState = new KeyState({}, keyState)
-    let startMode = keyMode
     let newMode = args.mode || Normal
     if(keyMode !== newMode) enterMode(newMode)
     for (let i = 0; i < args.keys.length; i++){
         await runActionForKey(args.keys[i], newMode, typeKeyState)
     }
-    if(keyMode !== startMode) enterMode(startMode)
 }
 
 /**
