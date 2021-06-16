@@ -525,7 +525,7 @@ export class KeyState {
 
     update(keymap: Keymap){
         this.currentKeymap = keymap
-        this.countFinalized = true
+        if(this.argumentCount !== undefined) this.countFinalized = true
     }
 
     updateCount(val: number){
@@ -606,7 +606,7 @@ export class KeyState {
      * value.
      */
     async executeParameterized(action: Parameterized, mode: string, captured: string | undefined) {
-        let this_ = this
+        let this_ = this 
         let repeat: boolean | number
         let repeatStr: string = ""
         async function exec(args?: any) {
