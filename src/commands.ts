@@ -599,7 +599,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined, 
  * standard version to keep the state in sync.
  */
 async function cancelSelection(): Promise<void> {
-    if (keyMode === Normal && visualFlag) {
+    if (isSelecting()) {
         await vscode.commands.executeCommand("cancelSelection")
         enterMode(Normal)
     }
