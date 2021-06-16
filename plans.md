@@ -1,8 +1,7 @@
 - add folder to list presets
 - revise tutorials and vim presets
     - debug vim present:
-        - try out other commands...
-        - typeing a key to move to insert mode doesn't work
+        - in the middle of debuggin various vim sentences (operator/objects)
     - compile tutorials (pandoc?): should be a CI solution
       that doesn't create a lots of built html wihtin the
       main repo branch

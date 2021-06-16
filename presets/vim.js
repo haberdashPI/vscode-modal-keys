@@ -2,7 +2,8 @@ function aroundEntry(key, bounds){
     return {
         from: typeof(bounds) === 'string' ? bounds : bounds.value || bounds.from,
         to: typeof(bounds) === 'string' ? bounds : bounds.value || bounds.to,
-        regex: bounds.regex !== undefined
+        regex: bounds.regex !== undefined,
+        docScope: true
     }
 }
 function aroundObjects(mappings){
@@ -24,7 +25,8 @@ function operators(params){
     let result = {}
     for(const [opkey, opcom] of Object.entries(params.operators)){
         for(const [objkey, objcom] of Object.entries(params.objects)){
-            result["normal::"+opkey + objkey] = [opcom, objcom]
+            result["normal::"+opkey + objkey] = 
+                ["modalkeys.cancelMultipleSelections", objcom, opcom]
             result["normal::"+opkey+opkey] =
                 ["modalkeys.cancelMultipleSelections", "expandLineSelection", opcom]
             result["visual::"+opkey] = opcom
@@ -510,10 +512,10 @@ can be mapped the same way.
             ],
             ...(Object.fromEntries(["f", "F", "t", "T", "w", "b", "e", "W", "B", "E", "^",
                     "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
-                map(k => [k, { "typeKeys": { keys: "v"+k } } ]))),
+                map(k => [k, { "modalkeys.typeKeys": { keys: "v"+k } } ]))),
             ...aroundObjects({
-                "w": { value: "\\\\W", regex: true },
-                "p": { value: "(?<=\\\\r?\\\\n)\\\\s*\\\\r?\\\\n", regex: true },
+                "w": { value: "\\W", regex: true },
+                "p": { value: "(?<=\\r?\\n)\\s*\\r?\\n", regex: true },
                 "(": { from: "(", to: ")" },
                 "{": { from: "{", to: "}" },
                 "[": { from: "[", to: "]" },
