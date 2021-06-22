@@ -439,7 +439,7 @@ have counterparts in VS Code.
 
 _Change_ commands delete some text and then enter insert mode.
 <key>c</key><key>c</key> changes the current line (or all selected lines),
-<key>c</key><key>$</key> changes the text from the cursor to the end of line,
+<key>c</key><key>\$</key> changes the text from the cursor to the end of line,
 and <key>c</key><key>w</key> changes the end of the word. Three key sequnce
 <key>c</key><key>i</key><key>w</key> changes the whole word under the cursor.
 ```js

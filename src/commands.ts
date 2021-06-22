@@ -4,7 +4,9 @@
  * This module implements the new commands provided by ModalKeys. It also stores
  * the extension state; which mode we are in, search parameters, bookmarks,
  * quick snippets, etc.
+ * @module
  */
+
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
 import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand } from './actions'

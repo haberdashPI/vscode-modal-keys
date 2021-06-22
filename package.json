@@ -282,5 +282,10 @@
         "vscode-test": "^1.5.0",
         "webpack": "^5.19.0",
         "webpack-cli": "^4.4.0"
+    },
+    "dependencies": {
+        "docco": "^0.8.1",
+        "doco": "^0.3.0",
+        "typedoc": "^0.20.37"
     }
 }

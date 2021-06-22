@@ -14,6 +14,10 @@
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
 		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	},
+	"typedocOptions": {
+		"entryPoints": ["src/actions.ts", "src/commands.ts", "src/extension.ts", "src/util.ts"],
+		"out": "docs"
+	},
 	"exclude": [
 		"node_modules",
 		".vscode-test"

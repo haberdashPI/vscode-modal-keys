@@ -1,4 +1,70 @@
-function aroundEntry(key, bounds){
+
+/**
+# Advanced vim presets
+
+This document provides a more advanced set of vim keybindings than provided in
+the [tutorial](TODO). The goal of these bindings is to lower the barrier to
+entry for Vim users who don't want to spend the time defining bindings from
+ground up. A secondary goal is to show off some of the more advanced features of
+ModalKeys that were not discussed in the tutorial.
+
+![importing presets](../images/import-preset.png =553x94) If you are not
+interested on how the Vim keybindings are implemented and just want to use them,
+you can skip this discussion. Just import the presets by pressing
+<key>Ctrl</key>+<key>Shift</key>+<key>P</key> and running command **ModalKeys:
+Import preset keybindings**. You will be presented a choice to import either Vim
+bindings or any presets that you have created yourself. If you are planning to
+customize the bindings, or create Vim-style commands from scratch, this document
+gives you pointers how to go about with that.
+
+Unlike the tutorial, the assumption throughout this documentation is that you
+are familiar with vim. All concepts discussed here are introduced, at least
+briefly, in the tutorial.
+
+## Functions
+
+To begin with, we'll define some functions for use in our keybindings. Since
+imported keybindings can be defined using javascript, this can help generalize
+our bindings, allowing the defining of many keybindings at wonce. In vim, the
+cannonical use for this would be the operator/object combinations: e.g. to
+delete a word you type `d` (for delete) and `w` (for word). This noun-verb
+structure implies many possible shortcuts.
+**/
+
+/**
+ * Creates a series of key mappings which select a region of text around
+ * or within a given boundary (e.g. {from: "(", to: ")"})
+ * 
+ * @param mappings: a map of key: bounds pairings. Each key is a 
+ * single-character string (the key to map), and each bound specifies
+ * the region of text around which we can select. 
+ * @returns a map of key: command pairings. Two per entry in `mappings`
+ * (one for within `i<key>` and one for around `a<key>` the given bounds)
+ */
+function aroundObjects(mappings){
+    return Object.fromEntries(Object.entries(mappings).map(([key, bounds]) => {
+        return [
+            ["a"+key, { "modalkeys.selectBetween": {
+                ...aroundEntry(bounds),
+                inclusive: true
+            }}],
+            ["i"+key,  { "modalkeys.selectBetween": {
+                ...aroundEntry(bounds),
+                inclusive: false
+            }}]
+        ]
+    }).flat())
+}
+
+/**
+ * Helper function. Expands a simpler `bounds` argument to the arguments required for
+ * `selectBetween`
+ * @param {string | {value: string} | {from: string, to: string}} bounds - 
+ *    the characters around which a region should be selected. Can also include
+ *    a `regex: true` field to indicate that the bounds are regular expressions to
+ *    match, not strings.
+ */
+ function aroundEntry(bounds){
     return {
         from: typeof(bounds) === 'string' ? bounds : bounds.value || bounds.from,
         to: typeof(bounds) === 'string' ? bounds : bounds.value || bounds.to,
@@ -6,21 +72,21 @@ function aroundEntry(key, bounds){
         docScope: true
     }
 }
-function aroundObjects(mappings){
-    return Object.fromEntries(Object.entries(mappings).map(([key, bounds]) => {
-        return [
-            ["a"+key, { "modalkeys.selectBetween": {
-                ...aroundEntry(key, bounds),
-                inclusive: true
-            }}],
-            ["i"+key,  { "modalkeys.selectBetween": {
-                ...aroundEntry(key, bounds),
-                inclusive: false
-            }}]
-        ]
-    }).flat())
-}
 
+/**
+ * Defines a series of operators using `params`
+ * 
+ * @param params: an object with the following entires
+ *    - operators: an object defining the operators,
+ *      each entry should map a key to a command that acts on a selected 
+ *      region of text (e.g. `d` to delete).
+ *    - objects: an object defining the objects,
+ *      each entry should map a key to a command that selects a region of text 
+ *      (e.g. `w` selects a word)
+ * @returns An object containing all the mappings implied by the operator
+ *   object pairsing: e.g. ~n^2 entries. It also defines visual mode
+ *   actions for each operator and repeated action commands (e.g. `dd`).
+ */
 function operators(params){
     let result = {}
     for(const [opkey, opcom] of Object.entries(params.operators)){
@@ -36,94 +102,23 @@ function operators(params){
 }
 
 /**
-# New Vimproved ModalKeys 2.0
-
-![](../images/pooh.jpg =375x403)
-Providing full Vim emulation was not originally a goal of ModalKeys. The idea of
-the extension is to provide an engine that allows the user to [map any key
-combination to any command provided by VS Code](../README.html#configuration).
-However, most users equate modal editing with Vim and are familiar with its
-default keybindings. Vim users really love the powerful key sequences that
-combine editing operations with cursor motions or text ranges.
-
-ModalKeys has also evolved by taking inspiration from Vim. Many capabilities
-were added with the motive to enable some Vim feature that was previously not
-possible to implement. With version 2.0 ModalKeys's functionality is now
-extensive enough to build a semi-complete Vim emulation. So, here we go...
-
-Adding Vim keybindings as optional presets serves two purposes: it lowers the
-barrier to entry for Vim users who don't want to spend the time defining
-bindings from ground up. Secondly, Vim presets serve as an example to show
-how you can build sophisticated command sequences using the machinery provided
-by ModalKeys.
-
-![importing presets](../images/import-preset.png =553x94)
-If you are not interested on how the Vim keybindings are implemented and just
-want to use them, you can skip this discussion. Just import the presets by
-pressing <key>Ctrl</key>+<key>Shift</key>+<key>P</key> and running command
-**ModalKeys: Import preset keybindings**. You will be presented a choice to
-import either Vim bindings or any presets that you have created yourself. If
-you are planning to customize the bindings, or create Vim-style commands from
-scratch, this document gives you pointers how to go about with that.
-
 ## Game Plan
 
 We start with basic motion commands which are mostly straightforward to
-implement. Motions have two modes of operation: normal mode (moving cursor), and
-visual mode (extending selection). We make sure all motions work correctly in
-both modes. This allows us to reuse these keybindings when implementing more
-advanced operations. Our goal is to avoid repetition by building complex
-sequences from primitive commands.
+implement. 
 
-In Vim, there are multiple key sequences for a same operation. For example,
-you can convert a paragraph upper case by typing
-<key>g</key><key>U</key><key>i</key><key>p</key>. You can perform the same
-operation using visual mode by typing <key>v</key><key>i</key><key>p</key><key>U</key>.
-The trick we use is to convert key sequences that operate on character, word,
-line, paragraph, etc. to analagous key sequences that use visual mode. We can
-implement all the editing commands just to work on active selection and reuse
-these commands with the other key combinations. Consequently, command definition
-becomes a string mapping problem. Since we can use JavaScript to expressions to
-do string manipulation, these mappings are easy to formulate.
+A few notes:
 
-![](../images/vim-uppercase.gif)
-
-Many ways to skin a cat...
+- Where useful, `__count` is used to provide the number argument
+(e.g. the `3` in 3l) to a given command.
+- When in visual model, most of the commands are built to extend the selection
 
 ## Motions in Normal Mode
-
-The list of available cursor motion commands is shown below.
-
-| Keys      | Cursor Motion
-| --------- | -------------------
-| `Enter`   | Beginning of next line
-| `Space`   | Next character on right
-| `h`       | Left
-| `j`       | Down
-| `k`       | Up
-| `l`       | Right
-| `0`       | First character on line
-| `$`       | Last character on line
-| `^`       | First non-blank character on line
-| `g_`      | Last non-blank character on line
-| `gg`      | First charater in file
-| `G`       | Last character in file
-| `w`       | Beginning of next word
-| `e`       | End of next word
-| `b`       | Beginning of previous word
-| `W`       | Beginning of next alphanumeric word
-| `B`       | Beginning of previous alphanumeric word
-| `H`       | Top of the screen
-| `M`       | Middle of the screen
-| `L`       | Bottom of the screen
-| `%`       | Matching bracket
-
-Now, lets implement all the keybindings listed above.
 */
 module.exports = {
     "keybindings": {
         /**
-Cursor can be advanced in a file with with enter and space. These are not
+Cursor can be advanced in a file with enter and space. These are not
 technically motion commands but included for compatibility.
         */
         "\n": [
@@ -140,7 +135,7 @@ Move cursor up/down/left/right.
             "k": { to: 'up', select: '__mode == "visual"', value: '__count' },
             "l": { to: 'right', select: '__mode == "visual"', value: '__count' },
             /**
-Move to first/last character on line. These work also in visual mode.
+Move to first/last character on line.
         */
             "0": { to: 'wrappedLineStart', select: '__mode == "visual"' },
             "$": { to: 'wrappedLineEnd', select: '__mode == "visual"' },
@@ -153,34 +148,26 @@ Move to first/last non-blank character on line. Also these ones use the
         },
 
             /**
-Moving to the beginning of file is defined as a conditional command to make
-it work in visual mode.
+Moving to beginning or end of the file.
             */
-        "gg": "cursorTop",
+        gg: "cursorTop",
         "visual::gg": "cursorTopSelect",
-
-    /**
-<key>g</key><key>t</key> and <key>g</key><key>T</key> switch to next/previous
-tab.
+        G: "cursorBottom",
+        "visual::G": "cursorBottomSelect",
+        /**
+Switch to next and previous tab.
         */
         "gt": "workbench.action.nextEditor",
         "gT": "workbench.action.previousEditor",
         /**
-
-Now we can complete the list of basic motion commands. This one movest the
-cursor at the end of the file and selects the range, if visual mode is on.
-        */
-        G: {
-            "if": "__mode == 'visual'",
-            "then": "cursorBottomSelect",
-            "else": "cursorBottom"
-        },
-        /**
 The logic of separating words is bit different in VS Code and Vim, so we will
-not try to imitate Vim behavior here. These keys are mapped to the most similar
-motion available. The <key>W</key> and <key>B</key> move past all non-space characters,
-and are implemented using the search command, with appropriate options. To allow
-motion across multiple words, we use the 'repeat' option.
+not aim to immitate Vim exaclty. If that's something you want, you might
+consider looking at [Selection
+Utilities](https://github.com/haberdashPI/vscode-selection-utilities). 
+These keys are mapped to the most similar motion available. The <key>W</key> and
+<key>B</key> move past all non-space characters, and are implemented using the
+search command, with appropriate options. To handling of count arguments, we use
+the `repeat` option.
         */
         "w": { "cursorWordStartRight": {}, "repeat": "__count" },
         "visual::w": { "cursorWordStartRightSelect": {}, "repeat": "__count" },
@@ -219,13 +206,15 @@ Moving cursor to the top, middle, and bottom of the screen is mapped to
         /**
 Move to matching bracket command is somewhat challenging to implement
 consistently in VS Code. This is due to the problem that there are no commands
-that do exactly what Vim's motions do. In normal mode we call the
-`jumpToBracket` command which works if the cursor is on top of a bracket, but
-does not allow for the selection to be extended. In visual mode we use the
-`smartSelect.expand` command instead to extend the selection to whatever
-syntactic scope is above the current selection. In many cases, it is more useful
-motion than jumping to a matching bracket, but using it means that we are
-diverging from Vim's functionality.
+that do exactly what Vim's motions do, and because VSCode extensions are not
+allowed to access VS Code's parsing of brackets 😞, and so have to re-implement
+parsing (see, for example,
+[bracketeer](https://marketplace.visualstudio.com/items?itemName=pustelto.bracketeer)).
+In normal mode we call the `jumpToBracket` command which works if the cursor is
+on top of a bracket, but does not allow for the selection to be extended. In
+visual mode we use the `smartSelect.expand` command, which is *roughly*
+equivlaent. In many cases, it is more useful motion than jumping to a matching
+bracket, but using it means that we are diverging from Vim's functionality.
         */
         "%": "editor.action.jumpToBracket",
         "visual::%": "editor.action.smartSelect.expand",
@@ -233,19 +222,8 @@ diverging from Vim's functionality.
 ## Jump to a Character
 
 Advanced cursor motions in Vim include jump to character, which is especially powerful in
-connection with editing commands. With this motion, we can apply edits upto or including a
-specified character. The same motions work also as jump commands in normal mode. We have to
-provide separate implementations for normal and visual mode, since we need to provide
-different parameters to the `modalkeys.search` command we are utilizing.
-
-| Keys          | Cursor Motion
-| ------------- | ---------------------------------------------
-| `f`<_char_>   | Jump to next occurrence of <_char_>
-| `F`<_char_>   | Jump to previous occurrence of <_char_>
-| `t`<_char_>   | Jump to character before the next occurrence of <_char_>
-| `T`<_char_>   | Jump to character after the previous occurrence of <_char_>
-| `;`           | Repeat previous f, t, F or T motion
-| `,`           | Repeat previous f, t, F or T motion in opposite direction
+connection with editing commands. With this motion, we can apply edits up to or including a
+specified character. The same motions work also as jump commands in normal mode. 
 
 All of these keybindings are implemented using the [incremental
 search](../README.html#incremental-search) command, just the parameters are different for
@@ -294,21 +272,6 @@ Repeating the motions can be done simply by calling `nextMatch` or
 ## Switching between Modes
 
 Next, we define keybindings that switch between normal, insert, and visual mode:
-
-| Keys      | Command
-| --------- | --------------------------------
-| `i`       | Switch to insert mode
-| `I`       | Move to start of line and switch to insert mode
-| `a`       | Move to next character and switch to insert mode
-| `A`       | Move to end of line and switch to insert mode
-| `o`       | Insert line below current line, move on it, and switch to insert mode
-| `O`       | Insert line above current line, move on it, and switch to insert mode
-| `v`       | Switch to visual mode
-| `V`       | Select current line and switch to visual mode
-
-These commands have more memorable names such as `i` = insert, `a` = append,
-and `o` = open, but above we describe what the commands do exactly instead
-of using these names.
         */
         "i": "modalkeys.enterInsert",
         "I": [
@@ -350,23 +313,7 @@ motion commands to extend and create selections.
 Editing commands in normal mode typically either affect current character or
 line, or expect a motion key sequence at the end which specifies the scope of
  the edit. Let's first define simple commands that do not require a motion
- annex:
-
-| Keys  | Command
-| ----- | -------------------------
-| `x`   | Delete character under cursor
-| `X`   | Delete character left of cursor (backspace)
-| `r`   | Replace character under cursor (delete and switch to insert mode)
-| `s`   | Substitute character under cursor (same as `r`)
-| `S`   | Substitute current line (delete and switch to insert mode)
-| `D`   | Delete rest of line
-| `C`   | Change rest of line (delete and switch to insert mode)
-| `Y`   | Yank (copy) rest of line
-| `p`   | Paste contents of clipboard after cursor
-| `P`   | Paste contents of clipboard at cursor
-| `J`   | Join current and next line. Add space in between
-| `u`   | Undo last change
-| `.`   | Repeat last change
+ suffix:
 
 <key>x</key> and <key>X</key> commands do exactly what <key>Delete</key> and
 <key>Backspace</key> keys do.
@@ -390,14 +337,14 @@ rest of line.
             "modalkeys.cancelSelection"
         ],
         /**
-Again, we utilize existing mappings to implement the <key>C</key> command. It
+We utilize existing mappings to implement the <key>C</key> command. It
 does same thing as keys <key>D</key><key>i</key> together.
         */
         "C": { "modalkeys.typeKeys": { "keys": "Di" } },
         /**
-Yanking or copying is always done on selected range. So, we make sure that only
-rest of line is selected before copying the range to clipboard. Afterwards we
-clear the selection again.
+Yanking or copying is always done on a selected range. So, below, we make sure
+that only the rest of line is selected before copying the range to clipboard.
+Afterwards we clear the selection again.
         */
         "Y": [
             "modalkeys.cancelSelection",
@@ -408,7 +355,11 @@ clear the selection again.
         /**
 Pasting text at cursor is done with <key>P</key> key. Following Vim convention
 <key>p</key> pastes text after cursor position. In both cases we clear the
-selection after paste, so that we don't accidently end up in visual mode.
+selection after paste, so that we don't accidently end up in visual mode. Note
+that these do not work exactly the same as the VIM commands. In vim paste
+behaviors differently depending on whether you have a single line or multiple
+lines in the clipboard. You would need to write a VSCode extension that inspects
+the contents of the clipboard before pasting to get this same behavior. 
         */
         "p": [
             "cursorRight",
@@ -421,11 +372,10 @@ selection after paste, so that we don't accidently end up in visual mode.
         ],
         /**
 <key>J</key> joins current and next lines together adding a space in between.
-There is a built in command that does just this.
         */
         "J": "editor.action.joinLines",
         /**
-Undoing last change is also a matter of calling built-in command. We clear the
+Undoing last change is also a matter of calling built-in commands. We clear the
 selection afterwards.
         */
         "u": [
@@ -438,6 +388,8 @@ command that changed the text somehow. This command is provided by ModalKeys. It
 checks after each key sequence is typed whether it caused a change in file.
 If so, it stores the seqeuence as a change. The command just runs the stored
 keysequence again.
+
+TODO: stopped here
         */
         ".": "modalkeys.repeatLastChange",
         /**

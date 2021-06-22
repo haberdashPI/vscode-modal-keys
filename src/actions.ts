@@ -1,6 +1,3 @@
-import { sortBy, mergeWith, mapValues, flatten, uniq } from 'lodash'
-import { IHash } from './util'
-
 /**
  * # Converting Keybinding Definitions to Actions
  *
@@ -8,10 +5,14 @@ import { IHash } from './util'
  * interfaces. We parse the configuration JSON to TypeScript objects which
  * directly define all the valid keyboard sequences and the commands that these
  * will invoke.
+ * @module
  */
-//#region -c action.ts imports
+
+import { sortBy, mergeWith, mapValues, flatten, uniq } from 'lodash'
+import { IHash } from './util'
+
 import * as vscode from 'vscode'
-//#endregion
+
 /**
  * ## Action Definitions
  *
