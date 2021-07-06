@@ -258,6 +258,7 @@
         "vscode:prepublish": "npm run package",
         "compile": "webpack",
         "watch": "webpack --watch",
+        "build-markdown": "npx mkdirp docs/build/presets docs/build/src && npx jdi docs/*.js presets/*.js src/*.ts && npx cpx \"presets/*.js.md\" docs/build/presets/ && npx cpx \"docs/*.js.md\" docs/build/ && npx cpx \"src/*.ts.md\" docs/build/src/ && npx rimraf \"docs/*.js.md\" && npx rimraf \"presets/*.js.md\" && npx rimraf \"src/*.ts.md\"",
         "package": "webpack --mode production --devtool hidden-source-map",
         "test-compile": "tsc -p ./",
         "test-watch": "tsc -watch -p ./",
@@ -273,10 +274,16 @@
         "@types/vscode": "^1.55.0",
         "@typescript-eslint/eslint-plugin": "^4.14.1",
         "@typescript-eslint/parser": "^4.14.1",
+        "cpx": "^1.5.0",
         "eslint": "^7.19.0",
         "glob": "^7.1.6",
+        "jdi": "^1.1.3",
         "lodash": "^4.17.21",
+        "mkdirp": "^0.5.5",
         "mocha": "^8.2.1",
+        "node-pandoc": "^0.3.0",
+        "rimraf": "^3.0.2",
+        "tailwindcss": "^2.2.4",
         "ts-loader": "^8.0.14",
         "typescript": "^4.1.3",
         "vscode-test": "^1.5.0",
@@ -284,8 +291,6 @@
         "webpack-cli": "^4.4.0"
     },
     "dependencies": {
-        "docco": "^0.8.1",
-        "doco": "^0.3.0",
         "typedoc": "^0.20.37"
     }
 }
