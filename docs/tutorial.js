@@ -41,8 +41,7 @@
 // block for key bindings. We'll use the [Vim Cheat Sheet][] as our specification
 // for key bindings to be added.
 
-js
-{
+return {
     "modalkeys.keybindings": {
 
 // ## Switching Between Modes
@@ -89,10 +88,10 @@ js
 // empty line, and putting the cursor on it. There are two variants of this command
 // as well: <key>o</key> opens a new line below the current line whereas
 // <key>O</key> opens it on the current line.
-// ```js
-//         "o": [ "editor.action.insertLineAfter", "modalkeys.enterInsert" ],
-//         "O": [ "editor.action.insertLineBefore", "modalkeys.enterInsert" ],
-// ```
+
+        "o": [ "editor.action.insertLineAfter", "modalkeys.enterInsert" ],
+        "O": [ "editor.action.insertLineBefore", "modalkeys.enterInsert" ],
+
 // Now we can test the commands we just created.
 
 // ![mode switching](../images/mode-switching.gif)
@@ -140,7 +139,7 @@ js
         "j": { to: 'down', select: '__selecting' },
         "k": { to: 'up', select: '__selecting' },
         "l": { to: 'right', select: '__selecting' },
-    }
+    },
 
 // ModalKeys will knows to re-write this, so the two ways of specifying these commands are
 // equivalent.
@@ -150,7 +149,7 @@ js
 // as selection mode is turned on automatically.
 
 
-        "V": "expandLineSelection",
+    "V": "expandLineSelection",
 
 // ### Moving Inside Screen
 
@@ -163,7 +162,7 @@ js
         "H": { to: 'viewPortTop', select: '__selecting' },
         "M": { to: 'viewPortCenter', select: '__selecting' },
         "L": { to: 'viewPortBottom', select: '__selecting' },
-    }
+    },
 
 
 // ### Jumping to Previous/Next Word
@@ -208,7 +207,7 @@ js
         "0": { to: 'wrappedLineStart', select: '__selecting' },
         "^": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__selecting' },
         "$": { to: 'wrappedLineEnd', select: '__selecting' },
-    }
+    },
 
 // A lesser known variant of above commands is <key>g</key><key>_</key> that jumps
 // to the last non-blank character of the line.
@@ -336,7 +335,7 @@ js
 // are already in use, so you need to decide whether you want to remap the existing
 // commands first.
 
-/* keybindings.json */
+/* keybindings.json should contain the following:
 {
     {
         "key": "ctrl+b",
@@ -349,6 +348,7 @@ js
         "when": "editorTextFocus && modalkeys.mode == normal"
     }
 }
+*/
 
 // ## Commands with Counts
 
@@ -364,7 +364,7 @@ js
         "j": { to: 'down', select: '__selecting', value: '__count' },
         "k": { to: 'up', select: '__selecting', value: '__count' },
         "l": { to: 'right', select: '__selecting', value: '__count' },
-    }
+    },
     "w": {
         "if": "__selecting",
         "then": { "cursorWordStartRightSelect": {}, repeat: '__count' },
@@ -372,12 +372,12 @@ js
     },
     "b": {
         "if": "__selecting",
-        "then": { "cursorWordStartLeftSelect",: {}, repeat: '__count' },
+        "then": { "cursorWordStartLeftSelect": {}, repeat: '__count' },
         "else": { "cursorWordStartLeft": {}, repeat: '__count' },
     },
     "e": {
         "if": "__selecting",
-        "then": { "cursorWordEndRightSelect",: {}, repeat: '__count' },
+        "then": { "cursorWordEndRightSelect": {}, repeat: '__count' },
         "else": { "cursorWordEndRight": {}, repeat: '__count' },
     },
 
@@ -397,7 +397,7 @@ js
     "G": [
         { "revealLine": { lineNumber: '__count', at: 'top' } },
         { "cursorMove": { "to": "viewPortTop" } }
-    ]
+    ],
 
 // ## Editing
 
@@ -457,7 +457,7 @@ js
                 "modalkeys.enterInsert"
             ]
         }
-    }
+    },
     "cf": {
         "modalkeys.search": {
             caseSensitive: true,
@@ -471,7 +471,7 @@ js
                 "modalkeys.enterInsert"
             ]
         }
-    }
+    },
 
 // Next, we add commands to change the text inside or around various brackets, using an extension which [implements this behavior](https://github.com/dbankier/vscode-quick-select/).
 
@@ -536,9 +536,9 @@ js
             "modalkeys.cancelSelection"
         ],
 
-{/* <key>d</key> deletes (cuts) the selected text and puts it to clipboard. Capital
+/* <key>d</key> deletes (cuts) the selected text and puts it to clipboard. Capital
 <key>D</key> deletes the rest of the line. <key>x</key> deletes just the
-character under the cursor. */}
+character under the cursor. */
 
         "d": "editor.action.clipboardCutAction",
         "D": [
@@ -572,11 +572,11 @@ character under the cursor. */}
 // Code commands based on the expression. The command is bound to the tilde
 // <key>~</key> character.
 
-        "~": {
-            "if": "__selectionstr == __selection.toUpperCase()",
-            "then": "editor.action.transformToLowercase",
-            "else": "editor.action.transformToUppercase"
-        },
+    "~": {
+        "if": "__selectionstr == __selection.toUpperCase()",
+        "then": "editor.action.transformToLowercase",
+        "else": "editor.action.transformToUppercase"
+    },
 
 // ## Searching
 
@@ -584,24 +584,25 @@ character under the cursor. */}
 // search command provided by ModalKeys for this. As in Vim, typing <key>/</key>
 // starts an incremental search. <key>?</key> starts a search backwards.
 
-        "/": {
-            "command": "modalkeys.search",
-            "args": {
-                "caseSensitive": true
-            }
-        },
-        "?": {
-            "command": "modalkeys.search",
-            "args": {
-                "caseSensitive": true,
-                "backwards": true
-            }
-        },
+    "/": {
+        "command": "modalkeys.search",
+        "args": {
+            "caseSensitive": true
+        }
+    },
+    "?": {
+        "command": "modalkeys.search",
+        "args": {
+            "caseSensitive": true,
+            "backwards": true
+        }
+    },
 
 // Jumping to next previous match is done with keys <key>n</key> and <key>N</key>.
 
-        "n": "modalkeys.nextMatch",
-        "N": "modalkeys.previousMatch",
+    "n": "modalkeys.nextMatch",
+    "N": "modalkeys.previousMatch"
+}
 
 // There are some subtle differences in the search functionality as well. Instead
 // of just highlighting matches ModalKeys selects them. This is preferable anyway,
