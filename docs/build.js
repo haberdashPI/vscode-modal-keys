@@ -39,6 +39,20 @@ function docpath(source){
         .replace(/\.(ts|js)$/, '.html')
 }
 
+let header = `
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Modal Keys Documentation</title>
+	<meta charset="utf-8"/>
+</head>
+<body>`
+
+let footer = `
+</body>
+</html>
+`
+
 files.map(file => jdi.doc(path.join(process.cwd(), file))).
     map(stream => {
         let chunks = []
@@ -47,7 +61,7 @@ files.map(file => jdi.doc(path.join(process.cwd(), file))).
         stream.on('end', () => {
             let out = md.render(Buffer.concat(chunks).toString('utf8'))
             let toFile = docpath(stream.options.file)
-            fs.writeFile(toFile, out, err => {
+            fs.writeFile(toFile, header+out+footer, err => {
                 if(err) throw err;
                 else console.log('Wrote '+toFile)
             })
