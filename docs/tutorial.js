@@ -1,6 +1,5 @@
 // # Build Your Own Vim Emulation for VS Code
 
-// ![Shark](../images/sharks.png =256x206)
 // [Vim][] is the great white shark of text editors. It has survived among modern
 // IDEs because of its unique philosophy. It supports [modal editing][] which is
 // almost an opposite approach to how other editors work. You start in "normal"
@@ -93,8 +92,6 @@ return {
         "O": [ "editor.action.insertLineBefore", "modalkeys.enterInsert" ],
 
 // Now we can test the commands we just created.
-
-// ![mode switching](../images/mode-switching.gif)
 
 // ## Cursor Movement
 
@@ -322,8 +319,6 @@ return {
 
 // Let's test some of the movement commands. We should be able to navigate now
 // without using arrow keys or <key>Home</key> and <key>End</key> keys.
-
-// ![Navigation](../images/cursor-movement.gif)
 
 // We skipped commands that move cursor up and down on page at the time. The
 // reason for this is that these commands are bound to <key>Ctrl</key>+<key>b</key>
@@ -628,9 +623,8 @@ character under the cursor. */
 // Happy Editing! 🦈😎
 
 // [Vim]: https://www.vim.org/
-// [ModalKeys]: ../README.html
+// [ModalKeys]: ./README.html
 // [modal editing]: https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors
-// [settings]: ../../.vscode/settings.json
 // [commands]: https://code.visualstudio.com/api/references/commands
 // [Vim Cheat Sheet]: https://vim.rtorr.com/
 // [extensions]: https://marketplace.visualstudio.com/

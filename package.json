@@ -291,6 +291,8 @@
         "webpack-cli": "^4.4.0"
     },
     "dependencies": {
+        "http-server": "^0.12.3",
+        "parcel": "*",
         "typedoc": "^0.20.37"
     }
 }

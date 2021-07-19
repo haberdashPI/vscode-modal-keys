@@ -5,28 +5,21 @@ const { Remarkable } = require('remarkable')
 const hljs = require('highlight.js')
 const mkdirp = require('mkdirp')
 const path = require('path')
+const { ConsoleLogger } = require('typedoc/dist/lib/utils')
 
 console.log(process.cwd())
 
 // load files to document
-files = glob.sync('src/*.ts').
-    concat(glob.sync('docs/*.js', {ignore: "docs/build.js"})).
+sourcefiles = glob.sync('src/*.ts').
+    concat(glob.sync('docs/*.js', {ignore: ["docs/build.js", "docs/index.js"]})).
     concat(glob.sync('presets/*.js'))
+docfiles = ['README.md']
 
 // markdown parser
-md = new Remarkable('full', {
-    highlight: function(str,lang){
-        if (lang && hljs.getLanguage(lang)) {
-            try {
-                return hljs.highlight(lang, str).value;
-            } catch (err) {}
-        }
-        try {
-            return hljs.highlightAuto(str).value;
-        } catch (err) {}
-    
-        return ''; // use external default escaping
-    }
+md = new Remarkable({
+    html: true,
+    xhtmlOut: true,
+    highlight: (str, lang) => hljs.highlightAuto(str).value
 })
 
 mkdirp.sync('docs/build/src')
@@ -36,7 +29,8 @@ function docpath(source){
     return source.replace('docs/','docs/build/')
         .replace('src/','docs/build/src/')
         .replace('presets/','docs/build/presets/')
-        .replace(/\.(ts|js)$/, '.html')
+        .replace('README', 'docs/build/README')
+        .replace(/\.(ts|js|md)$/, '.html')
 }
 
 let header = `
@@ -45,21 +39,36 @@ let header = `
 <head>
 	<title>Modal Keys Documentation</title>
 	<meta charset="utf-8"/>
+    <link rel="stylesheet" href="./style.css"/>
 </head>
-<body>`
+<body>
+<script src="./index.js"></script>
+<div class="content">
+`
 
 let footer = `
+</div>
 </body>
 </html>
 `
 
-files.map(file => jdi.doc(path.join(process.cwd(), file))).
+// commit_hash = Git.Repository.open(process.cwd()).
+//     then(rep => rep.getHeadCommit()).
+//     then(commit => commit.sha()).
+//     then(sha => {
+//         return `http://github.com/haberdashPi/vscode-modal-keys/blob/${sha}/`
+//     })
+
+sourcefiles.map(file => jdi.doc(path.join(process.cwd(), file))).
     map(stream => {
         let chunks = []
         stream.on('data', chunk => chunks.push(Buffer.from(chunk)))
         stream.on('error', e => {if(e){ throw e }})
         stream.on('end', () => {
-            let out = md.render(Buffer.concat(chunks).toString('utf8'))
+            let mark = Buffer.concat(chunks).toString('utf8')
+            mark = mark.replace('------------------------', '')
+            mark = mark.replace(/^Generated _.*from.*$/m,'')
+            let out = md.render(mark)
             let toFile = docpath(stream.options.file)
             fs.writeFile(toFile, header+out+footer, err => {
                 if(err) throw err;
@@ -67,4 +76,21 @@ files.map(file => jdi.doc(path.join(process.cwd(), file))).
             })
         })
     })
+
+docfiles.map(file => {
+    fs.readFile(file, (err, data) => {
+        if(err){
+            console.log(err.message)
+        }else{
+            let out = md.render(data.toString('utf8'));
+            let toFile = docpath(file);
+            fs.writeFile(toFile, header+out+footer, err => {
+                if(err) console.log(err.message)
+                else console.log('Wrote '+toFile)
+            })
+        }
+    })
+});
     
+fs.copyFileSync('docs/style.css', 'docs/build/style.css')
+fs.copyFileSync('docs/index.js', 'docs/build/index.js')

@@ -54,7 +54,7 @@ When the extension is installed, text documents will open in normal mode. The
 current mode is shown in the status bar. You can even switch between normal and insert modes by
 clicking the pane in the status bar.
 
-![Status bar](images/status-bar.gif)
+<!-- ![Status bar](images/status-bar.gif) -->
 
 In normal mode keys don't output characters but invoke commands. You can
 specify these commands in the `settings.json` file. To edit your user-level
@@ -98,7 +98,7 @@ Vim's visual mode.
 
 You can also change the text shown in status bar during visual mode using [configuration parameters](#changing-status-bar)
 
-![Selection active](images/selected-text.png)
+<!-- ![Selection active](images/selected-text.png) -->
 
 ### Mode Specific Bindings and Custom Modes
 
@@ -244,7 +244,7 @@ output log. You can find it by opening **View - Output** and then choosing the
 **ModalKeys** from the drop-down menu. Errors in configuration will be reported
 there. If your configuration is ok, you should see the following message.
 
-![output log](images/output-log.png)
+<!-- ![output log](images/output-log.png) -->
 
 ### Advanced Keybindings
 
@@ -363,7 +363,7 @@ search mode. Normal mode commands are suppressed while incremental search is
 active. Just type the search string directly without leaving the editor. You
 can see the searched string in the status bar as well as the search parameters.
 
-![Searching](images/searching.gif)
+<!-- ![Searching](images/searching.gif) -->
 
 The command takes following arguments. All of them are optional.
 

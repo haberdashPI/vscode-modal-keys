@@ -1,4 +1,5 @@
 dist
+.parcel-cache
 docs/build
 out
 node_modules
