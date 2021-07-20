@@ -19,6 +19,9 @@
         "*"
     ],
     "main": "./dist/extension.js",
+    "targets": {
+        "main": false
+    },
     "docs": "./dist/docs/README.html",
     "contributes": {
         "configuration": {
@@ -275,7 +278,7 @@
         "build-html-docs": "node docs/build.js",
         "watch-html-docs": "npx npm-watch build-html-docs",
         "parcel-docs": "npx parcel docs/build/README.html",
-        "parcel-build-docs": "npx parcel build docs/build/README.html --target docs" ,
+        "parcel-build-docs": "npx parcel build docs/build/README.html --dist-dir dist/docs" ,
         "keep-watching-docs": "npm-run-all --parallel parcel-docs watch-html-docs",
         "watch-docs": "npm-run-all --serial build-html-docs keep-watching-docs",
         "build-docs": "npm-run-all --serial build-html-docs parcel-build-docs",
