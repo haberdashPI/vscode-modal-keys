@@ -63,7 +63,7 @@ settings file, open command palette with `Ctrl+Shift+P` and look up command
 project specific, edit the `settings.json` that is located in the `.vscode`
 directory under your project directory.
 
-> You might want to skip to the [tutorial](https://johtela.github.io/vscode-modaledit/docs/.vscode/settings.html), if you prefer learning by
+> You might want to skip to the [tutorial](./tutorial.html), if you prefer learning by
 > example. If you want to start with Vim keybindings, you'll find the
 > instructions [here](TODO). Otherwise keep reading this document.
 

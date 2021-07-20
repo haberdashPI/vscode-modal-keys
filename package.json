@@ -19,6 +19,7 @@
         "*"
     ],
     "main": "./dist/extension.js",
+    "docs": "./dist/docs/README.html",
     "contributes": {
         "configuration": {
             "type": "object",
@@ -254,11 +255,30 @@
             }
         ]
     },
+    "watch": {
+        "build-html-docs": {
+            "patterns": [
+                "docs",
+                "src",
+                "presets",
+                "README.md"
+            ],
+            "extensions": "js,ts,md,css",
+            "ignore": "docs/build",
+            "delay": 1000
+        }
+    },
     "scripts": {
         "vscode:prepublish": "npm run package",
         "compile": "webpack",
         "watch": "webpack --watch",
-        "build-docs": "node docs/build.js",
+        "build-html-docs": "node docs/build.js",
+        "watch-html-docs": "npx npm-watch build-html-docs",
+        "parcel-docs": "npx parcel docs/build/README.html",
+        "parcel-build-docs": "npx parcel build docs/build/README.html --target docs" ,
+        "keep-watching-docs": "npm-run-all --parallel parcel-docs watch-html-docs",
+        "watch-docs": "npm-run-all --serial build-html-docs keep-watching-docs",
+        "build-docs": "npm-run-all --serial build-html-docs parcel-build-docs",
         "package": "webpack --mode production --devtool hidden-source-map",
         "test-compile": "tsc -p ./",
         "test-watch": "tsc -watch -p ./",
@@ -292,6 +312,8 @@
     },
     "dependencies": {
         "http-server": "^0.12.3",
+        "npm-run-all": "^4.1.5",
+        "npm-watch": "^0.10.0",
         "parcel": "*",
         "typedoc": "^0.20.37"
     }

@@ -52,12 +52,7 @@ let footer = `
 </html>
 `
 
-// commit_hash = Git.Repository.open(process.cwd()).
-//     then(rep => rep.getHeadCommit()).
-//     then(commit => commit.sha()).
-//     then(sha => {
-//         return `http://github.com/haberdashPi/vscode-modal-keys/blob/${sha}/`
-//     })
+// TODO: hanlde readme specially so we can manage doc links
 
 sourcefiles.map(file => jdi.doc(path.join(process.cwd(), file))).
     map(stream => {
