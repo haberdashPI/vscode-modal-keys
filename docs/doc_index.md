@@ -1,9 +1,11 @@
 ## Getting Started
 
-This documentation assumes you understand the conventions of Vim: if you are new to what normal mode is, and how modal editors work, [read the tutorial](./tutorial.html).
+Here, it is assumed you understand the conventions of Vim: if you are new to what normal mode is, and how modal editors work, [read the tutorial](./tutorial.html).
 
-To define the key mappings used in normal mode, you should create javascript file (e.g. `mybindings.js`). When run, the file should evaluate to an object
-with a single property called `keybindings`, that defines all of your bindings. The default mode is Normal mode. 
+ModalKeys has two built in modes, and as many custom modes as you want. By default, VSCode will open in normal mode.
+
+To define the key mappings for these modes, you should create a javascript file (e.g. `mybindings.js`). When run, the file should evaluate to an object
+with the single property `keybindings`; this should define all of your bindings.
 
 ### Minimal configuration
 
@@ -14,17 +16,15 @@ the editor to the *insert mode*, which is the same as VS Code's default mode.
     i: "modalkeys.enterInsert"
 }}
 ```
-These bindings can be inserted into your VSCode settings by running the command
-`"ModalKeys: Import preset keybindings"`.
+By default, a binding works for all modes except insert mode. Mode specific bindings are [documented below](#keybindings).
+
+Bindings can then be set by running the command `"ModalKeys: Import preset
+keybindings"` on this file. 
 
 The simplest type of binding maps a series of keystrokes to a given VSCode
 command. You can find these commands by looking at the list of keybindings (e.g.
 `Ctrl-K Ctrl+S` on windows) and copying the command ID from the right-click
 menu. More advanced keybindings are covered below.
-
-By default, any keys defined under `modalkeys.keybindings` will be available in
-all modes other than insert mode (see below for how to make a binding specific
-to one or more modes).
 
 ModalKeys adds a regular VS Code keyboard shortcut for `Esc` to return back to
 normal mode. If you wish, you can remap this command to another key by
@@ -36,16 +36,15 @@ In addition to normal mode, ModalKeys can includes visual mode, and as many cust
 
 #### Selections/Visual Mode
 
-Visual mode works slighlty differently than Vim's, because VSCode allows
-selections to occur in 'insert' mode. Any time we request normal model (e.g. hit
-'escape') and text is selected, visual mode starts. (Visual mode can also be
-manually started).
+Visual mode works a bit differently than Vim's. Any time we are in normal mode
+(e.g. hit 'escape') and text happens to be selected, visual mode starts. (Visual
+mode can also be manually started).
 
-ModalKeys defines a new command `modalkeys.toggleSelection` which allows you
-to start selecting text in normal mode without holding down the shift key. This imitates
-Vim's visual mode.
+ModalKeys defines a new command `modalkeys.toggleSelection` which allows you to
+start selecting text in normal mode without holding down the shift key.
 
-You can also change the text shown in status bar during visual mode using [configuration parameters](#changing-status-bar)
+You can change the text shown in status bar during visual mode using
+[configuration parameters](#changing-status-bar)
 
 <!-- ![Selection active](images/selected-text.png) -->
 
@@ -76,18 +75,21 @@ when you are in "evil" mode.
 
 ## Keybindings
 
-You can define the bindings in four different ways. It is also possible to combine them
-freely.
+You can define the bindings in four different ways. It is also possible to
+combine them freely.
 
 ### Single Command
 
 The simplest way is to map a key to a single command. This has the format:
+
 ```js
 "<binding>": "<command>"
 ```
-The `<binding>` specifies the sequence of keys to press, and `<command>` is any valid VS
-Code command. You can see the list of all available commands by opening global settings with
-command **Preferences: Open Default Keyboard Shortcuts (JSON)**.
+
+The `<binding>` specifies the sequence of keys to press, and `<command>` is any
+valid VS Code command. You can see the list of all available commands by opening
+global settings with command **Preferences: Open Default Keyboard Shortcuts
+(JSON)**.
 
 The example in the previous section maps the `i` key to the
 `modalkeys.enterInsert` command.
@@ -97,16 +99,19 @@ The example in the previous section maps the `i` key to the
 Some [commands](https://code.visualstudio.com/api/references/commands#commands) take arguments. For example `cursorMove` which allows you
 to specify which direction and how much cursor moves. These commands can be
 executed by defining an object with prefined properties:
+
 ```js
 "<binding>":  {
     "<command>": { ... }
     "repeat": number | "__count"
 }
 ```
-The `<command>` is again a valid VS Code command. The arguments passed to "<command>" ({ ...
-}) contains whatever arguments the command takes. It is specified as a JSON object.
-ModalKeys evaluates JavaScript expressions within the argument values. The following
-variables can be used inside expression strings:
+
+The `<command>` is again a valid VS Code command. The arguments passed to
+"<command>" ({ ...}) contains whatever arguments the command takes. It is
+specified as a JSON object. ModalKeys evaluates JavaScript expressions within
+the argument values. The following variables can be used inside expression
+strings:
 
 | Variable        | Type       | Description
 | --------------- | ---------- | -------------------------------------------------

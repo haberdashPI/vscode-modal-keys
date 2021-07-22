@@ -31,7 +31,8 @@ To start configuration ModalKeys to your liking, you have a few options:
 
 1. Read the [Tutorial](./tutorial.html)
 2. Start using ModalKeys right-away with one of the [Presets](./preset_index.html)
-3. Read through the [Documentation](./doc_index.html)
+3. Read through the full [Documentation](./doc_index.html)
+4. You can even read through the documented [source code](./src/extension.html)
 
 ## Acknowledgements
 

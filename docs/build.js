@@ -13,7 +13,8 @@ console.log(process.cwd())
 sourcefiles = glob.sync('src/*.ts').
     concat(glob.sync('docs/*.js', {ignore: ["docs/build.js", "docs/index.js"]})).
     concat(glob.sync('presets/*.js'))
-docfiles = ['README.md']
+docfiles = ['README.md'].
+    concat(glob.sync('docs/*.md'))
 
 // markdown parser
 md = new Remarkable({
@@ -33,16 +34,16 @@ function docpath(source){
         .replace(/\.(ts|js|md)$/, '.html')
 }
 
-let header = `
+let header = dir => `
 <!DOCTYPE html>
 <html>
 <head>
 	<title>Modal Keys Documentation</title>
 	<meta charset="utf-8"/>
-    <link rel="stylesheet" href="./style.css"/>
+    <link rel="stylesheet" href="${dir}/style.css"/>
 </head>
 <body>
-<script src="./index.js"></script>
+<script src="${dir}/index.js"></script>
 <div class="content">
 `
 
@@ -63,9 +64,15 @@ sourcefiles.map(file => jdi.doc(path.join(process.cwd(), file))).
             let mark = Buffer.concat(chunks).toString('utf8')
             mark = mark.replace('------------------------', '')
             mark = mark.replace(/^Generated _.*from.*$/m,'')
+            console.log('-------------------------------------')
+            console.log('File: '+stream.options.file)
+            console.log(mark)
             let out = md.render(mark)
             let toFile = docpath(stream.options.file)
-            fs.writeFile(toFile, header+out+footer, err => {
+            let depth = path.dirname(toFile).split(path.delimiter).length
+            let prefix = Array(depth).fill("..").join(path.delimiter)
+            let head = header(prefix)
+            fs.writeFile(toFile, head+out+footer, err => {
                 if(err) throw err;
                 else console.log('Wrote '+toFile)
             })
@@ -79,7 +86,10 @@ docfiles.map(file => {
         }else{
             let out = md.render(data.toString('utf8'));
             let toFile = docpath(file);
-            fs.writeFile(toFile, header+out+footer, err => {
+            let depth = path.dirname(toFile).split(path.delimiter).length
+            let prefix = Array(depth).fill("..").join(path.delimiter)
+            let head = header(prefix)
+            fs.writeFile(toFile, head+out+footer, err => {
                 if(err) console.log(err.message)
                 else console.log('Wrote '+toFile)
             })
