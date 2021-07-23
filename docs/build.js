@@ -72,7 +72,7 @@ sourcefiles.map(file => jdi.doc(path.join(process.cwd(), file))).
             let toFile = docpath(stream.options.file)
             let depth = path.dirname(toFile).split(path.delimiter).length
             let prefix = Array(depth).fill("..").join(path.delimiter)
-            let head = header(prefix)
+            let head = header("./"+prefix)
             fs.writeFile(toFile, head+out+footer, err => {
                 if(err) throw err;
                 else console.log('Wrote '+toFile)
@@ -87,9 +87,9 @@ docfiles.map(file => {
         }else{
             let out = md.render(data.toString('utf8'));
             let toFile = docpath(file);
-            let depth = path.dirname(toFile).split(path.delimiter).length
+            let depth = path.dirname(toFile).split(path.delimiter).length-1
             let prefix = Array(depth).fill("..").join(path.delimiter)
-            let head = header(prefix)
+            let head = header("./"+prefix)
             fs.writeFile(toFile, head+out+footer, err => {
                 if(err) console.log(err.message)
                 else console.log('Wrote '+toFile)
