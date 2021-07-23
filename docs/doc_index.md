@@ -5,7 +5,7 @@ Here, it is assumed you understand the conventions of Vim: if you are new to wha
 ModalKeys has two built in modes, and as many custom modes as you want. By default, VSCode will open in normal mode.
 
 To define the key mappings for these modes, you should create a javascript file (e.g. `mybindings.js`). When run, the file should evaluate to an object
-with the single property `keybindings`; this should define all of your bindings.
+with the single property `keybindings`; this should define all of your bindings. If your bindings are simple enough you can also use a `json` or `jsonc` file (but this will limit the flexibility of your bindings).
 
 ### Minimal configuration
 
@@ -115,10 +115,17 @@ strings:
 
 | Variable        | Type       | Description
 | --------------- | ---------- | -------------------------------------------------
-| `__line`        | `number`   | The line number where the cursor is currently on.
-| `__selecting`   | `boolean`  | Flag that indicates whether selection is active.
+| `__file`        | `string`   | The name of the current file
+| `__line`        | `number`   | The line number of cursor location
+| `__col`         | `number`   | The column number of cursor location
+| `__char`        | `string`   | The character under the cursor
+| `__language`    | `string`   | The languageId of the current file
+| `__selections`  | [`Selection[]`](https://code.visualstudio.com/api/references/vscode-api#Selection) | The selection objects of the current editor
+| `__selection`   | [`Selection`](https://code.visualstudio.com/api/references/vscode-api#Selection)  | The primary selection object of the current editor
+| `__selectionstr` | `string`  | The text of the primary selection
 | `__mode`        | `string    | A string specifying the current mode
 | `__count`       | `number`   | A number indicating the prefixed numerical values in front of a command: see below.
+| `__captured`    | `string`   | The list of captured keys following (see [`captureChar`](#capturing-keys))
 
 When you type a modal command you can prefix it with numbers: these are passed using the
 `__count` variable to your command.
@@ -397,21 +404,26 @@ of like selections, but are not visually displayed). E.g. `wd` in a kakaune-like
 { ".": [ "modalkeys.repeatLastUsedSelection", "modalkeys.repeatLastChange" ] }
 ```
 
-### Importing Presets
+### Capturing keys
 
-You can use `modalkeys.importPresets` to import a set of keybindings in both JSON and
-JavaScript form. It reads keybindings from a file and copies them to the global
-`settings.json` file. It overrides existing keybindings, so back them up somewhere before
-running the command, if you want to preserve them.
+`modalkeys.captureChar` is a generic command for capturing a sequence of keys that the user types. It records characters until the user hits return (or until `acceptAfter` keys are typed). One could implement a poor man's version of the search commands using `modalkeys.captureChar`. It accepts the following arguments
 
-Preset keybindings for vim are available. You can learn more about Vim bindings [here](TODO).
-Built-in presets are located under the `presets` folder under the extension installation
-folder. The command scans and lists all the files there. It also provides an option to
-browse for any other file you want to import.
+| Argument                  | Type      | Default     | Description
+| ------------------------- | --------- | ----------- | ---------------------------------
+| `acceptAfter`             | `number`  | `undefined` | Accept search automatically after _x_ characters has been entered. 
+| `execuateAfter`           | <command> | `undefined` | The commands to run after capturing keys.
 
-As noted above, presets are stored either in a JSON or JavaScript file. In either case, the
-file to be imported should evaluate to an object which should have a single property at the top level, named `keybindings`.
+For example, the following command selects all characters that fall between two instances of a given key; so, in the string "joe |bob| joe", with the cursor on the first "b", typing `uc|` would select "bob".
 
-It is also possible to define the object in JS. In that case the object should be the
-expression that the whole script evaluates to (i.e. the last value in the script)
-
+```js
+    uc: { "modalkeys.captureChar": {
+        acceptAfter: 1,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured",
+            to: "__captured",
+            inclusive: false,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+```
