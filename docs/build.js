@@ -2,6 +2,7 @@ const jdi = require('jdi')
 const glob = require('glob')
 const fs = require('fs')
 const { Remarkable } = require('remarkable')
+const HeaderIdsPlugin = require('remarkable-header-ids')
 const hljs = require('highlight.js')
 const mkdirp = require('mkdirp')
 const path = require('path')
@@ -21,7 +22,7 @@ md = new Remarkable({
     html: true,
     xhtmlOut: true,
     highlight: (str, lang) => hljs.highlightAuto(str).value
-})
+}).use(HeaderIdsPlugin({levels: [1,2,3]}))
 
 mkdirp.sync('docs/build/src')
 mkdirp.sync('docs/build/presets')
