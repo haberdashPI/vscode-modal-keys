@@ -1,7 +1,5 @@
-- revise tutorials and vim presets
-    - compile tutorials (pandoc?): should be a CI solution
-      that doesn't create a lots of built html wihtin the
-      main repo branch
+- ensure that all command variables are documented
+- create the setup to publish docs on gh-pages
 - RELEASE! once these features are in place, make a release
 - add macro recording
     - non-insert only
