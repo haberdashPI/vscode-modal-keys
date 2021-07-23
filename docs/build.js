@@ -68,9 +68,6 @@ sourcefiles.map(file => jdi.doc(path.join(process.cwd(), file))).
             let mark = Buffer.concat(chunks).toString('utf8')
             mark = mark.replace('------------------------', '')
             mark = mark.replace(/^Generated _.*from.*$/m,'')
-            console.log('-------------------------------------')
-            console.log('File: '+stream.options.file)
-            console.log(mark)
             let out = md.render(mark)
             let toFile = docpath(stream.options.file)
             let depth = path.dirname(toFile).split(path.delimiter).length
