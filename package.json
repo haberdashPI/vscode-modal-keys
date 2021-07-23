@@ -20,7 +20,8 @@
     ],
     "main": "./dist/extension.js",
     "targets": {
-        "main": false
+        "main": false,
+        "": { "publicUrl": "./" }
     },
     "docs": "./dist/docs/README.html",
     "contributes": {
