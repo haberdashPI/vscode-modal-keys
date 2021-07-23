@@ -1,0 +1,288 @@
+<!DOCTYPE html><html><head><title>Modal Keys Documentation</title><meta charset="utf-8"><link rel="stylesheet" href="/README.7780f428.css"></head><body> <script src="/README.c8d6d105.js"></script> <div class="content"> <h1 id="heading-#build-your-own-vim-emulation-for-vs-code"><a class="header-anchor" id="build-your-own-vim-emulation-for-vs-code" href="#build-your-own-vim-emulation-for-vs-code"> </a>Build Your Own Vim Emulation for VS Code</h1> <p><a href="https://www.vim.org/">Vim</a> is the great white shark of text editors. It has survived among modern IDEs because of its unique philosophy. It supports <a href="https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors">modal editing</a>, where the effect of each key press depends on the mode your in. In insert mode, typing keys works the way it would in any editor, it inserts the keys you press. In normal mode, sequences of keys correspond to various commands, with commonly used commands usally corresponding to a single key press. Once you have become an experienced modal-editor user, you will spend a lot of your time in normal mode, and it is the default mode.</p> <p>This might sound difficult, and granted, the learning curve is steep. But after you are accustomed to this way of editing, it is very difficult to go back. For example, having to use arrow keys to move cursor feels uncomfortable. The proof of this is that nearly all popular text editors have some kind of add-in that provides Vim emulation. VS Code has several of them.</p> <p>So, why write yet another extension that provides Vim emulation? Well, the problem is that most emulators try to make VS Code behave exactly like Vim which quickly becomes an exercise in futility. Trying to mimick Vim's functionality too closely results in disjointed user experience as it has a lot of features that do not have counterparts in VS Code.</p> <p><a href="/README.html">ModalKeys's</a> approach is to utilize VS Code's existing features and just add the concept of modal editing to the mix. Turns out implementing modal editing is extremely simple. We basically provide pair of commands that switch between normal mode and insert mode.</p> <p>To complete the feature set, we need an ability to bind normal mode key sequences to VS Code's commands. In modal keys, you define a configuration file as a javascript file, and you can use this configuration by using the command &quot;ModalKeys: Import preset keybindings&quot;.</p> <p>With these capabilities we can start building our Vim emulation. We don't have to use Vim's standard key bindings, if we prefer not to. You can map any key (sequence) to any command. But to keep things familiar, we'll follow Vim's conventions in this tutorial.</p> <p>Let's get started! We'll use the <a href="https://vim.rtorr.com/">Vim Cheat Sheet</a> as our specification for key bindings to be added.</p> <pre><code class="language-js"><span class="hljs-keyword">return</span> {
+    <span class="hljs-string">&quot;modalkeys.keybindings&quot;</span>: {
+
+</code></pre> <h2 id="heading-#switching-between-modes"><a class="header-anchor" id="switching-between-modes" href="#switching-between-modes"> </a>Switching Between Modes</h2> <p>First things first: we need to be able to enter the normal mode somehow. The <key>Esc</key> key is mapped to the <code>modalkeys.enterNormal</code> command by default, so we dont't need to do anything for that. If you like, you can map other keys to this command using VS Code's standard keymappings pressing <key>Ctrl</key>+<key>K</key> <key>Ctrl</key>+<key>S</key>.</p> <h3 id="heading-#insert-text"><a class="header-anchor" id="insert-text" href="#insert-text"> </a>Insert Text</h3> <p>There are multiple ways to enter insert mode. If you want to insert text in the current cursor position, you press <key>i</key>.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;i&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span><span class="hljs-punctuation">,</span>
+</code></pre> <p>To insert text at the beginning of line, you press <key>I</key>. For this operation, we need a command sequence, i.e. an array of commands.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;I&quot;</span>: [
+            <span class="hljs-string">&quot;cursorHome&quot;</span>,
+            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+        ],
+
+</code></pre> <h3 id="heading-#append-text"><a class="header-anchor" id="append-text" href="#append-text"> </a>Append Text</h3> <p><em>Appending</em> text works analogously; <key>a</key> appends text after current character and <key>A</key> at the end of the line. There is a special case, though. If cursor is already at the last character of the line, it should not move. This is why we use a conditional command to move the cursor only, if the current character is not an empty string which marks the end of the line. A conditional command is an object that contains the <code>condition</code> property. The value of the property is a JS expression which ModalKeys evaluates. It selects the command based on the result. In this case, the result <code>false</code> will execute the <code>cursorRight</code> command.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;a&quot;</span>: [
+            { <span class="hljs-string">&quot;if&quot;</span>: <span class="hljs-string">&quot;__char == &#x27;&#x27;&quot;</span>, <span class="hljs-string">&quot;then&quot;</span>: <span class="hljs-string">&quot;cursorRight&quot;</span> },
+            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+        ],
+        <span class="hljs-string">&quot;A&quot;</span>: [ <span class="hljs-string">&quot;cursorEnd&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+
+</code></pre> <h3 id="heading-#open-a-new-line"><a class="header-anchor" id="open-a-new-line" href="#open-a-new-line"> </a>Open a New Line</h3> <p>The third way to enter insert mode is to <em>open</em> a line. This means creating an empty line, and putting the cursor on it. There are two variants of this command as well: <key>o</key> opens a new line below the current line whereas <key>O</key> opens it on the current line.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;o&quot;</span>: [ <span class="hljs-string">&quot;editor.action.insertLineAfter&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+        <span class="hljs-string">&quot;O&quot;</span>: [ <span class="hljs-string">&quot;editor.action.insertLineBefore&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+
+</code></pre> <p>Now we can test the commands we just created.</p> <h2 id="heading-#cursor-movement"><a class="header-anchor" id="cursor-movement" href="#cursor-movement"> </a>Cursor Movement</h2> <p>The next task in hand is to add commands for moving the cursor. As all Vim users know, instead of arrow keys, we move the cursor with <key>h</key>, <key>j</key>, <key>k</key>, and <key>l</key> keys. Before implementing these, let's talk a bit about text selection.</p> <h3 id="heading-#selecting-text"><a class="header-anchor" id="selecting-text" href="#selecting-text"> </a>Selecting Text</h3> <p>In Vim, there is a separate &quot;visual&quot; mode that you activate when you want to select text. Visual mode can be characterwise or linewise.</p> <p>Visual mode is on whenver an additional flag is set (by issuing a <code>setMode</code> command) and whenver you select text in the usual way from VSCode (e.g. via <code>modealkeys.toggleSelection</code>).</p> <p>The end result is that selection mode works <em>almost</em> like visual mode in Vim, the main difference being that selections are not automatically turned off when you enter insert mode.</p> <p>So, let's add a binding to toggle selections on or off. We use the familiar <key>v</key> key for this.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;v&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.toggleSelection&quot;</span><span class="hljs-punctuation">,</span>
+
+
+</code></pre> <p>Now we can add commands for cursor movement. These commands use the generic <a href="https://code.visualstudio.com/api/references/commands"><code>cursorMove</code> command</a> which takes arguments. The <code>__selecting</code> flag in the expression indicates whether selection mode is on.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;h&quot;</span>: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;left&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> } },
+        <span class="hljs-string">&quot;j&quot;</span>: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;down&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> } },
+        <span class="hljs-string">&quot;k&quot;</span>: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;up&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> } },
+        <span class="hljs-string">&quot;l&quot;</span>: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;right&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> } },
+
+
+</code></pre> <p>If we want to be more succinct in how we write these commands, we can also do the following.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;::using::cursorMove&quot;</span>: {
+        <span class="hljs-string">&quot;h&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;left&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+        <span class="hljs-string">&quot;j&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;down&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+        <span class="hljs-string">&quot;k&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;up&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+        <span class="hljs-string">&quot;l&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;right&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+    },
+
+</code></pre> <p>ModalKeys will knows to re-write this, so the two ways of specifying these commands are equivalent.</p> <p>We can also simulate linewise visual mode using VS Code's <code>expandLineSelection</code> command. Note that we don't need to call <code>modalkeys.toggleSelection</code> this time as selection mode is turned on automatically.</p> <pre><code class="language-js">    <span class="hljs-attr">&quot;V&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;expandLineSelection&quot;</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <h3 id="heading-#moving-inside-screen"><a class="header-anchor" id="moving-inside-screen" href="#moving-inside-screen"> </a>Moving Inside Screen</h3> <p>To move cursor quickly to the top, middle, or bottom of the screen we use keys <key>H</key>, <key>M</key>, and <key>L</key>. Again, we need to use the <a href="https://code.visualstudio.com/api/references/commands"><code>cursorMove</code> command</a>.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;::using::cursorMove&quot;</span>: {
+        <span class="hljs-string">&quot;H&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;viewPortTop&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+        <span class="hljs-string">&quot;M&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;viewPortCenter&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+        <span class="hljs-string">&quot;L&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;viewPortBottom&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+    },
+
+
+</code></pre> <h3 id="heading-#jumping-to-previousnext-word"><a class="header-anchor" id="jumping-to-previousnext-word" href="#jumping-to-previousnext-word"> </a>Jumping to Previous/Next Word</h3> <p>Other commonly used navigation commands in Vim include <key>w</key> and <key>b</key> which move the cursor to the start of the next and previous word. For these we need to use conditional commands because <code>cursorMove</code> falls short in this use case.</p> <pre><code class="language-js">        &quot;w&quot;: {
+            <span class="hljs-string">&quot;if&quot;</span>: <span class="hljs-string">&quot;__selecting&quot;</span>,
+            <span class="hljs-string">&quot;then&quot;</span>: <span class="hljs-string">&quot;cursorWordStartRightSelect&quot;</span>,
+            <span class="hljs-string">&quot;else&quot;</span>: <span class="hljs-string">&quot;cursorWordStartRight&quot;</span>
+        },
+        &quot;<span class="hljs-selector-tag">b</span>&quot;: {
+            <span class="hljs-string">&quot;if&quot;</span>: <span class="hljs-string">&quot;__selecting&quot;</span>,
+            <span class="hljs-string">&quot;then&quot;</span>: <span class="hljs-string">&quot;cursorWordStartLeftSelect&quot;</span>,
+            <span class="hljs-string">&quot;else&quot;</span>: <span class="hljs-string">&quot;cursorWordStartLeft&quot;</span>
+        },
+
+</code></pre> <p><key>e</key> jumps to the end of the next word.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;e&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+            <span class="hljs-attr">&quot;if&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;__selecting&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;then&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cursorWordEndRightSelect&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;else&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cursorWordEndRight&quot;</span>
+        <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <blockquote> <p><strong>Note</strong>: We omit variants of these commands <key>W</key>, <key>B</key>, and <key>E</key> which skip the punctuation characters. There are no built-in commands in VS Code that work exactly like those in Vim. There are some extensions you can make use of to implement these commands (e.g. <a href="https://github.com/haberdashPI/vscode-selection-utilities">Selection Utilities</a>). That's beyond the scope of this tutorial.</p> </blockquote> <h3 id="heading-#jumping-to-startend-of-line"><a class="header-anchor" id="jumping-to-startend-of-line" href="#jumping-to-startend-of-line"> </a>Jumping to Start/End of Line</h3> <p>In the similar vein, we'll throw in commands for jumping to the beginning <key>0</key>, to the first non-blank character <key>^</key>, and to the end of line <key>$</key>.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;::using::curosrMove&quot;</span>: {
+        <span class="hljs-string">&quot;0&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineStart&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+        <span class="hljs-string">&quot;^&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineFirstNonWhitespaceCharacter&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+        <span class="hljs-string">&quot;$&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineEnd&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> },
+    },
+
+</code></pre> <p>A lesser known variant of above commands is <key>g</key><key>_</key> that jumps to the last non-blank character of the line.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;g_&quot;</span>: { <span class="hljs-string">&quot;cursorMove&quot;</span>:
+        { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineLastNonWhitespaceCharacter&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__selecting&#x27;</span> }
+    },
+
+</code></pre> <h3 id="heading-#jumping-to-startend-of-document"><a class="header-anchor" id="jumping-to-startend-of-document" href="#jumping-to-startend-of-document"> </a>Jumping to Start/End of Document</h3> <p>Another motion command is <key>g</key><key>g</key> which jumps to the beginning of the file.</p> <pre><code class="language-js">            <span class="hljs-attr">&quot;g&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                <span class="hljs-attr">&quot;if&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;__selecting&quot;</span><span class="hljs-punctuation">,</span>
+                <span class="hljs-attr">&quot;then&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cursorTopSelect&quot;</span><span class="hljs-punctuation">,</span>
+                <span class="hljs-attr">&quot;else&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cursorTop&quot;</span>
+            <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <p>The opposite of that is <key>G</key> wich jumps to the end of file.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;G&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+            <span class="hljs-attr">&quot;if&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;__selecting&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;then&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cursorBottomSelect&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;else&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cursorBottom&quot;</span>
+        <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <h3 id="heading-#jump-to-character"><a class="header-anchor" id="jump-to-character" href="#jump-to-character"> </a>Jump to Character</h3> <p>We have the basic movement commands covered, so let's move on to more sophisticated ones. Seasoned Vim users avoid hitting movement commands repeatedly by using <key>f</key> and <key>F</key> keys which move directly to a given character. VS Code provides no built-in command for this, but ModalKeys includes an incremental search command which can be customized to this purpose.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;f&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+            <span class="hljs-attr">&quot;if&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;__selecting&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;then&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                <span class="hljs-attr">&quot;modalkeys.search&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                    <span class="hljs-attr">&quot;caseSensitive&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;acceptAfter&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;selectTillMatch&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+                <span class="hljs-punctuation">}</span>
+            <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;else&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                <span class="hljs-attr">&quot;modalkeys.search&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                    <span class="hljs-attr">&quot;caseSensitive&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;acceptAfter&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;offset&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;exclusive&quot;</span><span class="hljs-punctuation">,</span>
+                <span class="hljs-punctuation">}</span>
+            <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <p>The command is a bit involved, so let's explain what each argument does.</p> <ul> <li><code>caseSensitive</code> sets the search mode to case sensitive (as in Vim).</li> <li><code>acceptAfter</code> ends the incremental search as soon as first entered character is found. Normally the user needs to press <key>Enter</key> to accept the search or <key>Esc</key> to cancel it.</li> <li><code>selectTillMatch</code> argument controls whether selection is extended until the searched character. This depends on whether we have selection mode on or not.</li> <li><code>offset</code> argument allows determine where the cursor should land at each match of the search. By default, <code>modalEdit.search</code> uses an &quot;inclusive&quot; offset, meaning the cursor ends after the match when moving foward and before it when moving backward. When set to exclusive, the opposite is true: the cursor lands before when moving forward and after the match when moving backward (the offset can also be set to &quot;start&quot; or &quot;end&quot; to always end at the start or end of a match, regardless of search direction).</li> </ul> <p>Now we can implement the opposite <key>F</key> command which searches for the previous character. The <code>backwards</code> parameter switches the search direction.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;F&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+            <span class="hljs-attr">&quot;if&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;__selecting&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;then&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                <span class="hljs-attr">&quot;modalkeys.search&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                    <span class="hljs-attr">&quot;caseSensitive&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;acceptAfter&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;selectTillMatch&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;backwards&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+                <span class="hljs-punctuation">}</span>
+            <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;else&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                <span class="hljs-attr">&quot;modalkeys.search&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+                    <span class="hljs-attr">&quot;caseSensitive&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;acceptAfter&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;offset&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;exclusive&quot;</span><span class="hljs-punctuation">,</span>
+                    <span class="hljs-attr">&quot;backwards&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span>
+                <span class="hljs-punctuation">}</span>
+            <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <p>With <key>;</key> and <key>,</key> keys you can repeat the previous <key>f</key> or <key>F</key> commands either forwards or backwards.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;;&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;,&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <blockquote> <p>We omitted a few useful jump commands, like <key>t</key>, <key>T</key>, <key>{</key>, and <key>}</key>. The t and T commands could be implemented using the &quot;exclusive&quot; offset. The paragraph operators, require an extension, like <a href="https://github.com/haberdashPI/vscode-selection-utilities">selection-utilities</a> to implement.</p> </blockquote> <h3 id="heading-#center-cursor-on-screen"><a class="header-anchor" id="center-cursor-on-screen" href="#center-cursor-on-screen"> </a>Center Cursor on Screen</h3> <p>The last movement command we add is <key>z</key><key>z</key> that scrolls the screen so that cursor is at the center. Again, the ability to use JS expression in arguments comes in handy: WE use the <code>__line</code> parameter to get the line where the cursor is.</p> <p>&quot;zz&quot;: { &quot;revealLine&quot;: { lineNumber: '__line', at: 'center' } }</p> <p>Let's test some of the movement commands. We should be able to navigate now without using arrow keys or <key>Home</key> and <key>End</key> keys.</p> <p>We skipped commands that move cursor up and down on page at the time. The reason for this is that these commands are bound to <key>Ctrl</key>+<key>b</key> and <key>Ctrl</key>+<key>f</key> in Vim. Since these are &quot;normal&quot; VS Code shortcuts we cannot remap them in ModalKeys. If you want to use these shortcuts, you need to add the bindings to the VS Code's <code>keybindings.json</code> file. Below is an example that uses the <code>modalkeys.normal</code> context to make the shortcuts work only in normal mode. Most of the Vim's standard <key>Ctrl</key>+key combinations are already in use, so you need to decide whether you want to remap the existing commands first.</p> <pre><code class="language-js">/* keybindings.json should <span class="hljs-keyword">contain</span> <span class="hljs-keyword">the</span> following:
+{
+    {
+        <span class="hljs-string">&quot;key&quot;</span>: <span class="hljs-string">&quot;ctrl+b&quot;</span>,
+        <span class="hljs-string">&quot;command&quot;</span>: <span class="hljs-string">&quot;cursorPageUp&quot;</span>,
+        <span class="hljs-string">&quot;when&quot;</span>: <span class="hljs-string">&quot;editorTextFocus &amp;&amp; modalkeys.mode == normal&quot;</span>
+    },
+    {
+        <span class="hljs-string">&quot;key&quot;</span>: <span class="hljs-string">&quot;ctrl+f&quot;</span>,
+        <span class="hljs-string">&quot;command&quot;</span>: <span class="hljs-string">&quot;cursorPageDown&quot;</span>,
+        <span class="hljs-string">&quot;when&quot;</span>: <span class="hljs-string">&quot;editorTextFocus &amp;&amp; modalkeys.mode == normal&quot;</span>
+    }
+}
+*/
+
+</code></pre> <h2 id="heading-#commands-with-counts"><a class="header-anchor" id="commands-with-counts" href="#commands-with-counts"> </a>Commands with Counts</h2> <p>In Vim, you can repeat commands by typing a number first. For example, <key>3</key><key>j</key> moves the cursor down three lines. When you type numbers as part of a key sequence, ModalKeys stores these as a number, which you can access using the <code>__count</code> variable.</p> <p>To make use of counts, we need to update some of the commands above. Below are shown the updated cursor movements that use the <code>__count</code> variable.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;::using::cursorMove&quot;</span>: {
+        <span class="hljs-string">&quot;h&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;left&#x27;</span>, select: <span class="hljs-string">&#x27;__selecting&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
+        <span class="hljs-string">&quot;j&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;down&#x27;</span>, select: <span class="hljs-string">&#x27;__selecting&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
+        <span class="hljs-string">&quot;k&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;up&#x27;</span>, select: <span class="hljs-string">&#x27;__selecting&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
+        <span class="hljs-string">&quot;l&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;right&#x27;</span>, select: <span class="hljs-string">&#x27;__selecting&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
+    },
+    <span class="hljs-string">&quot;w&quot;</span>: {
+        <span class="hljs-string">&quot;if&quot;</span>: <span class="hljs-string">&quot;__selecting&quot;</span>,
+        <span class="hljs-string">&quot;then&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartRightSelect&quot;</span>: {}, <span class="hljs-keyword">repeat</span>: <span class="hljs-string">&#x27;__count&#x27;</span> },
+        <span class="hljs-string">&quot;else&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartRight&quot;</span>: {}, <span class="hljs-keyword">repeat</span>: <span class="hljs-string">&#x27;__count&#x27;</span> },
+    },
+    <span class="hljs-string">&quot;b&quot;</span>: {
+        <span class="hljs-string">&quot;if&quot;</span>: <span class="hljs-string">&quot;__selecting&quot;</span>,
+        <span class="hljs-string">&quot;then&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartLeftSelect&quot;</span>: {}, <span class="hljs-keyword">repeat</span>: <span class="hljs-string">&#x27;__count&#x27;</span> },
+        <span class="hljs-string">&quot;else&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartLeft&quot;</span>: {}, <span class="hljs-keyword">repeat</span>: <span class="hljs-string">&#x27;__count&#x27;</span> },
+    },
+    <span class="hljs-string">&quot;e&quot;</span>: {
+        <span class="hljs-string">&quot;if&quot;</span>: <span class="hljs-string">&quot;__selecting&quot;</span>,
+        <span class="hljs-string">&quot;then&quot;</span>: { <span class="hljs-string">&quot;cursorWordEndRightSelect&quot;</span>: {}, <span class="hljs-keyword">repeat</span>: <span class="hljs-string">&#x27;__count&#x27;</span> },
+        <span class="hljs-string">&quot;else&quot;</span>: { <span class="hljs-string">&quot;cursorWordEndRight&quot;</span>: {}, <span class="hljs-keyword">repeat</span>: <span class="hljs-string">&#x27;__count&#x27;</span> },
+    },
+
+</code></pre> <p>Many command, like those shown above, can internally repeat (e.g. <code>value</code> for <code>cursorMove</code>), and this is generally better, as it execute faster. If a command does not take a parameter like this however, you can make use of the <code>repeat</code> parameter, shown above for the word motions. This will simply call the command multiple times.</p> <h3 id="heading-#jumping-to-a-line"><a class="header-anchor" id="jumping-to-a-line" href="#jumping-to-a-line"> </a>Jumping to a Line</h3> <p>Another command that has a number prefix is <em>x</em><key>G</key> where <em>x</em> is the line number you want to jump to. Let's add that as well in the same keymap. While the mapping is trivial the command itself is a bit involved, because we need to use two commands to do the jumping. First we move the target line to the top of the screen, and then we move the cursor to the same line. Unfortunately the built-in command <code>workbench.action.gotoLine</code> does not take any arguments, so we have to reinvent the wheel.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;G&quot;</span>: [
+        { <span class="hljs-string">&quot;revealLine&quot;</span>: { lineNumber: <span class="hljs-string">&#x27;__count&#x27;</span>, at: <span class="hljs-string">&#x27;top&#x27;</span> } },
+        { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-string">&quot;to&quot;</span>: <span class="hljs-string">&quot;viewPortTop&quot;</span> } }
+    ],
+
+</code></pre> <h2 id="heading-#editing"><a class="header-anchor" id="editing" href="#editing"> </a>Editing</h2> <p>Now we'll implement Vim's common editing commands. We only add the ones that have counterparts in VS Code.</p> <h3 id="heading-#joining-lines"><a class="header-anchor" id="joining-lines" href="#joining-lines"> </a>Joining Lines</h3> <p><key>J</key> joins current and next line together.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;J&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.joinLines&quot;</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <h3 id="heading-#changing-text"><a class="header-anchor" id="changing-text" href="#changing-text"> </a>Changing Text</h3> <p><em>Change</em> commands delete some text and then enter insert mode. <key>c</key><key>c</key> changes the current line (or all selected lines), <key>c</key><key>$</key> changes the text from the cursor to the end of line, and <key>c</key><key>w</key> changes the end of the word. Three key sequnce <key>c</key><key>i</key><key>w</key> changes the whole word under the cursor.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;cc&quot;</span>: [
+        <span class="hljs-string">&quot;deleteAllLeft&quot;</span>,
+        <span class="hljs-string">&quot;deleteAllRight&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+    ],
+    <span class="hljs-string">&quot;c$&quot;</span>: [
+        <span class="hljs-string">&quot;deleteAllRight&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+    ],
+    <span class="hljs-string">&quot;cw&quot;</span>: [
+        <span class="hljs-string">&quot;deleteWordEndRight&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+    ],
+
+</code></pre> <h3 id="heading-#change-untilaroundinside"><a class="header-anchor" id="change-untilaroundinside" href="#change-untilaroundinside"> </a>Change Until/Around/Inside</h3> <p>Very useful variants of change commands are those which allow changing text upto a given character or between given characters. For example, <key>c</key><key>t</key><key>_</key> changes the text until next underscore, and <key>c</key><key>i</key><key>&quot;</key> changes the text inside quotation marks. The cursor can be anywhere inside the quotation marks and the command still works.</p> <p>First, we use the <code>executeAfter</code> option of the search command to implement changing all characters up until the given letter.</p> <pre><code class="language-js">    <span class="hljs-attr">&quot;ct&quot;:</span> {
+        <span class="hljs-attr">&quot;modalkeys.search&quot;:</span> {
+            <span class="hljs-attr">caseSensitive:</span> <span class="hljs-literal">true</span>,
+            <span class="hljs-attr">acceptAfter:</span> <span class="hljs-number">1</span>,
+            <span class="hljs-attr">backwards:</span> <span class="hljs-literal">false</span>,
+            <span class="hljs-attr">selectTillMatch:</span> <span class="hljs-literal">true</span>,
+            <span class="hljs-attr">offset:</span> <span class="hljs-string">&#x27;exclusive&#x27;</span>,
+            <span class="hljs-attr">wrapAround:</span> <span class="hljs-literal">false</span>,
+            <span class="hljs-attr">executeAfter:</span> [
+                <span class="hljs-string">&quot;deleteLeft&quot;</span>,
+                <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+            ]
+        }
+    }<span class="hljs-string">,</span>
+    <span class="hljs-attr">&quot;cf&quot;:</span> {
+        <span class="hljs-attr">&quot;modalkeys.search&quot;:</span> {
+            <span class="hljs-attr">caseSensitive:</span> <span class="hljs-literal">true</span>,
+            <span class="hljs-attr">acceptAfter:</span> <span class="hljs-number">1</span>,
+            <span class="hljs-attr">backwards:</span> <span class="hljs-literal">false</span>,
+            <span class="hljs-attr">selectTillMatch:</span> <span class="hljs-literal">true</span>,
+            <span class="hljs-attr">offset:</span> <span class="hljs-string">&#x27;inclusive&#x27;</span>,
+            <span class="hljs-attr">wrapAround:</span> <span class="hljs-literal">false</span>,
+            <span class="hljs-attr">executeAfter:</span> [
+                <span class="hljs-string">&quot;deleteLeft&quot;</span>,
+                <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+            ]
+        }
+    }<span class="hljs-string">,</span>
+
+</code></pre> <p>Next, we add commands to change the text inside or around various brackets, using an extension which <a href="https://github.com/dbankier/vscode-quick-select/">implements this behavior</a>.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;ci(&quot;</span>: [ <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;extension.selectParenthesis&quot;</span>, <span class="hljs-string">&quot;deleteLeft&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+    <span class="hljs-string">&quot;ca(&quot;</span>: [ <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;extension.selectParenthesis&quot;</span>, <span class="hljs-string">&quot;extension.selectParenthesis&quot;</span>, <span class="hljs-string">&quot;deleteLeft&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+    <span class="hljs-string">&quot;ci[&quot;</span>: [ <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;extension.selectSquareBrackets&quot;</span>, <span class="hljs-string">&quot;deleteLeft&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+    <span class="hljs-string">&quot;ca[&quot;</span>: [ <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;extension.selectSquareBrackets&quot;</span>, <span class="hljs-string">&quot;extension.selectSquareBrackets&quot;</span>, <span class="hljs-string">&quot;deleteLeft&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+    <span class="hljs-string">&quot;ci{&quot;</span>: [ <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;extension.selectAngleBrackets&quot;</span>, <span class="hljs-string">&quot;deleteLeft&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+    <span class="hljs-string">&quot;ca{&quot;</span>: [ <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;extension.selectAngleBrackets&quot;</span>, <span class="hljs-string">&quot;extension.selectAngleBrackets&quot;</span>, <span class="hljs-string">&quot;deleteLeft&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
+
+</code></pre> <p>For each of these commands we first clear the selection, while leaving multiple cursors intact, to ensure the subsequent commands behave properly. Then we use the extension to select the appropriate region of text, delete it, and enter insert mode.</p> <p>It is also useful to be able to change the current word the cursor is on. You can do this by typing <key>c</key><key>i</key><key>w</key>.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;ciw&quot;</span>: [
+            <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
+            <span class="hljs-string">&quot;editor.action.smartSelect.expand&quot;</span>,
+            <span class="hljs-string">&quot;deleteLeft&quot;</span>,
+            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+        ],
+
+</code></pre> <blockquote> <p>We could also implement delete commands <key>d</key><key>i</key><key>w</key>, <key>d</key><key>t</key><key>-</key>, etc. in the similar fashion. But for the sake of keeping the tutorial short, we'll leave those as an exercise.</p> </blockquote> <p>A shorthand for <key>c</key><key>$</key> command is <key>C</key>.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;C&quot;</span>: [
+            <span class="hljs-string">&quot;deleteAllRight&quot;</span>,
+            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+        ],
+
+</code></pre> <h3 id="heading-#undo--redo"><a class="header-anchor" id="undo--redo" href="#undo--redo"> </a>Undo &amp; Redo</h3> <p>You can undo the last change with <key>u</key>. We also clear the selection to copy Vim's operation.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;u&quot;</span>: [
+            <span class="hljs-string">&quot;undo&quot;</span>,
+            <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>
+        ],
+
+</code></pre> <p>Since redo is mapped to <key>Ctrl</key>+<key>r</key> by default, we leave this binding as an exercise to the reader.</p> <h2 id="heading-#visual-selection-commands"><a class="header-anchor" id="visual-selection-commands" href="#visual-selection-commands"> </a>Visual (Selection) Commands</h2> <p>Visual commands operate on the selected text. <key>&lt;</key> and <key>&gt;</key> shift selected text left or right (indent/outdent).</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;&lt;&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.outdentLines&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;&gt;&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.indentLines&quot;</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <h3 id="heading-#clipboard-commands"><a class="header-anchor" id="clipboard-commands" href="#clipboard-commands"> </a>Clipboard Commands</h3> <p><key>y</key> yanks, i.e. copies, selected text to clipboard. Following Vim convention, we also clear the selection.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;y&quot;</span>: [
+            <span class="hljs-string">&quot;editor.action.clipboardCopyAction&quot;</span>,
+            <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>
+        ],
+
+<span class="hljs-comment">/* &lt;key&gt;d&lt;/key&gt; deletes (cuts) the selected text and puts it to clipboard. Capital
+&lt;key&gt;D&lt;/key&gt; deletes the rest of the line. &lt;key&gt;x&lt;/key&gt; deletes just the
+character under the cursor. */</span>
+
+        <span class="hljs-string">&quot;d&quot;</span>: <span class="hljs-string">&quot;editor.action.clipboardCutAction&quot;</span>,
+        <span class="hljs-string">&quot;D&quot;</span>: [
+            <span class="hljs-string">&quot;cursorEndSelect&quot;</span>,
+            <span class="hljs-string">&quot;editor.action.clipboardCutAction&quot;</span>
+        ],
+        <span class="hljs-string">&quot;x&quot;</span>: [
+            <span class="hljs-string">&quot;cursorRightSelect&quot;</span>,
+            <span class="hljs-string">&quot;editor.action.clipboardCutAction&quot;</span>
+        ],
+
+</code></pre> <blockquote> <p><strong>Note</strong>: If there is no text selected, <key>y</key> and <key>d</key> commands perform exactly the same actions as <key>y</key><key>y</key> and <key>d</key><key>d</key> in Vim. That is, they yank or delete the current line. Again, one of the subtle differences that is futile to try to unify.</p> </blockquote> <p>For pasting (or <em>putting</em> in Vim parlance) the text in clipboard you have two commands: <key>p</key> puts the text after the cursor, and <key>P</key> puts it before.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;p&quot;</span>: [
+            <span class="hljs-string">&quot;cursorRight&quot;</span>,
+            <span class="hljs-string">&quot;editor.action.clipboardPasteAction&quot;</span>
+        ],
+        <span class="hljs-string">&quot;P&quot;</span>: <span class="hljs-string">&quot;editor.action.clipboardPasteAction&quot;</span>,
+
+</code></pre> <h3 id="heading-#switching-case"><a class="header-anchor" id="switching-case" href="#switching-case"> </a>Switching Case</h3> <p>Switching selected text to upper or lower case is done with a nifty trick. We can examine the selection in a conditional command that calls different VS Code commands based on the expression. The command is bound to the tilde <key>~</key> character.</p> <pre><code class="language-js">    <span class="hljs-attr">&quot;~&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;if&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;__selectionstr == __selection.toUpperCase()&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;then&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.transformToLowercase&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;else&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.transformToUppercase&quot;</span>
+    <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <h2 id="heading-#searching"><a class="header-anchor" id="searching" href="#searching"> </a>Searching</h2> <p>The last category of commands we implement is searching. We use the incremental search command provided by ModalKeys for this. As in Vim, typing <key>/</key> starts an incremental search. <key>?</key> starts a search backwards.</p> <pre><code class="language-js">    <span class="hljs-attr">&quot;/&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.search&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+            <span class="hljs-attr">&quot;caseSensitive&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span>
+        <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;?&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.search&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+            <span class="hljs-attr">&quot;caseSensitive&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;backwards&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span>
+        <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+
+</code></pre> <p>Jumping to next previous match is done with keys <key>n</key> and <key>N</key>.</p> <pre><code class="language-js">    <span class="hljs-attr">&quot;n&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;N&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span>
+<span class="hljs-punctuation">}</span>
+
+</code></pre> <p>There are some subtle differences in the search functionality as well. Instead of just highlighting matches ModalKeys selects them. This is preferable anyway, as replacing needs to be done manually with selection commands. Use VS Code's built-in find command, if you need regex support.</p> <h2 id="heading-#conclusion"><a class="header-anchor" id="conclusion" href="#conclusion"> </a>Conclusion</h2> <p>We have built far from complete but nevertheless usable Vim emulation which you can tweak in various ways to make it better. The point of this exercise was to show that you can significantly enhance VS Code's editing experience using just a simple extension and built-in commands.</p> <p>The goal of ModalKeys is not to emulate Vim. My own bindings, for day-to-day use, do not match Vim's. I'd recommend you start with the pre-defined vim bindings, and then adapt them to your own purposes.</p> <p>You don't need to learn all the magical Vim facilities to make efficient use of ModalKeys. Just keep an eye on what operations you repeat, and think how you could make them more efficient. Then add commands that will speed up those operations. Try to make the new commands as general as possible, and as easy as possible to use. Your text editor should adapt to your way of working, not the other way around.</p> <p>Happy Editing! 🦈😎</p> </div> </body></html>
