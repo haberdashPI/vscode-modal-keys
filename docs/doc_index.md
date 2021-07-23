@@ -16,7 +16,7 @@ the editor to the *insert mode*, which is the same as VS Code's default mode.
     i: "modalkeys.enterInsert"
 }}
 ```
-By default, a binding works for all modes except insert mode. Mode specific bindings are [documented below](#keybindings).
+By default, a binding works for all modes except insert mode. Mode specific bindings are [documented below](#mode-specific-bindings-and-custom-modes).
 
 Bindings can then be set by running the command `"ModalKeys: Import preset
 keybindings"` on this file. 
@@ -53,7 +53,7 @@ You can change the text shown in status bar during visual mode using
 To define custom modes, just define keybindings for that mode. Custom modes
 behave like normal mode in all respects except that they have their own set of
 keymappings. To define bindings specific to one or more modes, you prefix the
-bindings with `[modename]::`. You can specificy multiple bindings using `|` e.g.
+bindings with `[modename]::`. You can specificy multiple modes using `|` e.g.
 `mycustommode|visual::`.
 
 To enter the given mode, you will need to call the command `modalkeys.enterMode`
@@ -73,7 +73,7 @@ when you are in "evil" mode.
 }
 ```
 
-## Keybindings
+## Keybinding forms
 
 You can define the bindings in four different ways. It is also possible to
 combine them freely.
@@ -98,7 +98,7 @@ The example in the previous section maps the `i` key to the
 
 Some [commands](https://code.visualstudio.com/api/references/commands#commands) take arguments. For example `cursorMove` which allows you
 to specify which direction and how much cursor moves. These commands can be
-executed by defining an object with prefined properties:
+executed by defining an object with predefined properties:
 
 ```js
 "<binding>":  {
@@ -120,7 +120,7 @@ strings:
 | `__mode`        | `string    | A string specifying the current mode
 | `__count`       | `number`   | A number indicating the prefixed numerical values in front of a command: see below.
 
-When you type a modal command you can prefix it with numbers, these are passed using the
+When you type a modal command you can prefix it with numbers: these are passed using the
 `__count` variable to your command.
 
 As a full example of using `__count`, the following would bind h to move left (like vim) in all modes.

@@ -1,11 +1,13 @@
 // # Build Your Own Vim Emulation for VS Code
 
-// [Vim][] is the great white shark of text editors. It has survived among modern
-// IDEs because of its unique philosophy. It supports [modal editing][] which is
-// almost an opposite approach to how other editors work. You start in "normal"
-// mode where you can navigate and edit text but not insert it. When you want to
-// enter text, you switch to "insert" mode where you can type new text but do
-// nothing else. So, you end up bouncing between modes as you edit your file.
+// [Vim][] is the great white shark of text editors. It has survived among
+// modern IDEs because of its unique philosophy. It supports [modal editing][],
+// where the effect of each key press depends on the mode your in. In insert
+// mode, typing keys works the way it would in any editor, it inserts the keys
+// you press. In normal mode, sequences of keys correspond to various commands,
+// with commonly used commands usally corresponding to a single key press. Once
+// you have become an experienced modal-editor user, you will spend a lot of
+// your time in normal mode, and it is the default mode. 
 
 // This might sound difficult, and granted, the learning curve is steep. But after
 // you are accustomed to this way of editing, it is very difficult to go back. For
@@ -25,19 +27,16 @@
 // between normal mode and insert mode.
 
 // To complete the feature set, we need an ability to bind normal mode key
-// sequences to VS Code's commands. ModalKeys accomplishes this by defining the key
-// bindings in the VS Code's standard configuration file `settings.json`. It allows
-// binding any key to any command, or a sequence of commands. It supports also
-// conditional commands that do different things based on editor state. Refer to
-// the [README][ModalKeys] page for the details of the configuration options.
+// sequences to VS Code's commands. In modal keys, you define a configuration file
+// as a javascript file, and you can use this configuration by using the command 
+// "ModalKeys: Import preset keybindings".
 
 // With these capabilities we can start building our Vim emulation. We don't have
 // to use Vim's standard key bindings, if we prefer not to. You can map any key
 // (sequence) to any command. But to keep things familiar, we'll follow Vim's
 // conventions in this tutorial.
 
-// Let's start configuring our Vim emulator by adding the ModalKeys's configuration
-// block for key bindings. We'll use the [Vim Cheat Sheet][] as our specification
+// Let's get started! We'll use the [Vim Cheat Sheet][] as our specification
 // for key bindings to be added.
 
 return {
@@ -105,7 +104,7 @@ return {
 // In Vim, there is a separate "visual" mode that you activate when you want to
 // select text. Visual mode can be characterwise or linewise.
 
-// Seleciton mdoe is on whenver an additional flag is set (by issuing a `setMode` command) and whenver you select text in the usual way from VSCode (e.g. via `modealkeys.toggleSelection`).
+// Visual mode is on whenver an additional flag is set (by issuing a `setMode` command) and whenver you select text in the usual way from VSCode (e.g. via `modealkeys.toggleSelection`).
 
 // The end result is that selection mode works _almost_ like visual mode in Vim,
 // the main difference being that selections are not automatically turned off
