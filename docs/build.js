@@ -22,7 +22,10 @@ md = new Remarkable({
     html: true,
     xhtmlOut: true,
     highlight: (str, lang) => hljs.highlightAuto(str).value
-}).use(HeaderIdsPlugin({levels: [1,2,3]}))
+}).use(HeaderIdsPlugin({
+    levels: [1,2,3],
+    anchorText: " "
+}))
 
 mkdirp.sync('docs/build/src')
 mkdirp.sync('docs/build/presets')
