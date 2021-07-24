@@ -56,4 +56,4 @@ Features that ModalKeys has, which ModalEdit lacks.
 ModalKeys is missing a few features I did not want to maintain from ModalEdit: bookmarks and quick snippets. I find these features to be well covered by several existing extensions in VSCode.
 
 There has also been quite a bit of internal refactoring as part of my plans to
-pave the way for fully functional keyboard macros and
+pave the way for fully functional keyboard macros.
