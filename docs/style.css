@@ -8,6 +8,7 @@ body {
     --color-pale: #ede1c2;
     --color-text: #333;
     background-color: var(--color-shade);
+    margin-top: 2rem;
 }
 
 a {
