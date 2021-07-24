@@ -270,7 +270,7 @@ The command takes following arguments. All of them are optional.
 | `acceptAfter`             | `number`  | `undefined` | Accept search automatically after _x_ characters has been entered. This helps implementing quick one or two character search operations.
 | `selectTillMatch`         | `boolean` | `false`     | Select the range from current position till the match instead of just the match. Useful with `acceptAfter` to quickly extend selection till the specified character(s).
 | `highlightMatches`        | `boolean` | `true`      | If true, use the search highlight colors to highlight all matches
-| `offset`                  | `string`  | `"inclusive"` | Where the cursor should lad after searching: "inclusive" of match, "exclusive" of match string, at the "start" or at the "end" of the match.
+| `offset`                  | `string`  | `"inclusive"` | Where the cursor should land after searching: "inclusive" of match, "exclusive" of match string, at the "start" or at the "end" of the match.
 | `executeAfter`            | `<command>` |           | The given commands are run after accepting a search
 | `text`                    | `string`  | ""          | If non-empty, run a non-interactive search using the given text
 | `regex`                   | `boolean` | `false`     | If true, interpret search query as a regular expression
