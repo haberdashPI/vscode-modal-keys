@@ -1,5 +1,3 @@
-- ensure that all command variables are documented
-- create the setup to publish docs on gh-pages
 - RELEASE! once these features are in place, make a release
 - add macro recording
     - non-insert only
