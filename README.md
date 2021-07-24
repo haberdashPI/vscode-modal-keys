@@ -1,7 +1,6 @@
 # Modal Keybindings in VS Code
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/Project%20Status-Active-green)](https://www.repostatus.org/#active)
-
 [![Project Documentation](https://img.shields.io/badge/docs-stable-blue)](https://haberdashpi.github.io/vscode-modal-keys/doc_index.html)
 
 ModalKeys is an extension for defining modal keybindings in VSCode. The most
