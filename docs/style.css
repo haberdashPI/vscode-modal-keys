@@ -1,16 +1,24 @@
+
+
 body {
-    background-color: #e6b89c;
+    --color-1: #c95b46;
+    --color-2: #DC7933;
+    --color-3: #6CA87E;
+    --color-shade: #6CA87E;
+    --color-pale: #ede1c2;
+    --color-text: #333;
+    background-color: var(--color-shade);
 }
 
 a {
-    color: #fe938c;
+    color: var(--color-2);
 }
 a:active {
-    color: #e6b89c;
+    color: var(--color-shade);
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: #4281a4;
+    color: var(--color-1);
 }
 
 .content {
@@ -18,7 +26,7 @@ h1, h2, h3, h4, h5, h6 {
     background-color: #fff;
     border-radius: 2rem;
     font-size: 16pt;
-    color: #333;
+    color: var(--color-text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     width: min(60rem, 95vw);
     margin: auto;
@@ -26,7 +34,7 @@ h1, h2, h3, h4, h5, h6 {
 
 pre {
     font-size: 12pt;
-    background-color: #d7e5eb;
+    background-color: var(--color-pale);
     border-radius: 1rem;
     margin: 1rem;
     padding: 2rem;
@@ -53,4 +61,13 @@ td {
     padding-right: 1rem;
 }
 
-tr:nth-child(even) {background: #d7e5eb}
+tr:nth-child(even) {background: var(--color-pale)}
+
+key {
+    border: 1px solid black;
+    background-color: var(--color-pale);
+    border-radius: 3px;
+    padding: 2pt;
+    margin: 2pt;
+    font-family: 'Courier New', Courier, monospace; 
+}

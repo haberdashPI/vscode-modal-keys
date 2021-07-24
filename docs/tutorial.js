@@ -1,19 +1,19 @@
 // # Build Your Own Vim Emulation for VS Code
 
-// [Vim][] is the great white shark of text editors. It has survived among
-// modern IDEs because of its unique philosophy. It supports [modal editing][],
-// where the effect of each key press depends on the mode your in. In insert
-// mode, typing keys works the way it would in any editor, it inserts the keys
-// you press. In normal mode, sequences of keys correspond to various commands,
-// with commonly used commands usally corresponding to a single key press. Once
-// you have become an experienced modal-editor user, you will spend a lot of
-// your time in normal mode, and it is the default mode. 
+// [Vim][] has probably survived among modern IDEs because of its relatively
+// unique philosophy. It supports [modal editing][], where the effect of each
+// key press depends on the mode your in. In insert mode, typing keys works the
+// way it would in any editor, it inserts the keys you press. In normal mode,
+// sequences of keys correspond to various commands, with commonly used commands
+// usally corresponding to a single key press. Once you have become an
+// experienced user, you will spend a lot of your time in normal mode, and it is
+// the default mode. 
 
-// This might sound difficult, and granted, the learning curve is steep. But after
-// you are accustomed to this way of editing, it is very difficult to go back. For
-// example, having to use arrow keys to move cursor feels uncomfortable. The proof
-// of this is that nearly all popular text editors have some kind of add-in that
-// provides Vim emulation. VS Code has several of them.
+// This might sound difficult, and granted, the learning curve is steep. But
+// after you are accustomed to this way of editing, it is very difficult to go
+// back. For example, having to use arrow keys to move cursor feels
+// uncomfortable. The proof of this is that nearly all popular text editors have
+// some kind of add-in that provides Vim emulation. VS Code has several of them.
 
 // So, why write yet another extension that provides Vim emulation? Well, the
 // problem is that most emulators try to make VS Code behave exactly like Vim which
@@ -21,26 +21,24 @@
 // too closely results in disjointed user experience as it has a lot of features
 // that do not have counterparts in VS Code.
 
-// [ModalKeys's][ModalKeys] approach is to utilize VS Code's existing features and
-// just add the concept of modal editing to the mix. Turns out implementing modal
-// editing is extremely simple. We basically provide pair of commands that switch
-// between normal mode and insert mode.
+// [ModalKeys's][ModalKeys] approach is to utilize VS Code's existing features
+// and just add the concept of modal editing to the mix. Turns out implementing
+// modal editing is extremely simple. We basically provide a pair of commands
+// that switch between normal mode and insert mode and the ability to map key
+// sequences to built-in VSCode commands.
 
-// To complete the feature set, we need an ability to bind normal mode key
-// sequences to VS Code's commands. In modal keys, you define a configuration file
-// as a javascript file, and you can use this configuration by using the command 
-// "ModalKeys: Import preset keybindings".
+// In ModalKeys, you define a configuration file as a javascript file, and you
+// can then import it using the "ModalKeys: Import preset keybindings" command.
 
 // With these capabilities we can start building our Vim emulation. We don't have
 // to use Vim's standard key bindings, if we prefer not to. You can map any key
 // (sequence) to any command. But to keep things familiar, we'll follow Vim's
 // conventions in this tutorial.
 
-// Let's get started! We'll use the [Vim Cheat Sheet][] as our specification
-// for key bindings to be added.
+// Our file will export a single object, containing the property `keybindings`.
 
-return {
-    "modalkeys.keybindings": {
+module.exports = {
+    "keybindings": {
 
 // ## Switching Between Modes
 
@@ -610,7 +608,9 @@ character under the cursor. */
 // to show that you can significantly enhance VS Code's editing experience using
 // just a simple extension and built-in commands.
 
-// The goal of ModalKeys is not to emulate Vim. My own bindings, for day-to-day use, do not match Vim's. I'd recommend you start with the pre-defined vim bindings, and then adapt them to your own purposes.
+// The goal of ModalKeys is not to emulate Vim. My own bindings, for day-to-day
+// use, do not match Vim's. I'd recommend you start with the [preset vim
+// bindings](./presets/vim.html), and then adapt them to your own purposes.
 
 // You don't need to learn all the magical Vim facilities to make efficient use of
 // ModalKeys. Just keep an eye on what operations you repeat, and think how you
@@ -619,7 +619,7 @@ character under the cursor. */
 // possible to use. Your text editor should adapt to your way of working, not the
 // other way around.
 
-// Happy Editing! 🦈😎
+// Happy Editing! 🚀
 
 // [Vim]: https://www.vim.org/
 // [ModalKeys]: ./README.html

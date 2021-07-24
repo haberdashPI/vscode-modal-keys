@@ -6,7 +6,7 @@ ModalKeys is an extension for defining modal keybindings in VSCode. The most
 prominent [modal
 editor](https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors)
 is [Vim](https://www.vim.org/) and ModalKeys includes
-[presets](./preset_index.html) that resemble Vim. While you can emulate existing
+[presets](https://haberdashpi.github.io/vscode-modal-keys/preset_index.html) that resemble Vim. While you can emulate existing
 modal editors like Vim or
 [Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html), the real advantage
 of ModalKeys is that you create custom modal keybindings.
@@ -24,23 +24,24 @@ As a little taste of what's possible, here are the basic movement commands in my
     },
 ```
 
-These essentially replicate Vim's standard motions. When these keys are pressed in normal mode the built-in VSCode command `cursorMove` will be called with the given arguments. If you don't know what normal mode is [read the tutorial](./tutorial.html).
+When these key sequences are pressed in normal mode, the built-in VSCode command `cursorMove` will be called with the given arguments. If you don't know what normal mode is [read the tutorial](https://haberdashpi.github.io/vscode-modal-keys/tutorial.html).
+
+To start creating a custom set of keybindings for ModalKeys, you have a few options:
+
+1. Read the [Tutorial](https://haberdashpi.github.io/vscode-modal-keys/tutorial.html)
+2. Start using ModalKeys right away with one of the example [Presets](https://haberdashpi.github.io/vscode-modal-keys/preset_index.html), reading docs and modifying it as you go.
+3. Read through the [Documentation](https://haberdashpi.github.io/vscode-modal-keys/doc_index.html)
 
 If you don't care to create a custom set of keybindings, and prefer to replicate
 vim in VSCode, consider using [VSCodeVim](https://github.com/VSCodeVim/Vim) or
 [vscode-neovim](https://github.com/asvetliakov/vscode-neovim).
 
-To start configuring ModalKeys to your liking, you have a few options:
-
-1. Read the [Tutorial](./tutorial.html)
-2. Start using ModalKeys right-away with one of the example [Presets](./preset_index.html), reading docs and modifying it as you go.
-3. Read through the [Documentation](./doc_index.html)
-
 ## Acknowledgements
 
 ModalKeys is a fork of [ModalEdit](https://github.com/johtela/vscode-modaledit);
-I am in debt to the hard and thoughtful work put into that extension. There are
-some important features that differ between the two extensions.
+I am in debt to the hard and thoughtful work from that extension along with its
+meticulous documentation. There are some important features that differ between
+the two extensions.
 
 Features that ModalKeys has, which ModalEdit lacks.
 

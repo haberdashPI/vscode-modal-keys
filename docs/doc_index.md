@@ -16,39 +16,35 @@ the editor to the *insert mode*, which is the same as VS Code's default mode.
     i: "modalkeys.enterInsert"
 }}
 ```
-By default, a binding works for all modes except insert mode. Mode specific bindings are [documented below](#mode-specific-bindings-and-custom-modes).
+By default, a binding works for all modes except insert mode. Mode specific bindings are [documented below](#custom-modes).
 
 Bindings can then be set by running the command `"ModalKeys: Import preset
 keybindings"` on this file. 
 
 The simplest type of binding maps a series of keystrokes to a given VSCode
 command. You can find these commands by looking at the list of keybindings (e.g.
-`Ctrl-K Ctrl+S` on windows) and copying the command ID from the right-click
+<key>Ctrl</key>-<key>K</key> <key>Ctrl</key>+<key>S</key> on windows) and copying the command ID from the right-click
 menu. More advanced keybindings are covered below.
 
-ModalKeys adds a regular VS Code keyboard shortcut for `Esc` to return back to
+ModalKeys adds a regular VS Code keyboard shortcut for <key>Esc</key> to return back to
 normal mode. If you wish, you can remap this command to another key by
-pressing `Ctrl+K Ctrl+S`.
+pressing <key>Ctrl</key>+<key>K</key> <key>Ctrl</key>+<key>S</key>.
 
-### Modes
-
-In addition to normal mode, ModalKeys can includes visual mode, and as many custom modes as you want.
-
-#### Selections/Visual Mode
+### Visual mode
 
 Visual mode works a bit differently than Vim's. Any time we are in normal mode
-(e.g. hit 'escape') and text happens to be selected, visual mode starts. (Visual
-mode can also be manually started).
+(e.g. hit 'escape') and text happens to be selected, visual mode starts. Visual
+mode can also be manually started.
 
-ModalKeys defines a new command `modalkeys.toggleSelection` which allows you to
-start selecting text in normal mode without holding down the shift key.
+ModalKeys defines a new command, `modalkeys.toggleSelection`, which allows you
+to start selecting text in normal mode without holding down the shift key.
 
 You can change the text shown in status bar during visual mode using
-[configuration parameters](#changing-status-bar)
+[configuration parameters](#changing-status-bar).
 
-<!-- ![Selection active](images/selected-text.png) -->
+To define a binding specific to visual mode just place `visual::` in front of the binding sequence.
 
-### Mode Specific Bindings and Custom Modes
+### Custom Modes
 
 To define custom modes, just define keybindings for that mode. Custom modes
 behave like normal mode in all respects except that they have their own set of
@@ -262,10 +258,10 @@ settings. Leave these blanks to use the theme colors for built-in search command
 
 ### Changing Status Bar
 
-With version 2.0, you can also change the text shown in status bar in each mode
-along with the text color. Note that you can add icons in the text by using
-syntax `$(icon-name)` where `icon-name` is a valid name from the gallery of
-[built-in icons](https://microsoft.github.io/vscode-codicons/dist/codicon.html).
+You can change the text shown in status bar in each mode along with the text
+color. Note that you can add icons in the text by using syntax `$(icon-name)`
+where `icon-name` is a valid name from the gallery of [built-in
+icons](https://microsoft.github.io/vscode-codicons/dist/codicon.html).
 
 The color of the status text is specified in HTML format, such as `#ffeeff`,
 `cyan`, or `rgb(50, 50, 50)`. By default these colors are not defined, and thus
@@ -288,14 +284,10 @@ If you want VS Code to be in insert mode when it starts, set the
 `startInNormalMode` setting to `false`. By default, editor is in normal mode
 when you open it.
 
-### Example Configurations
-
-**TODO**
-
-## Additional VS Code Commands
+## VS Code Commands
 
 ModalKeys adds few useful commands to VS Code's repertoire. They help you
-create more Vim-like workflow for searching and navigation.
+create more Vim-like workflows.
 
 ### Switching between Modes
 
@@ -374,12 +366,12 @@ The command `modalkeys.typeKeys` invokes commands through key bindings. Calling 
 command with a key sequence has the same effect as pressing the keys in given mode. This
 allows you to treat key bindings as subroutines that can be called using this command.
 
-The command has arguments:
+The command has two arguments.
 
 1. `keys`: contains the key sequence as string.
 2. `mode`: defaults to 'normal', and specifies what mode the keys should be typed in
 
-Assuming that keys `k` and `u` are bound to some commands, the following example runs them
+Assuming that keys <key>k</key> and <key>u</key> are bound to some commands, the following example runs them
 both one after another.
 
 ```js
@@ -394,11 +386,17 @@ in Vim. The command takes no arguments.
 
 ### Repeat Last Used Selection
 
-`modalkeys.repeatLastUsedSelection` repeats the last command (sequence) that cased the
-selection to change *just before* the last change occurred. This is useful for implementing a
-kakaune-like workflow, where selections are applied and then followed by actions: this is in
-contrast to the vim-like approach of specifying actions followed by objects (which are kind
-of like selections, but are not visually displayed). E.g. `wd` in a kakaune-like workflow might select a word (`w`) and then delete it (`d`), whereas, in vim, you would type `dw` to delete a word. By repeating the last used selection, you could repeat `w` and repeating the last change, you could repeat `d`. Or you could have both repeat commands occur with a single stroke, like below.
+`modalkeys.repeatLastUsedSelection` repeats the last command (sequence) that
+caused the selection to change *just before* the last change occurred. This is
+useful for implementing a kakaune-like workflow, where selections are applied
+and then followed by actions. This is in contrast to the vim-like approach of
+specifying actions followed by objects (which are kind of like selections, but
+are not visually displayed). E.g. <key>w</key><key>d</key> in a kakaune-like
+workflow might select a word (<key>w</key>) and then delete it (<key>d</key>),
+whereas, in vim, you would type <key>d</key><key>d</key> to delete a word. By
+repeating the last used selection, you could repeat <key>w</key> and repeating
+the last change, you could repeat <key>d</key>. Or you could have both repeat
+commands occur with a single stroke, like below.
 
 ```js
 { ".": [ "modalkeys.repeatLastUsedSelection", "modalkeys.repeatLastChange" ] }
@@ -411,7 +409,7 @@ of like selections, but are not visually displayed). E.g. `wd` in a kakaune-like
 | Argument                  | Type      | Default     | Description
 | ------------------------- | --------- | ----------- | ---------------------------------
 | `acceptAfter`             | `number`  | `undefined` | Accept search automatically after _x_ characters has been entered. 
-| `execuateAfter`           | <command> | `undefined` | The commands to run after capturing keys.
+| `execuateAfter`           | &lt;command&gt; | `undefined` | The commands to run after capturing keys.
 
 For example, the following command selects all characters that fall between two instances of a given key; so, in the string "joe |bob| joe", with the cursor on the first "b", typing `uc|` would select "bob".
 

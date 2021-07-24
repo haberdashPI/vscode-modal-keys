@@ -1,19 +1,18 @@
 // # Advanced vim presets
 
 // This document provides a more advanced set of vim keybindings than provided in
-// the [tutorial](TODO). The goal of these bindings is to lower the barrier to
+// the [tutorial](../tutorial.html). The goal of these bindings is to lower the barrier to
 // entry for Vim users who don't want to spend the time defining bindings from
 // ground up. A secondary goal is to show off some of the more advanced features of
 // ModalKeys that were not discussed in the tutorial.
 
-// ![importing presets](../images/import-preset.png =553x94) If you are not
-// interested on how the Vim keybindings are implemented and just want to use them,
-// you can skip this discussion. Just import the presets by pressing
-// <key>Ctrl</key>+<key>Shift</key>+<key>P</key> and running command **ModalKeys:
-// Import preset keybindings**. You will be presented a choice to import either Vim
-// bindings or any presets that you have created yourself. If you are planning to
-// customize the bindings, or create Vim-style commands from scratch, this document
-// gives you pointers how to go about with that.
+// If you are not interested in how the Vim keybindings are implemented and just
+// want to use them, you can skip this discussion. Just import the presets by
+// pressing <key>Ctrl</key>+<key>Shift</key>+<key>P</key> and running command
+// `ModalKeys: Import preset keybindings`. You will be presented a choice to
+// import either Vim bindings or any presets that you have created yourself. If
+// you are planning to customize the bindings, or create Vim-style commands from
+// scratch, this document gives you pointers on how to go about doing that.
 
 // Unlike the tutorial, the assumption throughout this documentation is that you
 // are familiar with vim. All concepts discussed here are introduced, at least
@@ -23,10 +22,12 @@
 
 // To begin with, we'll define some functions for use in our keybindings. Since
 // imported keybindings can be defined using javascript, this can help generalize
-// our bindings, allowing the defining of many keybindings at wonce. In vim, the
+// our bindings, allowing us to create many keybindings at once. In vim, the
 // cannonical use for this would be the operator/object combinations: e.g. to
 // delete a word you type `d` (for delete) and `w` (for word). This noun-verb
 // structure implies many possible shortcuts.
+
+// You can see these functions in use when [we define motions](#editing-with-motions)
 
 /**
  * Creates a series of key mappings which select a region of text around

@@ -85,7 +85,13 @@ docfiles.map(file => {
         if(err){
             console.log(err.message)
         }else{
-            let out = md.render(data.toString('utf8'));
+            let str = data.toString('utf8')
+            if(file == 'README.md'){
+                str = str.replaceAll('https://haberdashpi.github.io/'+
+                    'vscode-modal-keys', '.')
+                debugger;
+            }
+            let out = md.render(str);
             let toFile = docpath(file);
             let depth = path.dirname(toFile).split(path.delimiter).length
             let prefix = Array(depth).fill("..").join(path.delimiter)
