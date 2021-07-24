@@ -52,12 +52,16 @@ let header = dir => `
 `
 
 let footer = `
+<a href="https://github.com/haberdashPI/vscode-modal-keys">View on GitHub</a>
 </div>
 </body>
 </html>
 `
-
-// TODO: hanlde readme specially so we can manage doc links
+function findprefix(str){
+    let depth = path.dirname(str).split(path.sep).length
+    let basedepth = path.dirname(__filename).split(path.sep).length
+    return "."+path.sep+Array(Math.max(0, depth-basedepth-1)).fill("..").join(path.sep)
+}
 
 sourcefiles.map(file => jdi.doc(path.join(process.cwd(), file))).
     map(stream => {
@@ -70,10 +74,8 @@ sourcefiles.map(file => jdi.doc(path.join(process.cwd(), file))).
             mark = mark.replace(/^Generated _.*from.*$/m,'')
             let out = md.render(mark)
             let toFile = docpath(stream.options.file)
-            let depth = path.dirname(toFile).split(path.delimiter).length
-            let prefix = Array(depth).fill("..").join(path.delimiter)
-            let head = header(prefix)
-            fs.writeFile(toFile, head+out+footer, err => {
+            let prefix = findprefix(toFile)
+            fs.writeFile(toFile, header(prefix)+out+footer, err => {
                 if(err) throw err;
                 else console.log('Wrote '+toFile)
             })
@@ -93,10 +95,8 @@ docfiles.map(file => {
             }
             let out = md.render(str);
             let toFile = docpath(file);
-            let depth = path.dirname(toFile).split(path.delimiter).length
-            let prefix = Array(depth).fill("..").join(path.delimiter)
-            let head = header(prefix)
-            fs.writeFile(toFile, head+out+footer, err => {
+            let prefix = findprefix(toFile)
+            fs.writeFile(toFile, header(prefix)+out+footer, err => {
                 if(err) console.log(err.message)
                 else console.log('Wrote '+toFile)
             })

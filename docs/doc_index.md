@@ -2,7 +2,7 @@
 
 Here, it is assumed you understand the conventions of Vim: if you are new to what normal mode is, and how modal editors work, [read the tutorial](./tutorial.html). If you are familiar with vim, but want to get started without reading the docs, you can [use a preset](./preset_index.html)
 
-ModalKeys has two built in modes, and as many custom modes as you want. By default, VSCode will open in normal mode.
+ModalKeys has two built in modes, and as many custom modes as you want. By default, VSCode will open in normal mode. ([This can be changed](#start-in-normal-mode))
 
 To define the key mappings for these modes, you should create a javascript file (e.g. `mybindings.js`). When run, the file should evaluate to an object
 with the single property `keybindings`; this should define all of your bindings. If your bindings are simple enough you can also use a `json` or `jsonc` file (but this will limit the flexibility of your bindings).
@@ -426,5 +426,4 @@ they are same as the rest of text in the status bar.
 ### Start in Normal Mode
 
 If you want VS Code to be in insert mode when it starts, set the
-`startInNormalMode` setting to `false`. By default, editor is in normal mode
-when you open it.
+`startInNormalMode` setting to `false` (it defaults to `true`).

@@ -24,7 +24,7 @@
 // imported keybindings can be defined using javascript, this can help generalize
 // our bindings, allowing us to create many keybindings at once. In vim, the
 // cannonical use for this would be the operator/object combinations: e.g. to
-// delete a word you type `d` (for delete) and `w` (for word). This noun-verb
+// delete a word you type <key>d</key> (for delete) and <key>w</key> (for word). This noun-verb
 // structure implies many possible shortcuts.
 
 // You can see these functions in use when [we define motions](#editing-with-motions)
@@ -37,7 +37,7 @@
  * single-character string (the key to map), and each bound specifies
  * the region of text around which we can select. 
  * @returns a map of key: command pairings. Two per entry in `mappings`
- * (one for within `i<key>` and one for around `a<key>` the given bounds)
+ * (one for within `i` and one for around `a` the given bounds)
  */
 function aroundObjects(mappings){
     return Object.fromEntries(Object.entries(mappings).map(([key, bounds]) => {
@@ -493,3 +493,6 @@ module.exports = {
 // about 600 lines of configuration, and most of it is pretty trivial. This
 // demonstrates that ModalKeys's functionality is powerful enough to build all
 // kinds of operations that make modal editors like Vim popular.
+//
+// For a full least of features available in ModalKeys, please refer to the
+// [documentation](../doc_index.html)

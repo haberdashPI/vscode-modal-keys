@@ -21,7 +21,9 @@
     "main": "./dist/extension.js",
     "targets": {
         "main": false,
-        "": { "publicUrl": "./" }
+        "": { 
+            "publicUrl": "https://haberdashpi.github.io/vscode-modal-keys"
+        }
     },
     "docs": "./dist/docs/README.html",
     "contributes": {
