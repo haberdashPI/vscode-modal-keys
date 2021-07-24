@@ -79,11 +79,15 @@ td {
 tr:nth-child(even) {background: var(--color-pale)}
 
 key {
+    position: relative;
+    top: -2pt;
     font-size: 10pt;
     border: 1px solid black;
     background-color: var(--color-pale);
     border-radius: 3px;
     padding: 2pt;
+    padding-left: 4pt;
+    padding-right: 4pt;
     margin: 2pt;
     font-family: 'Courier New', Courier, monospace; 
 }
