@@ -1,6 +1,8 @@
 # Modal Keybindings in VS Code
 
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://img.shields.io/badge/Project%20Status-WIP-yellow)](https://www.repostatus.org/#wip)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/Project%20Status-Active-green)](https://www.repostatus.org/#active)
+
+[![Project Documentation](https://img.shields.io/badge/docs-stable-blue)](https://haberdashpi.github.io/vscode-modal-keys/doc_index.html)
 
 ModalKeys is an extension for defining modal keybindings in VSCode. The most
 prominent [modal
@@ -29,7 +31,7 @@ When these key sequences are pressed in normal mode, the built-in VSCode command
 To start creating a custom set of keybindings for ModalKeys, you have a few options:
 
 1. Read the [Tutorial](https://haberdashpi.github.io/vscode-modal-keys/tutorial.html)
-2. Start using ModalKeys right away with one of the example [Presets](https://haberdashpi.github.io/vscode-modal-keys/preset_index.html), reading docs and modifying it as you go.
+2. Start with an example [presets](https://haberdashpi.github.io/vscode-modal-keys/preset_index.html), modifying it to your taste as needed.
 3. Read through the [Documentation](https://haberdashpi.github.io/vscode-modal-keys/doc_index.html)
 
 If you don't care to create a custom set of keybindings, and prefer to replicate
