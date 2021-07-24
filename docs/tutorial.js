@@ -2,7 +2,7 @@
 
 // [Vim][] has probably survived among modern IDEs because of its relatively
 // unique philosophy. It supports [modal editing][], where the effect of each
-// key press depends on the mode your in. In insert mode, typing keys works the
+// key press depends on the mode you're in. In insert mode, typing keys works the
 // way it would in any editor, it inserts the keys you press. In normal mode,
 // sequences of keys correspond to various commands, with commonly used commands
 // usally corresponding to a single key press. Once you have become an
