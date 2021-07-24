@@ -1,6 +1,6 @@
 # Getting Started
 
-Here, it is assumed you understand the conventions of Vim: if you are new to what normal mode is, and how modal editors work, [read the tutorial](./tutorial.html). If you are familiar with vim, but what to get started without reading the docs, you can [use a preset](./preset_index.html)
+Here, it is assumed you understand the conventions of Vim: if you are new to what normal mode is, and how modal editors work, [read the tutorial](./tutorial.html). If you are familiar with vim, but want to get started without reading the docs, you can [use a preset](./preset_index.html)
 
 ModalKeys has two built in modes, and as many custom modes as you want. By default, VSCode will open in normal mode.
 
