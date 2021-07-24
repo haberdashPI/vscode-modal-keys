@@ -25,12 +25,12 @@ keybindings"` on this file.
 
 The simplest type of binding maps a series of keystrokes to a given VSCode
 command. You can find these commands by looking at the list of keybindings (e.g.
-<key>Ctrl</key>-<key>K</key> <key>Ctrl</key>+<key>S</key> on windows) and copying the command ID from the right-click
+<key>Ctrl/Cmd</key>-<key>K</key> <key>Ctrl/Cmd</key>+<key>S</key> on windows) and copying the command ID from the right-click
 menu. More advanced keybindings are covered below.
 
 ModalKeys adds a regular VS Code keyboard shortcut for <key>Esc</key> to return back to
 normal mode. If you wish, you can remap this command to another key by
-pressing <key>Ctrl</key>+<key>K</key> <key>Ctrl</key>+<key>S</key>.
+pressing <key>Ctrl/Cmd</key>+<key>K</key> <key>Ctrl/Cmd</key>+<key>S</key>.
 
 ## Visual mode
 

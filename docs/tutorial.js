@@ -41,7 +41,7 @@ module.exports = {
 // <key>Esc</key> key is mapped to the `modalkeys.enterNormal` command by default,
 // so we dont't need to do anything for that. If you like, you can map other keys to
 // this command using VS Code's standard keymappings pressing
-// <key>Ctrl</key>+<key>K</key> <key>Ctrl</key>+<key>S</key>.
+// <key>Ctrl/Cmd</key>+<key>K</key> <key>Ctrl/Cmd</key>+<key>S</key>.
 
 // ### Insert Text
 
@@ -313,12 +313,12 @@ module.exports = {
 // without using arrow keys or <key>Home</key> and <key>End</key> keys.
 
 // We skipped commands that move cursor up and down on page at the time. The
-// reason for this is that these commands are bound to <key>Ctrl</key>+<key>b</key>
-// and <key>Ctrl</key>+<key>f</key> in Vim. Since these are "normal" VS Code
+// reason for this is that these commands are bound to <key>Ctrl/Cmd</key>+<key>b</key>
+// and <key>Ctrl/Cmd</key>+<key>f</key> in Vim. Since these are "normal" VS Code
 // shortcuts we cannot remap them in ModalKeys. If you want to use these shortcuts,
 // you need to add the bindings to the VS Code's `keybindings.json` file. Below is
 // an example that uses the `modalkeys.normal` context to make the shortcuts work
-// only in normal mode. Most of the Vim's standard <key>Ctrl</key>+key combinations
+// only in normal mode. Most of the Vim's standard <key>Ctrl/Cmd</key>+key combinations
 // are already in use, so you need to decide whether you want to remap the existing
 // commands first.
 
@@ -502,7 +502,7 @@ module.exports = {
             "modalkeys.cancelSelection"
         ],
 
-// Since redo is mapped to <key>Ctrl</key>+<key>r</key> by default, we leave this
+// Since redo is mapped to <key>Ctrl/Cmd</key>+<key>r</key> by default, we leave this
 // binding as an exercise to the reader.
 
 // ## Visual (Selection) Commands

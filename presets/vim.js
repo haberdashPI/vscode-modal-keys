@@ -8,7 +8,7 @@
 
 // If you are not interested in how the Vim keybindings are implemented and just
 // want to use them, you can skip this discussion. Just import the presets by
-// pressing <key>Ctrl</key>+<key>Shift</key>+<key>P</key> and running command
+// pressing <key>Ctrl/Cmd</key>+<key>Shift</key>+<key>P</key> and running command
 // `ModalKeys: Import preset keybindings`. You will be presented a choice to
 // import either Vim bindings or any presets that you have created yourself. If
 // you are planning to customize the bindings, or create Vim-style commands from
@@ -143,8 +143,8 @@ module.exports = {
         G: "cursorBottom",
         "visual::G": "cursorBottomSelect",
 // Switch to next and previous tab.
-        "gt": "workbench.action.nextEditor",
-        "gT": "workbench.action.previousEditor",
+        gt: "workbench.action.nextEditor",
+        gT: "workbench.action.previousEditor",
 // The logic of separating words is bit different in VS Code and Vim, so we will
 // not aim to immitate Vim exaclty. If that's something you want, you might
 // consider looking at [Selection
@@ -153,13 +153,13 @@ module.exports = {
 // <key>B</key> move past all non-space characters, and are implemented using the
 // search command, with appropriate options. To handling of count arguments, we use
 // the `repeat` option.
-        "w": { "cursorWordStartRight": {}, "repeat": "__count" },
+        w: { "cursorWordStartRight": {}, "repeat": "__count" },
         "visual::w": { "cursorWordStartRightSelect": {}, "repeat": "__count" },
-        "e": { "cursorWordEndRight": {}, "repeat": "__count" },
+        e: { "cursorWordEndRight": {}, "repeat": "__count" },
         "visual::e": { "cursorWordEndRightSelect": {}, "repeat": "__count" },
-        "b": { "cursorWordStartLeft": {}, "repeat": "__count" },
+        b: { "cursorWordStartLeft": {}, "repeat": "__count" },
         "visual::b": { "cursorWordStartLeftSelect": {}, "repeat": "__count" },
-        "W": {
+        W: {
             "modalkeys.search": {
                 "text": "\\W+",
                 "offset": 'inclusive',
@@ -169,7 +169,7 @@ module.exports = {
             },
             "repeat": '__count',
         },
-        "B": {
+        B: {
             "modalkeys.search": {
                 "text": "\\W+",
                 "offset": 'inclusive',
@@ -182,9 +182,9 @@ module.exports = {
         },
 // Moving cursor to the top, middle, and bottom of the screen is mapped to
 // <key>H</key> (high), <key>M</key> (middle), and <key>L</key> (low) keys.
-        "H": { "cursorMove": { to: 'viewPortTop', select: '__mode == "visual"' } },
-        "M": { "cursorMove": { to: 'viewPortCenter', select: '__mode == "visual"' } },
-        "L": { "cursorMove": { to: 'viewPortBottom', select: '__mode == "visual"' } },
+        H: { "cursorMove": { to: 'viewPortTop', select: '__mode == "visual"' } },
+        M: { "cursorMove": { to: 'viewPortCenter', select: '__mode == "visual"' } },
+        L: { "cursorMove": { to: 'viewPortBottom', select: '__mode == "visual"' } },
 // Move to matching bracket command is somewhat challenging to implement
 // consistently in VS Code. This is due to the problem that there are no commands
 // that do exactly what Vim's motions do, and because VSCode extensions are not
@@ -208,14 +208,14 @@ module.exports = {
 // search](../README.html#incremental-search) command, just the parameters are different for
 // each case. Basically we just perform either a forward or backward search and use the
 // "offset" option to determine where the cursor should land.
-        "f": {
+        f: {
             "modalkeys.search": {
                 "acceptAfter": 1,
                 "offset": "inclusive",
                 "selectTillMatch": "__mode == 'visual'",
             }
         },
-        "F": {
+        F: {
             "modalkeys.search": {
                 "acceptAfter": 1,
                 "backwards": true,
@@ -223,14 +223,14 @@ module.exports = {
                 "selectTillMatch": "__mode == 'visual'",
             }
         },
-        "t": {
+        t: {
             "modalkeys.search": {
                 "acceptAfter": 1,
                 "offset": "exclusive",
                 "selectTillMatch": "__mode == 'visual'",
             }
         },
-        "T": {
+        T: {
             "modalkeys.search": {
                 "acceptAfter": 1,
                 "backwards": true,
@@ -246,36 +246,36 @@ module.exports = {
 // ## Switching between Modes
 
 // Next, we define keybindings that switch between normal, insert, and visual mode:
-        "i": "modalkeys.enterInsert",
-        "I": [
+        i: "modalkeys.enterInsert",
+        I: [
             "cursorHome",
             "modalkeys.enterInsert"
         ],
 // The `a` has to check if the cursor is at the end of line. If so, we don't move
 // right because that would move to next line.
-        "a": [
+        a: [
             {
                 "if": "__char == ''",
                 "else": "cursorRight"
             },
             "modalkeys.enterInsert"
         ],
-        "A": [
+        A: [
             "cursorEnd",
             "modalkeys.enterInsert"
         ],
-        "o": [
+        o: [
             "editor.action.insertLineAfter",
             "modalkeys.enterInsert"
         ],
-        "O": [
+        O: [
             "editor.action.insertLineBefore",
             "modalkeys.enterInsert"
         ],
 // Note that visual mode works a little differently than in vim. We don't
 // seek to mimc visual mode particularly. Basically, we just toggle a switch that allows the
 // motion commands to extend and create selections.
-        "v": "modalkeys.toggleSelection",
+        v: "modalkeys.toggleSelection",
 // ## Editing in Normal Mode
 
 // Editing commands in normal mode typically either affect current character or
@@ -285,16 +285,16 @@ module.exports = {
 
 // <key>x</key> and <key>X</key> commands do exactly what <key>Delete</key> and
 // <key>Backspace</key> keys do.
-        "x": "deleteRight",
-        "X": "deleteLeft",
-        "r": "modalkeys.replaceChar",
+        x: "deleteRight",
+        X: "deleteLeft",
+        r: "modalkeys.replaceChar",
 // Deleting in Vim always copies the deleted text into clipboard, so we do that
 // as well. If you are wondering why we don't use VS Code's cut command, it has a
 // synchronization issue that sometimes causes the execution to advance to the
 // next command in the sequence before cutting is done. This leads to strange
 // random behavior that usually causes the whole line to disappear instead of the
 // rest of line.
-        "D": [
+        D: [
             "modalkeys.cancelSelection",
             "cursorEndSelect",
             "editor.action.clipboardCopyAction",
@@ -303,11 +303,11 @@ module.exports = {
         ],
 // We utilize existing mappings to implement the <key>C</key> command. It
 // does same thing as keys <key>D</key><key>i</key> together.
-        "C": { "modalkeys.typeKeys": { "keys": "Di" } },
+        C: { "modalkeys.typeKeys": { "keys": "Di" } },
 // Yanking or copying is always done on a selected range. So, below, we make sure
 // that only the rest of line is selected before copying the range to clipboard.
 // Afterwards we clear the selection again.
-        "Y": [
+        Y: [
             "modalkeys.cancelSelection",
             "cursorEndSelect",
             "editor.action.clipboardCopyAction",
@@ -320,20 +320,20 @@ module.exports = {
 // behaviors differently depending on whether you have a single line or multiple
 // lines in the clipboard. You would need to write a VSCode extension that inspects
 // the contents of the clipboard before pasting to get this same behavior. 
-        "p": [
+        p: [
             "cursorRight",
             "editor.action.clipboardPasteAction",
             "modalkeys.cancelSelection"
         ],
-        "P": [
+        P: [
             "editor.action.clipboardPasteAction",
             "modalkeys.cancelSelection"
         ],
 // <key>J</key> joins current and next lines together adding a space in between.
-        "J": "editor.action.joinLines",
+        J: "editor.action.joinLines",
 // Undoing last change is also a matter of calling built-in commands. We clear the
 // selection afterwards.
-        "u": [
+        u: [
             "undo",
             "modalkeys.cancelSelection"
         ],
@@ -377,9 +377,9 @@ module.exports = {
 // can be mapped the same way.
        ...operators({
         operators: {
-            "d": "editor.action.clipboardCutAction",
-            "y": [ "editor.action.clipboardCopyAction", "modalkeys.cancelMultipleSelections" ],
-            "c": [
+            d: "editor.action.clipboardCutAction",
+            y: [ "editor.action.clipboardCopyAction", "modalkeys.cancelMultipleSelections" ],
+            c: [
                 "deleteRight",
                 { if: "!__selection.isSingleLine", then: "editor.action.insertLineBefore" },
                 "modalkeys.enterInsert"
@@ -388,7 +388,7 @@ module.exports = {
             ">": ["editor.action.indentLines", "modalkeys.cancelMultipleSelections" ]
         },
         objects: {
-            "j": [
+            j: [
                 "modalkeys.cancelMultipleSelections",
                 {
                     "cursorMove": {
@@ -400,7 +400,7 @@ module.exports = {
                 },
                 "expandLineSelection",
             ],
-            "k": [
+            k: [
                 "modalkeys.cancelMultipleSelections",
                 {
                     "cursorMove": {
@@ -416,8 +416,8 @@ module.exports = {
                     "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
                 map(k => [k, { "modalkeys.typeKeys": { keys: "v"+k } } ]))),
             ...aroundObjects({
-                "w": { value: "\\W", regex: true },
-                "p": { value: "(?<=\\r?\\n)\\s*\\r?\\n", regex: true },
+                w: { value: "\\W", regex: true },
+                p: { value: "(?<=\\r?\\n)\\s*\\r?\\n", regex: true },
                 "(": { from: "(", to: ")" },
                 "{": { from: "{", to: "}" },
                 "[": { from: "[", to: "]" },
@@ -460,8 +460,8 @@ module.exports = {
                 "wrapAround": true
             }
         },
-        "n": "modalkeys.nextMatch",
-        "N": "modalkeys.previousMatch",
+        n: "modalkeys.nextMatch",
+        N: "modalkeys.previousMatch",
 // ## Miscellaneous Commands
 
 // Rest of the normal mode commands are not motion or editing commands, but do
@@ -469,7 +469,7 @@ module.exports = {
 
 // | Keys      | Command
 // | --------- | ---------------------------------
-// | `:`       | Show command menu (same as <key>Ctrl</key><key>Shift</key><key>P</key>)
+// | `:`       | Show command menu (same as <key>Ctrl/Cmd</key><key>Shift</key><key>P</key>)
 // | `zz`      | Center cursor on screen
 // | `ZZ`      | Save file and close the current editor (tab)
 // | `ZQ`      | Close the current editor without saving
@@ -477,12 +477,12 @@ module.exports = {
 // Note that <key>Z</key><key>Q</key> command still asks to save the file, if
 // it has been changed. There is no way to get around this in VS Code.
         ":": "workbench.action.showCommands",
-        "zz": { "revealLine": { lineNumber: '__line', at: 'center' } },
-        "ZZ": [
+        zz: { "revealLine": { lineNumber: '__line', at: 'center' } },
+        ZZ: [
             "workbench.action.files.save",
             "workbench.action.closeActiveEditor"
         ],
-        "ZQ": "workbench.action.closeActiveEditor"
+        ZQ: "workbench.action.closeActiveEditor"
     },
 }
 // ## Conclusion
