@@ -1,5 +1,0 @@
-- RELEASE! once these features are in place, make a release
-- add macro recording
-    - non-insert only
-    - manage insert mode too (using document modified events)
-- display visual layout of keyboard
