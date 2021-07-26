@@ -120,9 +120,19 @@ variables are recognized during this evaluation.
 | `__selections`  | [`Selection[]`](https://code.visualstudio.com/api/references/vscode-api#Selection) | The selection objects of the current editor
 | `__selection`   | [`Selection`](https://code.visualstudio.com/api/references/vscode-api#Selection)  | The primary selection object of the current editor
 | `__selectionstr` | `string`  | The text of the primary selection
-| `__mode`        | `string    | A string specifying the current mode
+| `__selecting`    | `bool`    | True if text should be selected (e.g. we're in visual mode).
+| `__mode`        | `string`    | A string specifying the current mode
 | `__count`       | `number`   | A number indicating the prefixed numerical values in front of a command: see below.
 | `__captured`    | `string`   | The list of captured keys following (see [`captureChar`](#capturing-keys))
+
+Below is an example that leverages string evaluation. It maps the key `o` to a command that moves the cursor to the
+end of the line. It also selects the jumped range, if we have a selection already active.
+
+```js
+"o": { "cursorMove": { to: 'wrappedLineEnd', select: '__selecting' } },
+```
+
+#### Numeric arguments
 
 When you type a modal command you can prefix it with numbers: these are passed using the
 `__count` variable to your command.
