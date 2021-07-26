@@ -30,7 +30,7 @@ When these key sequences are pressed in normal mode, the built-in VSCode command
 To start creating a custom set of keybindings for ModalKeys, you have a few options:
 
 1. Read the [Tutorial](https://haberdashpi.github.io/vscode-modal-keys/tutorial.html)
-2. Start with an example [presets](https://haberdashpi.github.io/vscode-modal-keys/preset_index.html), modifying it to your taste as needed.
+2. Start with an example from [presets](https://haberdashpi.github.io/vscode-modal-keys/preset_index.html), modifying it to your taste as needed.
 3. Read through the [Documentation](https://haberdashpi.github.io/vscode-modal-keys/doc_index.html)
 
 If you don't care to create a custom set of keybindings, and prefer to replicate
