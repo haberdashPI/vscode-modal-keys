@@ -105,11 +105,10 @@ executed by defining an object with predefined properties:
 }
 ```
 
-The `<command>` is again a valid VS Code command. The arguments passed to
-"<command>" ({ ...}) contains whatever arguments the command takes. It is
-specified as a JSON object. ModalKeys evaluates JavaScript expressions within
-the argument values. The following variables can be used inside expression
-strings:
+The `<command>` is again a valid VS Code command. Any arguments you wish to pass
+to this command should be placed inside the curly brackets. ModalKeys evaluates
+any argument strings that contain `__` as JavaScript expressions, and replaces the argument value with the result of this evaluation. The following
+variables are recognized during this evaluation.
 
 | Variable        | Type       | Description
 | --------------- | ---------- | -------------------------------------------------
@@ -121,9 +120,19 @@ strings:
 | `__selections`  | [`Selection[]`](https://code.visualstudio.com/api/references/vscode-api#Selection) | The selection objects of the current editor
 | `__selection`   | [`Selection`](https://code.visualstudio.com/api/references/vscode-api#Selection)  | The primary selection object of the current editor
 | `__selectionstr` | `string`  | The text of the primary selection
-| `__mode`        | `string    | A string specifying the current mode
+| `__selecting`    | `bool`    | True if text should be selected (e.g. we're in visual mode).
+| `__mode`        | `string`    | A string specifying the current mode
 | `__count`       | `number`   | A number indicating the prefixed numerical values in front of a command: see below.
 | `__captured`    | `string`   | The list of captured keys following (see [`captureChar`](#capturing-keys))
+
+Below is an example that leverages string evaluation. It maps the key `o` to a command that moves the cursor to the
+end of the line. It also selects the jumped range, if we have a selection already active.
+
+```js
+"o": { "cursorMove": { to: 'wrappedLineEnd', select: '__selecting' } },
+```
+
+#### Numeric arguments
 
 When you type a modal command you can prefix it with numbers: these are passed using the
 `__count` variable to your command.
@@ -137,16 +146,9 @@ As a full example of using `__count`, the following would bind h to move left (l
 Because `value` is specified as `__count`, if you typed `12h`, the cursor would move 12
 characters to the left.
 
-The `repeat` property allows you to run the command multiple times. If the value of the
-property is a number, it directly determines the repetition count, and if it is `__count` it
-repeats the expression based on the prefixed numbers passed to the keybinding.
+#### Repeating commands
 
-Below is an example that maps key `o` to a command that moves the cursor to the
-end of line. It also selects the jumped range, if we have selection active.
-
-```js
-"o": { "cursorMove": { to: 'wrappedLineEnd', select: '__selecting' } },
-```
+The `repeat` property of a command allows you to run the command multiple times. If it's a number, it should indicate the number of times to repeat the command. If it's a string it is evaluated as a JavaScript expression, and should evaluate to a numeric or boolean value. If numeric, the command repeats the given number of times. If boolean, it yields while-loop behavior: the command will continue to be repeated until it evaluates to false.
 
 ### Sequence of Commands
 
@@ -156,8 +158,7 @@ A sequence is defined as an array.
 ```js
 "<binding>": [ <command1>, <command2>, ... ]
 ```
-In above, `<command>` can assume any of the supported forms: single command,
-one with arguments, or conditional command (see below).
+In above, `<command>` can assume any of the four command types.
 
 The next example maps the `f` key to a command sequence that first deletes the
 selected text and then switch to insert mode. It corresponds to the `c` command
