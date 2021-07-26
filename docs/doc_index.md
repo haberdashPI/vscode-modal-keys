@@ -105,11 +105,10 @@ executed by defining an object with predefined properties:
 }
 ```
 
-The `<command>` is again a valid VS Code command. The arguments passed to
-"<command>" ({ ...}) contains whatever arguments the command takes. It is
-specified as a JSON object. ModalKeys evaluates JavaScript expressions within
-the argument values. The following variables can be used inside expression
-strings:
+The `<command>` is again a valid VS Code command. Any arguments you wish to pass
+to this command should be placed inside the curly brackets. ModalKeys evaluates
+any argument strings that contain `__` as JavaScript expressions, and replaces the argument value with the result of this evaluation. The following
+variables are recognized during this evaluation.
 
 | Variable        | Type       | Description
 | --------------- | ---------- | -------------------------------------------------

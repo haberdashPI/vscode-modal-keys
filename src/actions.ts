@@ -681,8 +681,7 @@ export class KeyState {
                 val === '__captured' ? captured :
                 /^\(\s*__count\s* \|\| 1\)$/.test(val) ? (this.argumentCount || 1) :
                 /^-\s*\(\s*__count\s* \|\| 1\)$/.test(val) ? -(this.argumentCount || 1) :
-                /[+-/*=]|__|editor\./.test(val) ? this.evalStringOrText(val, mode, captured) :
-                val
+                /__/.test(val) ? this.evalString__(val, mode, captured) : val
             result[key] = eval_val
         }
 
