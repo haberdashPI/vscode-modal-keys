@@ -125,7 +125,7 @@ variables are recognized during this evaluation.
 | `__count`       | `number`   | A number indicating the prefixed numerical values in front of a command: see below.
 | `__captured`    | `string`   | The list of captured keys following (see [`captureChar`](#capturing-keys))
 
-Below is an example that leverages string evaluation. It maps the key `o` to a command that moves the cursor to the
+Below is an example that leverages string evaluation. It maps the key <key>o</key> to a command that moves the cursor to the
 end of the line. It also selects the jumped range, if we have a selection already active.
 
 ```js
