@@ -136,16 +136,9 @@ As a full example of using `__count`, the following would bind h to move left (l
 Because `value` is specified as `__count`, if you typed `12h`, the cursor would move 12
 characters to the left.
 
-The `repeat` property allows you to run the command multiple times. If the value of the
-property is a number, it directly determines the repetition count, and if it is `__count` it
-repeats the expression based on the prefixed numbers passed to the keybinding.
+#### Repeating commands
 
-Below is an example that maps key `o` to a command that moves the cursor to the
-end of line. It also selects the jumped range, if we have selection active.
-
-```js
-"o": { "cursorMove": { to: 'wrappedLineEnd', select: '__selecting' } },
-```
+The `repeat` property of a command allows you to run the command multiple times. If it's a number, it should indicate the number of times to repeat the command. If it's a string it is evaluated as a JavaScript expression, and should evaluate to a numeric or boolean value. If numeric, the command repeats the given number of times. If boolean, it yields while-loop behavior: the command will continue to be repeated until it evaluates to false.
 
 ### Sequence of Commands
 
