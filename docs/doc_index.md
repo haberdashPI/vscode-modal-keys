@@ -158,8 +158,7 @@ A sequence is defined as an array.
 ```js
 "<binding>": [ <command1>, <command2>, ... ]
 ```
-In above, `<command>` can assume any of the supported forms: single command,
-one with arguments, or conditional command (see below).
+In above, `<command>` can assume any of the four command types.
 
 The next example maps the `f` key to a command sequence that first deletes the
 selected text and then switch to insert mode. It corresponds to the `c` command
