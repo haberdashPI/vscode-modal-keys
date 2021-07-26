@@ -659,14 +659,6 @@ export class KeyState {
             await exec()
     }
 
-    evalStringOrText(val: string, mode: string, captured: string | undefined){
-        try{
-            return this.evalString__(val, mode, captured)
-        }catch {
-            return val
-        }
-    }
-
     replaceVars(args: object, mode: string, captured: string | undefined){
         let editor = vscode.window.activeTextEditor
         let result: any = {}
