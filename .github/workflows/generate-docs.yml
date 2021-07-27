@@ -16,10 +16,10 @@ jobs:
           node-version: '16'
 
       - run: npm ci
-      - if: github.ref == 'refs/heads/main'
-        - run: npm run build-docs
-      - if: github.ref != 'refs/heads/main'
-        - run: npm run build-dev-docs
+      - run: npm run build-docs
+        if: github.ref == 'refs/heads/main'
+      - run: npm run build-dev-docs
+        if: github.ref != 'refs/heads/main'
 
       - name: Cache dependencies
         uses: actions/cache@v2
