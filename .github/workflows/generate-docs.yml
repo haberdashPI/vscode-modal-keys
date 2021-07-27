@@ -8,6 +8,7 @@ jobs:
   generate_docs:
     runs-on: ubuntu-latest
     steps:
+      - run: echo "Running on ${{github.ref}}"
       - uses: actions/checkout@v2
       - name: Setup Node
         uses: actions/setup-node@v2
@@ -15,7 +16,10 @@ jobs:
           node-version: '16'
 
       - run: npm ci
-      - run: npm run build-docs
+      - if: github.ref == 'refs/heads/main'
+        - run: npm run build-docs
+      - if: github.ref != 'refs/heads/main'
+        - run: npm run build-dev-docs
 
       - name: Cache dependencies
         uses: actions/cache@v2
