@@ -205,7 +205,7 @@ module.exports = {
 // specified character. The same motions work also as jump commands in normal mode. 
 
 // All of these keybindings are implemented using the [incremental
-// search](../README.html#incremental-search) command, just the parameters are different for
+// search](../doc_index.html#incremental-search) command, just the parameters are different for
 // each case. Basically we just perform either a forward or backward search and use the
 // "offset" option to determine where the cursor should land.
         f: {

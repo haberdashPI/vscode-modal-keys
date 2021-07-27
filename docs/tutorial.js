@@ -617,7 +617,7 @@ character under the cursor. */
 // Happy Editing! 🚀
 
 // [Vim]: https://www.vim.org/
-// [ModalKeys]: ./README.html
+// [ModalKeys]: https://github.com/haberdashPI/vscode-modal-keys
 // [modal editing]: https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors
 // [commands]: https://code.visualstudio.com/api/references/commands
 // [Vim Cheat Sheet]: https://vim.rtorr.com/

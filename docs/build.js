@@ -14,8 +14,7 @@ console.log(process.cwd())
 sourcefiles = glob.sync('src/*.ts').
     concat(glob.sync('docs/*.js', {ignore: ["docs/build.js", "docs/index.js"]})).
     concat(glob.sync('presets/*.js'))
-docfiles = ['README.md'].
-    concat(glob.sync('docs/*.md'))
+docfiles = glob.sync('docs/*.md')
 
 // markdown parser
 md = new Remarkable({
@@ -34,7 +33,7 @@ function docpath(source){
     return source.replace('docs/','docs/build/')
         .replace('src/','docs/build/src/')
         .replace('presets/','docs/build/presets/')
-        .replace('README', 'docs/build/README')
+        // .replace('README', 'docs/build/README')
         .replace(/\.(ts|js|md)$/, '.html')
 }
 
@@ -88,11 +87,11 @@ docfiles.map(file => {
             console.log(err.message)
         }else{
             let str = data.toString('utf8')
-            if(file == 'README.md'){
-                str = str.replaceAll('https://haberdashpi.github.io/'+
-                    'vscode-modal-keys', '.')
-                debugger;
-            }
+            // if(file == 'README.md'){
+            //     str = str.replaceAll('https://haberdashpi.github.io/'+
+            //         'vscode-modal-keys', '.')
+            //     debugger;
+            // }
             let out = md.render(str);
             let toFile = docpath(file);
             let prefix = findprefix(toFile)
