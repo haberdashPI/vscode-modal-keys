@@ -278,6 +278,18 @@
             {
                 "command": "modalkeys.untouchDocument",
                 "title": "ModalKeys: Treat the text as unchanged."
+            },
+            {
+                "command": "modalkeys.startRecordingMacro",
+                "title": "ModalKeys: Starting recording macro"
+            },
+            {
+                "command": "modalkeys.stopRecordingMacro",
+                "title": "ModalKeys: Stop recording macro",
+            },
+            {
+                "command": "modalkeys.replayMacro",
+                "title": "ModalKeys: Replay macro"
             }
         ],
         "keybindings": [

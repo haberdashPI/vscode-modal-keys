@@ -504,6 +504,12 @@ function isKeymap(x: any): x is Keymap {
 
 const MAX_REPEAT = 1000
 
+interface IMacro{
+    seq: string[]
+    mode: string
+    register: string
+}
+
 export class KeyState {
     argumentCount?: number
     countFinalized: boolean = false
@@ -511,6 +517,10 @@ export class KeyState {
     keySequence: string[] = []
     capturedKeys: string[] = []
     modeCaptures: IHash<string>
+    replaying: boolean = false
+    macros: IHash<IMacro> = {}
+    macro: IMacro | undefined = undefined
+
     constructor(modeCaptures: IHash<string>, parent?: KeyState){
         this.modeCaptures = { ...(parent?.modeCaptures || {}), ...modeCaptures }
     }
@@ -726,6 +736,26 @@ export class KeyState {
         }
     }
 
+    recordMacro(register: string, mode: string){
+        if(!this.replaying){
+            this.macro = {seq: [], register, mode}
+        }
+    }
+
+    saveMacro(){
+        if(!this.replaying && this.macro){
+            this.macros[this.macro.register] = this.macro;
+            this.macro = undefined;
+        }
+    }
+
+    macroReplayState(register: string): [KeyState, string[], string]{
+        let result = new KeyState({}, this)
+        let macro = this.macros[register]
+        result.replaying = true;
+
+        return [result, macro.seq, macro.mode];
+    }
 
     /**
      * ## Key Press Handler
@@ -748,6 +778,15 @@ export class KeyState {
     // KeyHandler
     async handleKey(key: string, keyMode: string) {
         let newKeymap: undefined | Keymap = this.currentKeymap || rootKeymodes[keyMode]
+
+        // record this key press if there is an actively recording macro
+        if(this.macro){
+            // it's possible the mode has changed since the start of recording...
+            if(this.macro.seq.length === 0 && this.macro.mode != keyMode){
+                this.macro.mode = keyMode
+            }
+            this.macro.seq.push(key)
+        }
 
         this.keySequence.push(key)
         const command = this.modeCaptures[keyMode]

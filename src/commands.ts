@@ -238,6 +238,9 @@ const untouchDocumentId = 'modalkeys.untouchDocument'
 const importPresetsId = "modalkeys.importPresets"
 const replaceCharId = "modalkeys.replaceChar"
 const captureCharId = "modalkeys.captureChar"
+const startRecordingMacroId = "startRecordingMacro"
+const stopRecordingMacroId = "stopRecordingMacro"
+const replayMacroId = "replayMacro"
 
 /**
  * ## Registering Commands
@@ -270,7 +273,10 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(untouchDocumentId, untouchDocument),
         vscode.commands.registerCommand(replaceCharId, replaceChar),
         vscode.commands.registerCommand(captureCharId, captureChar),
-        vscode.commands.registerCommand(importPresetsId, importPresets)
+        vscode.commands.registerCommand(importPresetsId, importPresets),
+        vscode.commands.registerCommand(startRecordingMacroId, startRecordingMacro),
+        vscode.commands.registerCommand(stopRecordingMacroId, stopRecordingMacro),
+        vscode.commands.registerCommand(replayMacroId, replayMacro)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
@@ -1227,6 +1233,24 @@ async function repeatLastUsedSelection(): Promise<void> {
         changeSelection(editor, doc.positionAt(fromOffs), doc.positionAt(toOffs))
     else
         changeSelection(editor, doc.positionAt(toOffs), doc.positionAt(fromOffs))
+}
+
+function startRecordingMacro(args?: {register: string}){
+    keyState.recordMacro(args?.register || "default", keyMode)
+    // TODO: update status bar
+}
+
+function stopRecordingMacro(){
+    keyState.saveMacro()
+    // TODO: update status bar
+}
+
+async function replayMacro(args?: {register?: string}): Promise<void> {
+    let [nestedState, seq, mode] = 
+        keyState.macroReplayState(args?.register || "default")
+    if(keyMode !== mode) enterMode(mode)
+    for (const item of seq)
+        await runActionForKey(item, mode, nestedState)
 }
 
 /**
