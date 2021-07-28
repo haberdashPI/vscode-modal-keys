@@ -324,6 +324,10 @@ both one after another.
 caused text in the editor to change. It corresponds to the [dot `.` command](https://vim.fandom.com/wiki/Repeat_last_change)
 in Vim. The command takes no arguments.
 
+#### Touching/Untouching a document
+
+To register a change to the document you can call `modalkeys.touchDoucment`, and to ignore the last change you can cal `modalkeys.untouchDocument`. This can be useful for changing the behavior of `repeatLastChange`. For example, you might want to treat a command that commits a range of the document to version control, or sends text to a REPL as a change (that can be repeated with `repeatLastCahnge`).
+
 ### Repeat Last Used Selection
 
 `modalkeys.repeatLastUsedSelection` repeats the last command (sequence) that

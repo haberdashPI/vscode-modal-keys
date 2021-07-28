@@ -242,6 +242,42 @@
             {
                 "command": "modalkeys.importPresets",
                 "title": "ModalKeys: Import preset keybindings"
+            },
+            {
+                "command": "modalkeys.toggleSelection",
+                "title": "ModalKeys: Toggle selection mode"
+            },
+            {
+                "command": "modalkeys.enableSelection",
+                "title": "ModalKeys: Enable selection mode"
+            },
+            {
+                "command": "modalkeys.cancelMultipleSelections",
+                "title": "ModalKeys: Clear all selections, leaving multiple cursors intact"
+            },
+            {
+                "command": "modalkeys.nextMatch",
+                "title": "ModalKeys: Go to the next search match"
+            },
+            {
+                "command": "modalkeys.previousMatch",
+                "title": "ModalKeys: Go to the previous search match"
+            },
+            {
+                "command": "modalkeys.repeatLastChange",
+                "title": "ModalKeys: Repeat the last command that changed text"
+            },
+            {
+                "command": "modalkeys.repeatLastUsedSelection",
+                "title": "ModalKeys: Repeat the last selection used to change text"
+            },
+            {
+                "command": "modalkeys.touchDocument",
+                "title": "ModalKeys: Register a change to the text."
+            },
+            {
+                "command": "modalkeys.untouchDocument",
+                "title": "ModalKeys: Treat the text as unchanged."
             }
         ],
         "keybindings": [
