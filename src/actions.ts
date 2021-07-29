@@ -728,6 +728,10 @@ export class KeyState {
      * screen.
      */
     async executeVSCommand(command: string, ...rest: any[]): Promise<void> {
+        // ignore macro recording commands
+        if(command === "modalkeys.toggleRecordingMacro" && this.replaying){
+            return
+        }
         try {
             await vscode.commands.executeCommand(command, ...rest)
         }
