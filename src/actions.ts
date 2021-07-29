@@ -742,6 +742,8 @@ export class KeyState {
         }
     }
 
+    isRecording(){ return this.macro !== undefined }
+
     saveMacro(){
         if(!this.replaying && this.macro){
             this.macros[this.macro.register] = this.macro;

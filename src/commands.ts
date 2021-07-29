@@ -249,8 +249,7 @@ const untouchDocumentId = 'modalkeys.untouchDocument'
 const importPresetsId = "modalkeys.importPresets"
 const replaceCharId = "modalkeys.replaceChar"
 const captureCharId = "modalkeys.captureChar"
-const startRecordingMacroId = "modalkeys.startRecordingMacro"
-const stopRecordingMacroId = "modalkeys.stopRecordingMacro"
+const toggleRecordingMacroId = "modalkeys.toggleRecordingMacro"
 const replayMacroId = "modalkeys.replayMacro"
 
 /**
@@ -285,8 +284,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(replaceCharId, replaceChar),
         vscode.commands.registerCommand(captureCharId, captureChar),
         vscode.commands.registerCommand(importPresetsId, importPresets),
-        vscode.commands.registerCommand(startRecordingMacroId, startRecordingMacro),
-        vscode.commands.registerCommand(stopRecordingMacroId, stopRecordingMacro),
+        vscode.commands.registerCommand(toggleRecordingMacroId, toggleRecordingMacro),
         vscode.commands.registerCommand(replayMacroId, replayMacro)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
@@ -1257,16 +1255,16 @@ async function repeatLastUsedSelection(): Promise<void> {
         changeSelection(editor, doc.positionAt(toOffs), doc.positionAt(fromOffs))
 }
 
-function startRecordingMacro(args?: {register: string}){
-    let register = args?.register || "default"
-    keyState.recordMacro(register, keyMode)
-    macroStatusBar.text = "$(debug-breakpoint) Recording Macro: "+register
-    macroStatusBar.show()
-}
-
-function stopRecordingMacro(){
-    keyState.saveMacro()
-    macroStatusBar.hide()
+function toggleRecordingMacro(args?: {register: string}){
+    if(keyState.isRecording()){
+        keyState.saveMacro()
+        macroStatusBar.hide()
+    }else{
+        let register = args?.register || "default"
+        keyState.recordMacro(register, keyMode)
+        macroStatusBar.text = "$(debug-breakpoint) Recording Macro: "+register
+        macroStatusBar.show()
+    }
 }
 
 async function replayMacro(args?: {register?: string}): Promise<void> {
