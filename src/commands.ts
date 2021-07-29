@@ -161,6 +161,13 @@ let secondaryStatusBar: vscode.StatusBarItem
  */
 let macroStatusBar: vscode.StatusBarItem
 /**
+ * Replaying key commands needs to have a small delay to avoid synchronization
+ * issues. Selections do not resolve at the time of command completion;
+ * executing a second command too quickly after a selection command can lead to
+ * unreliable behavior (since the selection will be in an unkonwn state)
+ */
+const replayDelay = 50
+/**
  * This is the main mode flag that tells if we are in normal mode, insert mode,
  * select mode, searching mode or some user defined mode
  */
@@ -1103,8 +1110,11 @@ async function repeatLastChange(): Promise<void> {
         let startMode = keyMode
         let seq = (<string[]>lastSentence.verb?.seq)
         if(keyMode !== lastSentence.verb.mode) enterMode(lastSentence.verb.mode)
-        for (let i = 0; i < seq.length; i++)
+        for (let i = 0; i < seq.length; i++){
             await runActionForKey(seq[i], lastSentence.verb.mode, nestedState)
+            // replaying actions too fast messes up selection
+            await new Promise(res => setTimeout(res, replayDelay));
+        }
         currentWord = lastWord
         if(keyMode !== startMode) enterMode(startMode)
     }
@@ -1120,8 +1130,11 @@ async function repeatLastUsedSelection(): Promise<void> {
         let startMode = keyMode
         let seq = (<string[]>lastSentence.noun?.seq)
         if(keyMode !== lastSentence.noun.mode) enterMode(lastSentence.noun.mode)
-        for (let i = 0; i < seq.length; i++)
+        for (let i = 0; i < seq.length; i++){
             await runActionForKey(seq[i], lastSentence.noun.mode, nestedState)
+            // replaying actions too fast messes up selection
+            await new Promise(res => setTimeout(res, replayDelay));
+        }
         currentWord = lastWord
         if(keyMode !== startMode) enterMode(startMode)
     }
@@ -1260,8 +1273,11 @@ async function replayMacro(args?: {register?: string}): Promise<void> {
     let [nestedState, seq, mode] = 
         keyState.macroReplayState(args?.register || "default")
     if(keyMode !== mode) enterMode(mode)
-    for (const item of seq)
+    for (const item of seq){
         await runActionForKey(item, mode, nestedState)
+        // replaying actions too fast messes up selection
+        await new Promise(res => setTimeout(res, replayDelay));
+    }
 }
 
 /**
