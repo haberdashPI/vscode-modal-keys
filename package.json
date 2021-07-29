@@ -280,12 +280,8 @@
                 "title": "ModalKeys: Treat the text as unchanged."
             },
             {
-                "command": "modalkeys.startRecordingMacro",
-                "title": "ModalKeys: Start recording macro"
-            },
-            {
-                "command": "modalkeys.stopRecordingMacro",
-                "title": "ModalKeys: Stop recording macro"
+                "command": "modalkeys.toggleRecordingMacro",
+                "title": "ModalKeys: Toggle recording macro"
             },
             {
                 "command": "modalkeys.replayMacro",
