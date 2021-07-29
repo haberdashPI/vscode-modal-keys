@@ -157,6 +157,10 @@ let typeSubscription: vscode.Disposable | undefined
 let mainStatusBar: vscode.StatusBarItem
 let secondaryStatusBar: vscode.StatusBarItem
 /**
+ * The macro status bar shows up read when a macro is being recorded
+ */
+let macroStatusBar: vscode.StatusBarItem
+/**
  * This is the main mode flag that tells if we are in normal mode, insert mode,
  * select mode, searching mode or some user defined mode
  */
@@ -283,6 +287,11 @@ export function register(context: vscode.ExtensionContext) {
     mainStatusBar.command = toggleId
     secondaryStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
+    macroStatusBar = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Right)
+    macroStatusBar.backgroundColor = 
+        new vscode.ThemeColor('statusBarItem.errorBackground')
+
 
     updateSearchHighlights();
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
@@ -1236,13 +1245,15 @@ async function repeatLastUsedSelection(): Promise<void> {
 }
 
 function startRecordingMacro(args?: {register: string}){
-    keyState.recordMacro(args?.register || "default", keyMode)
-    // TODO: update status bar
+    let register = args?.register || "default"
+    keyState.recordMacro(register, keyMode)
+    macroStatusBar.text = "$(debug-breakpoint) Recording Macro: "+register
+    macroStatusBar.show()
 }
 
 function stopRecordingMacro(){
     keyState.saveMacro()
-    // TODO: update status bar
+    macroStatusBar.hide()
 }
 
 async function replayMacro(args?: {register?: string}): Promise<void> {
