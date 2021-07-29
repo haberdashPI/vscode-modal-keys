@@ -238,9 +238,9 @@ const untouchDocumentId = 'modalkeys.untouchDocument'
 const importPresetsId = "modalkeys.importPresets"
 const replaceCharId = "modalkeys.replaceChar"
 const captureCharId = "modalkeys.captureChar"
-const startRecordingMacroId = "startRecordingMacro"
-const stopRecordingMacroId = "stopRecordingMacro"
-const replayMacroId = "replayMacro"
+const startRecordingMacroId = "modalkeys.startRecordingMacro"
+const stopRecordingMacroId = "modalkeys.stopRecordingMacro"
+const replayMacroId = "modalkeys.replayMacro"
 
 /**
  * ## Registering Commands

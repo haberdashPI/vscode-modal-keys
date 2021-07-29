@@ -281,11 +281,11 @@
             },
             {
                 "command": "modalkeys.startRecordingMacro",
-                "title": "ModalKeys: Starting recording macro"
+                "title": "ModalKeys: Start recording macro"
             },
             {
                 "command": "modalkeys.stopRecordingMacro",
-                "title": "ModalKeys: Stop recording macro",
+                "title": "ModalKeys: Stop recording macro"
             },
             {
                 "command": "modalkeys.replayMacro",
