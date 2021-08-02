@@ -1087,7 +1087,7 @@ async function typeKeys(args: TypeKeysArgs): Promise<void> {
     let newMode = args.mode || Normal
     if(keyMode !== newMode) enterMode(newMode)
     for (let i = 0; i < args.keys.length; i++){
-        await runActionForKey(args.keys[i], newMode, typeKeyState)
+        await runActionForKey(args.keys[i], keyMode, typeKeyState)
     }
 }
 
@@ -1111,7 +1111,7 @@ async function repeatLastChange(): Promise<void> {
         let seq = (<string[]>lastSentence.verb?.seq)
         if(keyMode !== lastSentence.verb.mode) enterMode(lastSentence.verb.mode)
         for (let i = 0; i < seq.length; i++){
-            await runActionForKey(seq[i], lastSentence.verb.mode, nestedState)
+            await runActionForKey(seq[i], keyMode, nestedState)
             // replaying actions too fast messes up selection
             await new Promise(res => setTimeout(res, replayDelay));
         }
@@ -1131,7 +1131,7 @@ async function repeatLastUsedSelection(): Promise<void> {
         let seq = (<string[]>lastSentence.noun?.seq)
         if(keyMode !== lastSentence.noun.mode) enterMode(lastSentence.noun.mode)
         for (let i = 0; i < seq.length; i++){
-            await runActionForKey(seq[i], lastSentence.noun.mode, nestedState)
+            await runActionForKey(seq[i], keyMode, nestedState)
             // replaying actions too fast messes up selection
             await new Promise(res => setTimeout(res, replayDelay));
         }
@@ -1264,13 +1264,14 @@ function toggleRecordingMacro(args?: {register: string}){
     }else{
         let register = args?.register || "default"
         keyState.recordMacro(register, keyMode)
-        macroStatusBar.text = "$(debug-breakpoint) Recording Macro: "+register
+        macroStatusBar.text = "$(debug-breakpoint-unverified) Macro: "+register
         macroStatusBar.show()
     }
 }
 
 function cancelRecordingMacro(){
     keyState.cancelMacro()
+    macroStatusBar.hide()
 }
 
 async function replayMacro(args?: {register?: string}): Promise<void> {
@@ -1278,7 +1279,7 @@ async function replayMacro(args?: {register?: string}): Promise<void> {
         keyState.macroReplayState(args?.register || "default")
     if(keyMode !== mode) enterMode(mode)
     for (const item of seq){
-        await runActionForKey(item, mode, nestedState)
+        await runActionForKey(item, keyMode, nestedState)
         // replaying actions too fast messes up selection
         await new Promise(res => setTimeout(res, replayDelay));
     }
