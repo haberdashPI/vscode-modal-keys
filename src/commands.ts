@@ -250,6 +250,7 @@ const importPresetsId = "modalkeys.importPresets"
 const replaceCharId = "modalkeys.replaceChar"
 const captureCharId = "modalkeys.captureChar"
 const toggleRecordingMacroId = "modalkeys.toggleRecordingMacro"
+const cancelRecordingMacroId = "modalkeys.cancelRecordingMacro"
 const replayMacroId = "modalkeys.replayMacro"
 
 /**
@@ -285,6 +286,7 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(captureCharId, captureChar),
         vscode.commands.registerCommand(importPresetsId, importPresets),
         vscode.commands.registerCommand(toggleRecordingMacroId, toggleRecordingMacro),
+        vscode.commands.registerCommand(cancelRecordingMacroId, cancelRecordingMacro),
         vscode.commands.registerCommand(replayMacroId, replayMacro)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
@@ -1265,6 +1267,10 @@ function toggleRecordingMacro(args?: {register: string}){
         macroStatusBar.text = "$(debug-breakpoint) Recording Macro: "+register
         macroStatusBar.show()
     }
+}
+
+function cancelRecordingMacro(){
+    keyState.cancelMacro()
 }
 
 async function replayMacro(args?: {register?: string}): Promise<void> {

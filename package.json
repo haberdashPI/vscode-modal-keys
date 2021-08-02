@@ -284,6 +284,10 @@
                 "title": "ModalKeys: Toggle recording macro"
             },
             {
+                "command": "modalkeys.cancelRecordingMacro",
+                "title": "ModalKeys: Cancel macro recording"
+            },
+            {
                 "command": "modalkeys.replayMacro",
                 "title": "ModalKeys: Replay macro"
             }

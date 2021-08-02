@@ -755,6 +755,10 @@ export class KeyState {
         }
     }
 
+    cancelMacro(){
+        this.macro = undefined
+    }
+
     macroReplayState(register: string): [KeyState, string[], string]{
         let result = new KeyState({}, this)
         let macro = this.macros[register]
