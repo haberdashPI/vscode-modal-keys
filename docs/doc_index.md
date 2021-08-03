@@ -226,7 +226,7 @@ Each binding is bound to the command `<command>`, passing the arguments specifie
 
 ## VS Code Commands
 
-ModalKeys adds few useful commands to VS Code's repertoire. They help you
+ModalKeys adds several useful commands to VS Code's repertoire. They help you
 create more Vim-like workflows.
 
 ### Switching between Modes
@@ -299,6 +299,26 @@ search direction.
 #### `modalkeys.enterMode`
 
 This command takes a single argument `mode` and allows you to enter any mode you desire.
+
+### Macros
+
+ModalKeys can record events from all modes, other than those from insert mode (support for insert mode is [planned](https://github.com/haberdashPI/vscode-modal-keys/issues/5)).
+
+There are three commands
+
+#### `modalkeys.toggleRecordingMacro`
+
+This starts or stops the recording of a macro. When starting a macro, this command accepts a single argument (`register`). The register determines what name (or number) the macro is stored under. For example, you could pass `__count` or use `captureChar` (documented below) to allow the user to create multiple macros.
+
+**LIMITATION**: Macro recording currently ignores all [insert-mode events](https://github.com/haberdashPI/vscode-modal-keys/issues/5)
+
+#### `modalkeys.cnacelRecordingMacro`
+
+This stops macro recording; unlike `toggleRecordingMacro`, the new recording is forgotten, and any previous recording stored at the given register is retained.
+
+#### `modalkeys.replayMacro`
+
+This replays a given macro, indicated by the argument `register`.
 
 ### Invoking Key Bindings
 

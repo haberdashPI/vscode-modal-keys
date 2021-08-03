@@ -157,6 +157,17 @@ let typeSubscription: vscode.Disposable | undefined
 let mainStatusBar: vscode.StatusBarItem
 let secondaryStatusBar: vscode.StatusBarItem
 /**
+ * The macro status bar shows up read when a macro is being recorded
+ */
+let macroStatusBar: vscode.StatusBarItem
+/**
+ * Replaying key commands needs to have a small delay to avoid synchronization
+ * issues. Selections do not resolve at the time of command completion;
+ * executing a second command too quickly after a selection command can lead to
+ * unreliable behavior (since the selection will be in an unkonwn state)
+ */
+const replayDelay = 50
+/**
  * This is the main mode flag that tells if we are in normal mode, insert mode,
  * select mode, searching mode or some user defined mode
  */
@@ -238,6 +249,9 @@ const untouchDocumentId = 'modalkeys.untouchDocument'
 const importPresetsId = "modalkeys.importPresets"
 const replaceCharId = "modalkeys.replaceChar"
 const captureCharId = "modalkeys.captureChar"
+const toggleRecordingMacroId = "modalkeys.toggleRecordingMacro"
+const cancelRecordingMacroId = "modalkeys.cancelRecordingMacro"
+const replayMacroId = "modalkeys.replayMacro"
 
 /**
  * ## Registering Commands
@@ -270,13 +284,21 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(untouchDocumentId, untouchDocument),
         vscode.commands.registerCommand(replaceCharId, replaceChar),
         vscode.commands.registerCommand(captureCharId, captureChar),
-        vscode.commands.registerCommand(importPresetsId, importPresets)
+        vscode.commands.registerCommand(importPresetsId, importPresets),
+        vscode.commands.registerCommand(toggleRecordingMacroId, toggleRecordingMacro),
+        vscode.commands.registerCommand(cancelRecordingMacroId, cancelRecordingMacro),
+        vscode.commands.registerCommand(replayMacroId, replayMacro)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
     mainStatusBar.command = toggleId
     secondaryStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
+    macroStatusBar = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Right)
+    macroStatusBar.backgroundColor = 
+        new vscode.ThemeColor('statusBarItem.errorBackground')
+
 
     updateSearchHighlights();
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
@@ -1065,7 +1087,7 @@ async function typeKeys(args: TypeKeysArgs): Promise<void> {
     let newMode = args.mode || Normal
     if(keyMode !== newMode) enterMode(newMode)
     for (let i = 0; i < args.keys.length; i++){
-        await runActionForKey(args.keys[i], newMode, typeKeyState)
+        await runActionForKey(args.keys[i], keyMode, typeKeyState)
     }
 }
 
@@ -1088,8 +1110,11 @@ async function repeatLastChange(): Promise<void> {
         let startMode = keyMode
         let seq = (<string[]>lastSentence.verb?.seq)
         if(keyMode !== lastSentence.verb.mode) enterMode(lastSentence.verb.mode)
-        for (let i = 0; i < seq.length; i++)
-            await runActionForKey(seq[i], lastSentence.verb.mode, nestedState)
+        for (let i = 0; i < seq.length; i++){
+            await runActionForKey(seq[i], keyMode, nestedState)
+            // replaying actions too fast messes up selection
+            await new Promise(res => setTimeout(res, replayDelay));
+        }
         currentWord = lastWord
         if(keyMode !== startMode) enterMode(startMode)
     }
@@ -1105,8 +1130,11 @@ async function repeatLastUsedSelection(): Promise<void> {
         let startMode = keyMode
         let seq = (<string[]>lastSentence.noun?.seq)
         if(keyMode !== lastSentence.noun.mode) enterMode(lastSentence.noun.mode)
-        for (let i = 0; i < seq.length; i++)
-            await runActionForKey(seq[i], lastSentence.noun.mode, nestedState)
+        for (let i = 0; i < seq.length; i++){
+            await runActionForKey(seq[i], keyMode, nestedState)
+            // replaying actions too fast messes up selection
+            await new Promise(res => setTimeout(res, replayDelay));
+        }
         currentWord = lastWord
         if(keyMode !== startMode) enterMode(startMode)
     }
@@ -1227,6 +1255,34 @@ async function repeatLastUsedSelection(): Promise<void> {
         changeSelection(editor, doc.positionAt(fromOffs), doc.positionAt(toOffs))
     else
         changeSelection(editor, doc.positionAt(toOffs), doc.positionAt(fromOffs))
+}
+
+function toggleRecordingMacro(args?: {register: string}){
+    if(keyState.isRecording()){
+        keyState.saveMacro()
+        macroStatusBar.hide()
+    }else{
+        let register = args?.register || "default"
+        keyState.recordMacro(register, keyMode)
+        macroStatusBar.text = "$(debug-breakpoint-unverified) Macro: "+register
+        macroStatusBar.show()
+    }
+}
+
+function cancelRecordingMacro(){
+    keyState.cancelMacro()
+    macroStatusBar.hide()
+}
+
+async function replayMacro(args?: {register?: string}): Promise<void> {
+    let [nestedState, seq, mode] = 
+        keyState.macroReplayState(args?.register || "default")
+    if(keyMode !== mode) enterMode(mode)
+    for (const item of seq){
+        await runActionForKey(item, keyMode, nestedState)
+        // replaying actions too fast messes up selection
+        await new Promise(res => setTimeout(res, replayDelay));
+    }
 }
 
 /**
