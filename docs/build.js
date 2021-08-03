@@ -6,7 +6,6 @@ const HeaderIdsPlugin = require('remarkable-header-ids')
 const hljs = require('highlight.js')
 const mkdirp = require('mkdirp')
 const path = require('path')
-const { ConsoleLogger } = require('typedoc/dist/lib/utils')
 
 console.log(process.cwd())
 
