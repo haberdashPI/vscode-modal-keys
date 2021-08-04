@@ -253,6 +253,11 @@ const toggleRecordingMacroId = "modalkeys.toggleRecordingMacro"
 const cancelRecordingMacroId = "modalkeys.cancelRecordingMacro"
 const replayMacroId = "modalkeys.replayMacro"
 
+export function revealActive(editor: vscode.TextEditor){
+    let act = new vscode.Range(editor.selection.active, editor.selection.active);
+    editor.revealRange(act)
+}
+
 /**
  * ## Registering Commands
  *
@@ -860,7 +865,7 @@ function highlightMatches(editor: vscode.TextEditor,
             }
         })
 
-        editor.revealRange(editor.selection)
+        revealActive(editor);
 
         /**
          * Finally, we highlight all search matches to make them stand out in the document.
@@ -986,7 +991,7 @@ async function cancelSearch(): Promise<void> {
         let editor = vscode.window.activeTextEditor
         if (editor) {
             editor.selections = searchStartSelections
-            editor.revealRange(editor.selection)
+            revealActive(editor);
         }
     }
 }
@@ -1033,7 +1038,7 @@ async function nextMatch(): Promise<void> {
     let editor = vscode.window.activeTextEditor
     if (editor && searchString) {
         highlightMatches(editor, editor.selections)
-        editor.revealRange(editor.selection)
+        revealActive(editor);
     }
 }
 /**
@@ -1045,7 +1050,7 @@ async function previousMatch(): Promise<void> {
     if (editor && searchString) {
         searchBackwards = !searchBackwards
         highlightMatches(editor, editor.selections)
-        editor.revealRange(editor.selection)
+        revealActive(editor);
         searchBackwards = !searchBackwards
     }
 }
@@ -1057,7 +1062,7 @@ async function previousMatch(): Promise<void> {
 function changeSelection(editor: vscode.TextEditor, anchor: vscode.Position,
     active: vscode.Position) {
     editor.selection = new vscode.Selection(anchor, active)
-    editor.revealRange(editor.selection)
+    revealActive(editor);
 }
 
 /**
