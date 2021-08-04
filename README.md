@@ -8,10 +8,13 @@ ModalKeys is an extension for defining modal keybindings in VSCode. The most
 prominent [modal
 editor](https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors)
 is [Vim](https://www.vim.org/) and ModalKeys includes
-[presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html) that resemble Vim. While you can emulate existing
-modal editors like Vim or
+[presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html)
+that resemble Vim. While you can emulate existing modal editors like Vim or
 [Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html), the real advantage
-of ModalKeys is that you create custom modal keybindings.
+of ModalKeys is that you create custom modal keybindings defined in terms of
+VSCode commands. You can define modular, operator-like (noun/verb) keybindings
+built from any of the existing extensions available in VSCode, or, if you want
+to author your own extension, any behavior you can imagine.
 
 As a little taste of what's possible, here are the basic movement commands in my configuration file:
 
