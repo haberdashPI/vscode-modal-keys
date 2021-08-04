@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
@@ -30,22 +31,24 @@ jobs:
       - run: npm i
       - run: npm run build-docs
         if: github.ref == 'refs/heads/main'
+        name: Build Stable Docs
       - run: npm run build-dev-docs
         if: github.ref != 'refs/heads/main'
+        name: Build Dev Docs
       
-      - name: Deploy
+      - name: Deploy Stable Docs
         if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/docs/stable
+          publish_dir: ${{GITHUB_WORKSPACE}}/dist/docs/stable
           destination_dir: stable
 
-      - name: Deploy
+      - name: Deploy Dev Docs
         if: github.ref != 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/docs/dev
+          publish_dir: ${{GITHUB_WORKSPACE}}/dist/docs/dev
           destination_dir: dev
 
