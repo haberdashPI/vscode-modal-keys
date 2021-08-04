@@ -312,7 +312,7 @@ This starts or stops the recording of a macro. When starting a macro, this comma
 
 **LIMITATION**: Macro recording currently ignores all [insert-mode events](https://github.com/haberdashPI/vscode-modal-keys/issues/5)
 
-#### `modalkeys.cnacelRecordingMacro`
+#### `modalkeys.cancelRecordingMacro`
 
 This stops macro recording; unlike `toggleRecordingMacro`, the new recording is forgotten, and any previous recording stored at the given register is retained.
 
