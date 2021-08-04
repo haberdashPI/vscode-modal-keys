@@ -504,7 +504,7 @@ function isKeymap(x: any): x is Keymap {
 
 const MAX_REPEAT = 1000
 
-interface IMacro{
+export interface IKeyRecording{
     seq: string[]
     mode: string
     register: string
@@ -518,8 +518,10 @@ export class KeyState {
     capturedKeys: string[] = []
     modeCaptures: IHash<string>
     replaying: boolean = false
-    macros: IHash<IMacro> = {}
-    macro: IMacro | undefined = undefined
+    macros: IHash<IKeyRecording> = {}
+    macro: IKeyRecording | undefined = undefined
+    curWord: IKeyRecording | undefined = undefined
+    lastWord: IKeyRecording | undefined = undefined
 
     constructor(modeCaptures: IHash<string>, parent?: KeyState){
         this.modeCaptures = { ...(parent?.modeCaptures || {}), ...modeCaptures }
@@ -532,6 +534,8 @@ export class KeyState {
         this.countFinalized = false
         this.keySequence = []
         this.capturedKeys = []
+        this.lastWord = this.curWord
+        this.curWord = undefined
     }
 
     update(keymap: Keymap){
@@ -799,6 +803,21 @@ export class KeyState {
         }
 
         this.keySequence.push(key)
+        if(!this.curWord){
+            if(this.modeCaptures[keyMode]){
+                // if the last sequence lead to a command that captures input
+                // then that sequence + the captured keys are both required to
+                // re-issue that same command (i.e. the are part of the same
+                // word)
+                this.curWord = this.lastWord
+            }else{
+                this.curWord = { seq: [], mode: keyMode, register: 'curWord' }
+            }
+        }
+        if(this.curWord){
+            this.curWord.seq.push(key)
+        }
+
         const command = this.modeCaptures[keyMode]
         if (command){
             this.capturedKeys.push(key)

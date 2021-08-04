@@ -5,22 +5,31 @@
 // key press depends on the mode you're in. In insert mode, typing keys works
 // the way it would in any editor: it inserts the keys you press. In normal
 // mode, the sequences of keys you press invoke various commands, with commonly
-// used commands usally requiring just a single key stroke. Once you have
-// become an experienced user, you will spend much of your time in normal mode.
+// used commands usally requiring just one or two keystrokes. 
 
-// This might sound difficult, and granted, the learning curve is steep. But
-// after you are fully accustomed to this way of editing, there's no turning
+// This might sound daunting to learn, and granted, the learning curve is steep.
+// But after you are fully accustomed to this way of editing, there's no turning
 // back. You can move to, select and change documents so precisely and quickly
-// that going without modal editing will feel painfully slow and cumbersome.
-// The proof of this is that nearly all popular text editors have some kind of
+// that going without modal editing will feel painfully slow and cumbersome. The
+// proof of this is that nearly all popular text editors have some kind of
 // add-in that provides Vim emulation. VS Code has several of them.
 
-// The value added for [ModalKeys's][ModalKeys] approach is is that it utilizes
-// VS Code's existing features and just adds the concept of modal editing to the
-// mix. This choice has two major benefits: (1) the commands can integrate
-// seamlessly with the ecosystem of packages already present in VSCode, providng
-// more long-term capabilities than emulating vim alone could provide and (2)
-// the commands can be customized in precisely the way that works best for you.
+// One key advantage of modular keybindings is realized when you understand its
+// noun-verb structure: many bindings define objects (regions of text you want
+// to do something to, a.k.a. nouns) and others define operators (things you
+// want to actually do to the objects, a.k.a. verbs). Muscle memory makes these
+// combinations fast, and suddenly there is one finds a large, generative space
+// of possible actions you can perform over your text. With ModalKeys, it
+// becomes easy to define new nouns and verbs based on existing extensions or
+// new extensions you create yourself.
+
+// In particular the value added for [ModalKeys's][ModalKeys] approach is is
+// that it utilizes VS Code's existing features and just adds the concept of
+// modal editing to the mix. This choice has two major benefits: (1) the
+// commands can integrate seamlessly with the ecosystem of packages already
+// present in VSCode, providng more long-term capabilities than emulating vim
+// alone could provide and (2) the commands can be customized in precisely the
+// way that works best for you.
 
 // In ModalKeys, you define a configuration file as a javascript file, and you
 // then import it using the `ModalKeys: Import preset keybindings` command.
@@ -61,11 +70,7 @@ module.exports = {
 // character and <key>A</key> at the end of the line. There is a special case,
 // though. If cursor is already at the last character of the line, it should not
 // move. This is why we use a conditional command to move the cursor only, if the
-// current character is not an empty string which marks the end of the line. A
-// conditional command is an object that contains the `condition` property. The
-// value of the property is a JS expression which ModalKeys evaluates. It selects
-// the command based on the result. In this case, the result `false` will execute
-// the `cursorRight` command.
+// current character is not an empty string which marks the end of the line. 
 
         "a": [
             { "if": "__char == ''", "then": "cursorRight" },
@@ -110,32 +115,31 @@ module.exports = {
 
 
 // Now we can add commands for cursor movement. These commands use the generic
-// [`cursorMove` command][commands] which takes arguments.  The `__selecting` flag
-// in the expression indicates whether selection mode is on. 
+// [`cursorMove` command][commands] which takes arguments.  The `__mode ==
+// "visual"` ensures that the commands only select text if we're in `visual`
+// mode.
 
-
-        "h": { "cursorMove": { to: 'left', select: '__selecting' } },
-        "j": { "cursorMove": { to: 'down', select: '__selecting' } },
-        "k": { "cursorMove": { to: 'up', select: '__selecting' } },
-        "l": { "cursorMove": { to: 'right', select: '__selecting' } },
+        "h": { "cursorMove": { to: 'left', select: '__mode == "visual"' } },
+        "j": { "cursorMove": { to: 'down', select: '__mode == "visual"' } },
+        "k": { "cursorMove": { to: 'up', select: '__mode == "visual"' } },
+        "l": { "cursorMove": { to: 'right', select: '__mode == "visual"' } },
 
 
 // If we want to be more succinct in how we write these commands, we can also do the following.
 
-
     "::using::cursorMove": {
-        "h": { to: 'left', select: '__selecting' },
-        "j": { to: 'down', select: '__selecting' },
-        "k": { to: 'up', select: '__selecting' },
-        "l": { to: 'right', select: '__selecting' },
+        "h": { to: 'left', select: '__mode == "visual"' },
+        "j": { to: 'down', select: '__mode == "visual"' },
+        "k": { to: 'up', select: '__mode == "visual"' },
+        "l": { to: 'right', select: '__mode == "visual"' },
     },
 
-// ModalKeys will knows to re-write this, so the two ways of specifying these commands are
-// equivalent.
+// ModalKeys knows to re-write this, such that thet two forms are equivalent.
 
-// We can also simulate linewise visual mode using VS Code's `expandLineSelection`
-// command. Note that we don't need to call `modalkeys.toggleSelection` this time
-// as selection mode is turned on automatically.
+// We can also simulate linewise visual mode using VS Code's
+// `expandLineSelection` command. Note that we don't need to call
+// `modalkeys.toggleSelection` this time as selection mode is turned on
+// automatically.
 
 
     "V": "expandLineSelection",
@@ -148,9 +152,9 @@ module.exports = {
 
 
     "::using::cursorMove": {
-        "H": { to: 'viewPortTop', select: '__selecting' },
-        "M": { to: 'viewPortCenter', select: '__selecting' },
-        "L": { to: 'viewPortBottom', select: '__selecting' },
+        "H": { to: 'viewPortTop', select: '__mode == "visual"' },
+        "M": { to: 'viewPortCenter', select: '__mode == "visual"' },
+        "L": { to: 'viewPortBottom', select: '__mode == "visual"' },
     },
 
 
@@ -162,12 +166,12 @@ module.exports = {
 // in this use case.
 
         "w": {
-            "if": "__selecting",
+            "if": "__mode == 'visual'",
             "then": "cursorWordStartRightSelect",
             "else": "cursorWordStartRight"
         },
         "b": {
-            "if": "__selecting",
+            "if": "__mode == 'visual'",
             "then": "cursorWordStartLeftSelect",
             "else": "cursorWordStartLeft"
         },
@@ -175,7 +179,7 @@ module.exports = {
 // <key>e</key> jumps to the end of the next word.
 
         "e": {
-            "if": "__selecting",
+            "if": "__mode == 'visual'",
             "then": "cursorWordEndRightSelect",
             "else": "cursorWordEndRight"
         },
@@ -193,16 +197,16 @@ module.exports = {
 // line <key>$</key>.
 
     "::using::curosrMove": {
-        "0": { to: 'wrappedLineStart', select: '__selecting' },
-        "^": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__selecting' },
-        "$": { to: 'wrappedLineEnd', select: '__selecting' },
+        "0": { to: 'wrappedLineStart', select: '__mode == "visual"' },
+        "^": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__mode == "visual"' },
+        "$": { to: 'wrappedLineEnd', select: '__mode == "visual"' },
     },
 
 // A lesser known variant of above commands is <key>g</key><key>_</key> that jumps
 // to the last non-blank character of the line.
 
     "g_": { "cursorMove":
-        { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__selecting' }
+        { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__mode == "visual"' }
     },
 
 // ### Jumping to Start/End of Document
@@ -211,7 +215,7 @@ module.exports = {
 // of the file.
 
             "g": {
-                "if": "__selecting",
+                "if": "__mode == 'visual'",
                 "then": "cursorTopSelect",
                 "else": "cursorTop"
             },
@@ -220,7 +224,7 @@ module.exports = {
 // The opposite of that is <key>G</key> wich jumps to the end of file.
 
         "G": {
-            "if": "__selecting",
+            "if": "__mode == 'visual'",
             "then": "cursorBottomSelect",
             "else": "cursorBottom"
         },
@@ -234,7 +238,7 @@ module.exports = {
 // includes an incremental search command which can be customized to this purpose.
 
         "f": {
-            "if": "__selecting",
+            "if": "__mode == 'visual'",
             "then": {
                 "modalkeys.search": {
                     "caseSensitive": true,
@@ -270,7 +274,7 @@ module.exports = {
 // previous character. The `backwards` parameter switches the search direction.
 
         "F": {
-            "if": "__selecting",
+            "if": "__mode == 'visual'",
             "then": {
                 "modalkeys.search": {
                     "caseSensitive": true,
@@ -347,23 +351,23 @@ module.exports = {
 // Below are shown the updated cursor movements that use the `__count` variable.
 
     "::using::cursorMove": {
-        "h": { to: 'left', select: '__selecting', value: '__count' },
-        "j": { to: 'down', select: '__selecting', value: '__count' },
-        "k": { to: 'up', select: '__selecting', value: '__count' },
-        "l": { to: 'right', select: '__selecting', value: '__count' },
+        "h": { to: 'left', select: '__mode == "visual"', value: '__count' },
+        "j": { to: 'down', select: '__mode == "visual"', value: '__count' },
+        "k": { to: 'up', select: '__mode == "visual"', value: '__count' },
+        "l": { to: 'right', select: '__mode == "visual"', value: '__count' },
     },
     "w": {
-        "if": "__selecting",
+        "if": "__mode == 'visual'",
         "then": { "cursorWordStartRightSelect": {}, repeat: '__count' },
         "else": { "cursorWordStartRight": {}, repeat: '__count' },
     },
     "b": {
-        "if": "__selecting",
+        "if": "__mode == 'visual'",
         "then": { "cursorWordStartLeftSelect": {}, repeat: '__count' },
         "else": { "cursorWordStartLeft": {}, repeat: '__count' },
     },
     "e": {
-        "if": "__selecting",
+        "if": "__mode == 'visual'",
         "then": { "cursorWordEndRightSelect": {}, repeat: '__count' },
         "else": { "cursorWordEndRight": {}, repeat: '__count' },
     },

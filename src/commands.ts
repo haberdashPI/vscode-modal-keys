@@ -9,7 +9,7 @@
 
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
-import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand } from './actions'
+import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand, IKeyRecording } from './actions'
 import { TextDecoder } from 'util'
 import { IHash } from './util'
 
@@ -325,25 +325,12 @@ interface KeySentence {
 
 let lastSentence: KeySentence = {}
 let pendingSentence: KeySentence = {}
-let lastWord: KeyWord = { seq: [], mode: '' }
-let currentWord: KeyWord = { seq: [], mode: '' }
 
-function addKey(word: KeyWord, key: string, mode: string){
-    if((<KeyCommand>word.seq).command){
-        throw Error(`Expected key sequence, got a command`)
-    }else{
-        let seq = (<string[]>word.seq)
-
-        if(seq.length === 0) word.mode = mode
-        seq.push(key)
-    }
-}
-
-function keySeq(word: KeyWord){
-    if((<KeyCommand>word.seq).command){
-        return ""
-    }else{
+function keySeq(word: IKeyRecording | undefined){
+    if(word){
         return (<string[]>word.seq).join("")
+    }else{
+        return ""
     }
 }
 
@@ -358,7 +345,7 @@ function keySeq(word: KeyWord){
 async function onType(event: { text: string }) {
     if(!repeatedSequence){
         if (textChanged && !ignoreChangedText) {
-            lastSentence = { ...pendingSentence, verb: lastWord }
+            lastSentence = { ...pendingSentence, verb: keyState.lastWord }
             pendingSentence = { noun: {
                 seq: { command: cancelMultipleSelectionsId },
                 mode: '' }
@@ -367,9 +354,9 @@ async function onType(event: { text: string }) {
         }
         if(selectionChanged && !ignoreChangedText){
             pendingSentence = {
-                noun: selectionUsed ? lastWord : {
+                noun: selectionUsed ? keyState.lastWord : {
                     seq: { command: cancelMultipleSelectionsId },
-                    mode: lastWord.mode
+                    mode: keyState.lastWord?.mode || ''
                 }
             }
             selectionChanged = false
@@ -382,11 +369,7 @@ async function onType(event: { text: string }) {
         textChanged = false
     }
 
-    addKey(currentWord, event.text, keyMode)
-    if (await runActionForKey(event.text, keyMode)) {
-        lastWord = currentWord
-        currentWord = { seq: [], mode: '' }
-    }
+    await runActionForKey(event.text, keyMode)
     updateCursorAndStatusBar(vscode.window.activeTextEditor, keyState.getHelp())
     // clear any search decorators if this key did not alter search state
     // (meaning it was not a search command)
@@ -509,15 +492,19 @@ let modeHooks: any = {
     //     exit: async (n: string, o: string) =>
     //         await vscode.commands.executeCommand("cancelSelection")
     // },
-    normal: {
-        enter: async (n: string, o: string) => {
-            currentWord = { seq: [], mode: '' }
-            keyState.reset()
+    [Normal]: {
+        enter: async (m: string) => { keyState.reset() }
+    },
+    [Search]: {
+        enter: async (oldmode: string) => {searchOldMode = oldmode}
+    },
+    __default__: {
+        enter: async (oldmode: string) => {
+            if(oldmode === Replace || oldmode == Capture || oldmode == Search){
+                keyState.reset()
+            }
         }
     },
-    search: {
-        enter: async (newmode: string, oldmode: string) => {searchOldMode = oldmode}
-    }
 }
 
 export async function enterNormal(){ enterMode('normal') }
@@ -530,15 +517,15 @@ export async function enterMode(args: string | EnterModeArgs) {
         newMode = Normal
         visualFlag = true
     }else if(newMode !== Visual){ visualFlag = false }
-    const exitHook = modeHooks[keyMode]?.exit
-    exitHook && await exitHook(newMode, keyMode)
+    const exitHook = modeHooks[keyMode]?.exit || modeHooks['__default__']?.exit
+    exitHook && await exitHook(newMode)
 
     const editor = vscode.window.activeTextEditor
     let oldMode = keyMode
     keyMode = newMode
     if(editor?.document.uri) editorModes[editor?.document.uri.toString()] = visualFlag ? Visual : newMode
-    const enterHook = modeHooks[keyMode]?.enter
-    enterHook && newMode !== oldMode && await enterHook(keyMode, oldMode)
+    const enterHook = modeHooks[keyMode]?.enter || modeHooks['__default__']?.enter
+    enterHook && newMode !== oldMode && await enterHook(oldMode)
     if (editor) {
         updateCursorAndStatusBar(editor)
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
@@ -597,7 +584,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined, 
          * The info given by search command is shown only as long there are
          * no other messages to show.
          */
-        let sec = " " + keySeq(currentWord)
+        let sec = " " + keySeq(keyState.curWord)
         if (help)
             sec = `${sec}    ${help}`
         if (searchInfo) {
@@ -1115,7 +1102,6 @@ async function repeatLastChange(): Promise<void> {
             // replaying actions too fast messes up selection
             await new Promise(res => setTimeout(res, replayDelay));
         }
-        currentWord = lastWord
         if(keyMode !== startMode) enterMode(startMode)
     }
 }
@@ -1135,7 +1121,6 @@ async function repeatLastUsedSelection(): Promise<void> {
             // replaying actions too fast messes up selection
             await new Promise(res => setTimeout(res, replayDelay));
         }
-        currentWord = lastWord
         if(keyMode !== startMode) enterMode(startMode)
     }
 }
