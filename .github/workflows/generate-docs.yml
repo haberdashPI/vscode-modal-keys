@@ -38,13 +38,14 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/docs
+          publish_dir: ./dist/docs/stable
+          destination_dir: stable
 
       - name: Deploy
         if: github.ref != 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/dev/docs
+          publish_dir: ./dist/docs/dev
           destination_dir: dev
 

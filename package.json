@@ -21,10 +21,7 @@
     ],
     "main": "./dist/extension.js",
     "targets": {
-        "main": false,
-        "": {
-            "publicUrl": "https://haberdashpi.github.io/vscode-modal-keys"
-        }
+        "main": false
     },
     "docs": "./dist/docs/README.html",
     "contributes": {
@@ -330,8 +327,8 @@
         "build-html-docs": "node docs/build.js",
         "watch-html-docs": "npx npm-watch build-html-docs",
         "parcel-docs": "npx parcel docs/build/README.html",
-        "parcel-build-docs": "npx parcel build docs/build/doc_index.html --dist-dir dist/docs",
-        "parcel-build-dev-docs": "npx parcel build docs/build/doc_index.html --dist-dir dist/dev/docs",
+        "parcel-build-docs": "npx parcel build docs/build/doc_index.html --dist-dir dist/docs/stable --public-url https://haberdashpi.github.io/vscode-modal-keys/stable/",
+        "parcel-build-dev-docs": "npx parcel build docs/build/doc_index.html --dist-dir dist/docs/dev --public-url https://haberdashpi.github.io/vscode-modal-keys/dev/",
         "keep-watching-docs": "npm-run-all --parallel parcel-docs watch-html-docs",
         "watch-docs": "npm-run-all --serial build-html-docs keep-watching-docs",
         "build-docs": "npm-run-all --serial build-html-docs parcel-build-docs",
