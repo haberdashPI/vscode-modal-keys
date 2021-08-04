@@ -2,6 +2,14 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+## Version 0.2.1
+
+- **Bugfix**: `repeatLastUsedSelection` failed to properly record commands
+that invovled capturing keys (e.g. `search` and `captureChars`).
+- **Docfix**: A few outdated commands in the tutorial. 
+- **Docfix**: Revised motivation
+- **Docfix**: Fixed some broken links
+
 ## Version 0.2.0
 
 - **Feature**: Keyboard macros. These can currently record events from all modes *except* insert mode.
