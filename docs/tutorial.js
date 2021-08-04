@@ -115,9 +115,9 @@ module.exports = {
 
 
 // Now we can add commands for cursor movement. These commands use the generic
-// [`cursorMove` command][commands] which takes arguments.  The `__mode == "visual"` flag
-// in the expression indicates whether selection mode is on. 
-
+// [`cursorMove` command][commands] which takes arguments.  The `__mode ==
+// "visual"` ensures that the commands only select text if we're in `visual`
+// mode.
 
         "h": { "cursorMove": { to: 'left', select: '__mode == "visual"' } },
         "j": { "cursorMove": { to: 'down', select: '__mode == "visual"' } },
@@ -127,7 +127,6 @@ module.exports = {
 
 // If we want to be more succinct in how we write these commands, we can also do the following.
 
-
     "::using::cursorMove": {
         "h": { to: 'left', select: '__mode == "visual"' },
         "j": { to: 'down', select: '__mode == "visual"' },
@@ -135,12 +134,12 @@ module.exports = {
         "l": { to: 'right', select: '__mode == "visual"' },
     },
 
-// ModalKeys will knows to re-write this, so the two ways of specifying these commands are
-// equivalent.
+// ModalKeys knows to re-write this, such that thet two forms are equivalent.
 
-// We can also simulate linewise visual mode using VS Code's `expandLineSelection`
-// command. Note that we don't need to call `modalkeys.toggleSelection` this time
-// as selection mode is turned on automatically.
+// We can also simulate linewise visual mode using VS Code's
+// `expandLineSelection` command. Note that we don't need to call
+// `modalkeys.toggleSelection` this time as selection mode is turned on
+// automatically.
 
 
     "V": "expandLineSelection",
