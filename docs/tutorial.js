@@ -14,14 +14,14 @@
 // proof of this is that nearly all popular text editors have some kind of
 // add-in that provides Vim emulation. VS Code has several of them.
 
-// One key advantage of modular keybindings is realized when you understand its
+// One key advantage of modal keybindings is realized when you understand its
 // noun-verb structure: many bindings define objects (regions of text you want
 // to do something to, a.k.a. nouns) and others define operators (things you
 // want to actually do to the objects, a.k.a. verbs). Muscle memory makes these
-// combinations fast, and suddenly there is one finds a large, generative space
-// of possible actions you can perform over your text. With ModalKeys, it
+// combinations fast, and suddenly one finds can tap into a large, generative
+// space of possible commands. With ModalKeys, it
 // becomes easy to define new nouns and verbs based on existing extensions or
-// new extensions you create yourself.
+// even new extensions you create yourself.
 
 // In particular the value added for [ModalKeys's][ModalKeys] approach is is
 // that it utilizes VS Code's existing features and just adds the concept of
