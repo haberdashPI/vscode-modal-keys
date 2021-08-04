@@ -41,7 +41,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/docs/stable/
+          publish_dir: ./dist/docs
           destination_dir: stable
 
       - name: Deploy Dev Docs
@@ -49,6 +49,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/docs/dev/
+          publish_dir: ./dist/docs
           destination_dir: dev
 
