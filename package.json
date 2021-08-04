@@ -19,15 +19,25 @@
     "activationEvents": [
         "*"
     ],
+    "default": "./dist/extension.js",
     "main": "./dist/extension.js",
     "targets": {
-        "main": false
+        "main": false,
+        "default": {
+            "includeNodeModules": {
+                "vscode": false
+            },
+            "engines": {
+                "node": ">= 14"
+            }
+        }
     },
+    
     "docs": "./dist/docs/README.html",
     "contributes": {
         "configuration": {
             "type": "object",
-            "title": "ModalKeys",
+            "title": "rKeys",
             "properties": {
                 "modalkeys.keybindings": {
                     "type": "object",
@@ -322,8 +332,7 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run package",
-        "compile": "webpack",
-        "watch": "webpack --watch",
+        "watch": "npx parcel watch src/extension.ts --target default",
         "build-html-docs": "node docs/build.js",
         "watch-html-docs": "npx npm-watch build-html-docs",
         "parcel-docs": "npx parcel docs/build/README.html",
@@ -333,7 +342,7 @@
         "watch-docs": "npm-run-all --serial build-html-docs keep-watching-docs",
         "build-docs": "npm-run-all --serial build-html-docs parcel-build-docs",
         "build-dev-docs": "npm-run-all --serial build-html-docs parcel-build-dev-docs",
-        "package": "webpack --mode production --devtool hidden-source-map",
+        "package": "npx parcel build src/extension.ts --target default",
         "test-compile": "tsc -p ./",
         "test-watch": "tsc -watch -p ./",
         "pretest": "npm run test-compile && npm run lint",

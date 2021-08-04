@@ -2,6 +2,9 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+## Version 0.2.2
+- **Bugfix**: Search did not reveal cursor location
+
 ## Version 0.2.1
 
 - **Bugfix**: `repeatLastUsedSelection` failed to properly record commands
