@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
+      
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
@@ -41,7 +41,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{GITHUB_WORKSPACE}}/dist/docs/stable
+          publish_dir: ./dist/docs/stable/
           destination_dir: stable
 
       - name: Deploy Dev Docs
@@ -49,6 +49,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{GITHUB_WORKSPACE}}/dist/docs/dev
+          publish_dir: ./dist/docs/dev/
           destination_dir: dev
 
