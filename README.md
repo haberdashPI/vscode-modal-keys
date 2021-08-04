@@ -8,7 +8,7 @@ ModalKeys is an extension for defining modal keybindings in VSCode. The most
 prominent [modal
 editor](https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors)
 is [Vim](https://www.vim.org/) and ModalKeys includes
-[presets](https://haberdashpi.github.io/vscode-modal-keys/preset_index.html) that resemble Vim. While you can emulate existing
+[presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html) that resemble Vim. While you can emulate existing
 modal editors like Vim or
 [Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html), the real advantage
 of ModalKeys is that you create custom modal keybindings.
@@ -26,13 +26,13 @@ As a little taste of what's possible, here are the basic movement commands in my
     },
 ```
 
-When these key sequences are pressed in normal mode, the built-in VSCode command `cursorMove` will be called with the given arguments. If you don't know what normal mode is [read the tutorial](https://haberdashpi.github.io/vscode-modal-keys/tutorial.html).
+When these key sequences are pressed in normal mode, the built-in VSCode command `cursorMove` will be called with the given arguments. If you don't know what normal mode is [read the tutorial](https://haberdashpi.github.io/vscode-modal-keys/stable/tutorial.html).
 
 To start creating a custom set of keybindings for ModalKeys, you have a few options:
 
-1. Read the [Tutorial](https://haberdashpi.github.io/vscode-modal-keys/tutorial.html)
-2. Start with an example from [presets](https://haberdashpi.github.io/vscode-modal-keys/preset_index.html), modifying it to your taste as needed.
-3. Read through the [Documentation](https://haberdashpi.github.io/vscode-modal-keys/doc_index.html)
+1. Read the [Tutorial](https://haberdashpi.github.io/vscode-modal-keys/stable/tutorial.html)
+2. Start with an example from [presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html), modifying it to your taste as needed.
+3. Read through the [Documentation](https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html)
 
 If you don't care to create a custom set of keybindings, and prefer to replicate
 vim in VSCode, consider using [VSCodeVim](https://github.com/VSCodeVim/Vim) or
