@@ -308,7 +308,7 @@ There are three commands
 
 #### `modalkeys.toggleRecordingMacro`
 
-This starts or stops the recording of a macro. When starting a macro, this command accepts a single argument (`register`). The register determines what name (or number) the macro is stored under. For example, you could pass `__count` or use `captureChar` (documented below) to allow the user to create multiple macros.
+This starts or stops the recording of a macro. When starting a macro, this command accepts a single argument (`register`). The register determines what name (or number) the macro is stored under. For example, you could pass `__count` or use [`captureChar`](https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html#capturing-keys).
 
 **LIMITATION**: Macro recording currently ignores all [insert-mode events](https://github.com/haberdashPI/vscode-modal-keys/issues/5)
 
@@ -346,7 +346,7 @@ in Vim. The command takes no arguments.
 
 #### Touching/Untouching a document
 
-To register a change to the document you can call `modalkeys.touchDoucment`, and to ignore the last change you can cal `modalkeys.untouchDocument`. This can be useful for changing the behavior of `repeatLastChange`. For example, you might want to treat a command that commits a range of the document to version control, or sends text to a REPL as a change (that can be repeated with `repeatLastCahnge`).
+To register a change to the document you can call `modalkeys.touchDoucment`, and to ignore the last change you can call `modalkeys.untouchDocument`. This can be useful for changing the behavior of `repeatLastChange`. For example, you might want to treat a command that commits a range of the document to version control, or sends text to a REPL as a change (that can be repeated with `repeatLastCahnge`).
 
 ### Repeat Last Used Selection
 
