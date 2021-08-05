@@ -46,7 +46,7 @@ let header = dir => `
     <link rel="stylesheet" href="${dir}/style.css"/>
 </head>
 <body>
-<script src="${dir}/index.js"></script>
+<script type="module" src="${dir}/index.js"></script>
 <div class="content">
 `
 

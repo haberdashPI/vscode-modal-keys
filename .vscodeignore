@@ -1,6 +1,7 @@
 .vscode/**
 .vscode-test/**
 docs/**
+doc_dist/**
 src/**
 .parcel-cache/*
 .gitignore
