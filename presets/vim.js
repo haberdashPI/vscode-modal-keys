@@ -488,9 +488,9 @@ module.exports = {
 // ## Conclusion
 
 // The list of commands we provided is by no means exhaustive but still contains
-// literally thousands of key combinations that cover the many commonly used Vim
+// about a thousand key combinations that cover many commonly used Vim
 // operations. This is quite a nice achievement considering that we only wrote
-// about 600 lines of configuration, and most of it is pretty trivial. This
+// about 400 lines of configuration, and most of it is pretty trivial. This
 // demonstrates that ModalKeys's functionality is powerful enough to build all
 // kinds of operations that make modal editors like Vim popular.
 //
