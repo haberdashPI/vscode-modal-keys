@@ -504,8 +504,12 @@ function isKeymap(x: any): x is Keymap {
 
 const MAX_REPEAT = 1000
 
+export interface IWord{
+    key: string
+    insertions?: vscode.TextDocumentContentChangeEvent[][]
+}
 export interface IKeyRecording{
-    seq: string[]
+    seq: IWord[]
     mode: string
     register: string
 }
@@ -799,7 +803,7 @@ export class KeyState {
             if(this.macro.seq.length === 0 && this.macro.mode != keyMode){
                 this.macro.mode = keyMode
             }
-            this.macro.seq.push(key)
+            this.macro.seq.push({key})
         }
 
         this.keySequence.push(key)
@@ -815,7 +819,7 @@ export class KeyState {
             }
         }
         if(this.curWord){
-            this.curWord.seq.push(key)
+            this.curWord.seq.push({key})
         }
 
         const command = this.modeCaptures[keyMode]
@@ -832,6 +836,22 @@ export class KeyState {
         }
         else {
             this.error()
+        }
+    }
+
+    recordEdit(changes: vscode.TextDocumentContentChangeEvent[]){
+        if(this.lastWord && this.lastWord.seq.length > 0){
+            let n = this.lastWord.seq.length
+            if(this.lastWord.seq[n].insertions !== undefined){
+                this.lastWord.seq[n].insertions?.concat(changes)
+            }else{
+                this.lastWord.seq[n].insertions = [changes]
+            }
+        }
+        if(this.macro){
+            let n = this.macro.seq.length
+            if(n > 0 && this.last)
+            this.macro.seq[n].insertions?.concat(changes)
         }
     }
 

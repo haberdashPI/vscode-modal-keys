@@ -322,6 +322,7 @@ interface KeyCommand {
 interface KeyWord {
     seq: string[] | KeyCommand
     mode: string
+    edits?: vscode.TextDocumentContentChangeEvent[]
 }
 interface KeySentence {
     noun?: KeyWord
@@ -389,8 +390,11 @@ async function onType(event: { text: string }) {
  * examined in the `onType` handler above, and the `lastChange` variable is set
  * to indicate that the last command that changed editor text.
  */
-export function onTextChanged() {
-     textChanged = true
+export function onTextChanged(edits: vscode.TextDocumentChangeEvent) {
+    textChanged = true
+    if(keyMode === Insert){
+        keyState.recordEdit(edits.contentChanges)
+    }
 }
 
 /**
