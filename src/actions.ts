@@ -506,7 +506,7 @@ const MAX_REPEAT = 1000
 
 export interface IWord{
     key: string
-    insertions?: vscode.TextDocumentContentChangeEvent[][]
+    insertions?: Array<readonly vscode.TextDocumentContentChangeEvent[]>
 }
 export interface IKeyRecording{
     seq: IWord[]
@@ -839,22 +839,28 @@ export class KeyState {
         }
     }
 
-    recordEdit(changes: vscode.TextDocumentContentChangeEvent[]){
-        if(this.lastWord && this.lastWord.seq.length > 0){
-            let n = this.lastWord.seq.length
-            if(this.lastWord.seq[n].insertions !== undefined){
-                this.lastWord.seq[n].insertions?.concat(changes)
-            }else{
-                this.lastWord.seq[n].insertions = [changes]
-            }
+    recordEdit(changes: readonly vscode.TextDocumentContentChangeEvent[]){
+        if(this.lastWord){
+            addInserts(this.lastWord.seq, changes)
         }
         if(this.macro){
-            let n = this.macro.seq.length
-            if(n > 0 && this.last)
-            this.macro.seq[n].insertions?.concat(changes)
+            addInserts(this.macro.seq, changes)
         }
     }
 
     getHelp() { return this.currentKeymap?.help }
+}
+
+function addInserts(seq: IWord[], changes: readonly vscode.TextDocumentContentChangeEvent[]){
+    let n = seq.length
+    if(n === 0){
+        seq = [{key: "", insertions: [changes]}]
+    }else{
+        if(seq[n].insertions !== undefined){
+            seq[n].insertions?.push(changes)
+        }else{
+            seq[n].insertions = [changes]
+        }
+    }
 }
 
