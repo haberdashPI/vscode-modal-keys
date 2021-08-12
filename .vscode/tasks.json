@@ -5,7 +5,7 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"script": "compile",
+			"script": "debug",
 			"problemMatcher": "$tsc",
 			"isBackground": false,
 			"presentation": {
@@ -20,13 +20,6 @@
 					"PATH": "${env:HOME}/.asdf/bin:${env:HOME}/.asdf/shims:${env:PATH}"
 				}
 			}
-		},
-		{
-			"type": "npm",
-			"script": "webpack",
-			"problemMatcher": [
-				"$tsc"
-			]
 		}
 	]
 }

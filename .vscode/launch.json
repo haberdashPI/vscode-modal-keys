@@ -16,7 +16,7 @@
 				"--disable-extension johtela.vscode-modaledit"
 			],
 			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
+				"${workspaceFolder}/dist/**/*.js"
 			],
 			"preLaunchTask": "${defaultBuildTask}"
 		}
