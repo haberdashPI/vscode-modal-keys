@@ -579,7 +579,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined, 
          */
         mainStatusBar.text = keyMode === Search ?
             `${text} [${searchBackwards ? "B" : "F"
-            }${searchCaseSensitive ? "S" : ""}]: ${searchString}` :
+            }${searchCaseSensitive ? "S" : ""}]` :
             text
         mainStatusBar.color = color
         mainStatusBar.show()
@@ -683,7 +683,7 @@ function* linesOf(doc: vscode.TextDocument, pos: vscode.Position,
     }
     if(wrap){
         line = forward ? 0 : doc.lineCount - 1
-        while(forward ? line < doc.lineCount : line > doc.lineCount){
+        while(forward ? line < doc.lineCount : line > 0){
             yield [doc.lineAt(line).text, line]
             line += (forward ? 1 : -1)
         }
@@ -761,6 +761,7 @@ async function search(args: SearchArgs | string): Promise<void> {
          * in the module level variables.
          */
         enterMode(Search)
+        
         searchString = args.text || ""
         searchStartSelections = editor.selections
         searchBackwards = args.backwards || false
@@ -1019,6 +1020,7 @@ function deleteCharFromSearch() {
     let editor = vscode.window.activeTextEditor
     if (editor && keyMode === Search && searchString.length > 0) {
         searchString = searchString.slice(0, searchString.length - 1)
+        keyState.deleteSearchChar()
         highlightMatches(editor, searchStartSelections)
         updateCursorAndStatusBar(editor)
     }

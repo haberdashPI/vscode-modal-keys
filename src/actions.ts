@@ -771,6 +771,10 @@ export class KeyState {
         return [result, macro.seq, macro.mode];
     }
 
+    deleteSearchChar(){
+        this.curWord?.seq.pop()
+    }
+
     /**
      * ## Key Press Handler
      *

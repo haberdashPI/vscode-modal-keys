@@ -315,12 +315,12 @@
             {
                 "key": "Escape",
                 "command": "modalkeys.cancelSearch",
-                "when": "editorTextFocus && modalkeys.searching"
+                "when": "editorTextFocus && modalkeys.mode == search"
             },
             {
                 "key": "Backspace",
                 "command": "modalkeys.deleteCharFromSearch",
-                "when": "editorTextFocus && modalkeys.searching"
+                "when": "editorTextFocus && modalkeys.mode == search"
             }
         ]
     },
@@ -349,6 +349,8 @@
         "watch-docs": "npm-run-all --serial build-html-docs keep-watching-docs",
         "build-docs": "npm-run-all --serial build-html-docs parcel-build-docs",
         "build-dev-docs": "npm-run-all --serial build-html-docs parcel-build-dev-docs",
+        "predebug": "rm -rf dist",
+        "debug": "npx tsc --outDir dist",
         "prepackage": "rm -rf dist",
         "package": "npx parcel build src/extension.ts --target main",
         "lint": "eslint src --ext ts"
