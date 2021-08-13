@@ -10,6 +10,7 @@
 
 import { sortBy, mergeWith, mapValues, flatten, uniq } from 'lodash'
 import { IHash } from './util'
+import { isEmpty } from 'lodash'
 
 import * as vscode from 'vscode'
 
@@ -552,7 +553,12 @@ export class KeyState {
     }
 
     error(){
-        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""))
+        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""), "Fix: Define keymap").
+        then(selection => {
+            if(selection === "Fix: Import keymap"){
+                vscode.commands.executeCommand("modalkeys.importPresets")
+            }
+        })
         this.reset()
     }
 
@@ -835,7 +841,28 @@ export class KeyState {
             this.updateCount(Number(key))
         }
         else {
-            this.error()
+            const type = "Fix: Let me type!"
+            const define = "Fix: Define a keymap"
+            const ignore = "Ignore"
+            if(!rootKeymodes[keyMode]){
+                vscode.window.showInformationMessage
+                vscode.window.showErrorMessage(`
+                    ModalKeys - no keymap defined for ${keyMode} mode.
+                `,{modal: true}, type, define, ignore).
+                then(selection => {
+                    if(selection === type){
+                        vscode.commands.executeCommand("modalkeys.enterMode",
+                            { mode: "insert" })
+                    }else if(selection === define){
+                        vscode.commands.executeCommand("modalkeys.importPresets")
+                    }else{
+                        return
+                    }
+                })
+                this.reset()
+            }else{
+                this.error()
+            }
         }
     }
 
