@@ -10,8 +10,8 @@
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
 import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand, IKeyRecording } from './actions'
-import { TextDecoder } from 'util'
 import { IHash } from './util'
+import { TextDecoder } from 'text-encoding'
 
 //#endregion
 /**

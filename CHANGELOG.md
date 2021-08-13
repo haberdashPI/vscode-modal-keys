@@ -2,10 +2,14 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+## Version 0.3.1
+
+- **Bugfix**: Packaging issue caused Import keybindings to fail.
+
 ## Version 0.3.0
 
 - **Feature**: Keybinding errors have buttons to solutions (e.g. define the bindings)
-- **Bufix**: Backspace behavior during search command
+- **Bugfix**: Backspace behavior during search command
 - **Bugfix**: Search wrapping when searching backwards
 - **Bugfix**: Search text repeat in status bar
 
