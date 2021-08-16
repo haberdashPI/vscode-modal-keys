@@ -13,7 +13,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--disable-extension johtela.vscode-modaledit"
+				"--disable-extension haberdashpi.vscode-modal-keys"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"

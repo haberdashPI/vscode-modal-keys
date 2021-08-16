@@ -2,6 +2,12 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+## Version 0.4.0
+
+- **Docs**: selectBetween
+- **Feature**: selectBetween supports multiple cursors
+- **Bugfix**: Repeated search result in some edge cases
+
 ## Version 0.3.1
 
 - **Bugfix**: Packaging issue caused Import keybindings to fail.

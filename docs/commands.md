@@ -111,6 +111,33 @@ both one after another.
 { "modaledit.typeKeys": { "keys": "ku" } }
 ```
 
+## Selecting Text Between Delimiters
+
+The command `modalkeys.selectBetween` selects a range of text between two delimiters (`from` and `to`), and has several additional arguments.
+
+- If the `regex` flag is on, `from` and `to` strings are treated as regular
+  expressions in the search.
+- The `inclusive` flag tells if the delimiter strings are included in the
+  selection or not. By default the delimiter strings are not part of the
+  selection.
+- The `caseSensitive` flag makes the search case-sensitive. When this flag is
+  missing or false the search is case-insensitive.
+
+Below is an example that selects all text inside quotation marks. For more
+advanced examples check the [vim presets](./presets/vim.html).
+
+```js
+{
+    "command": "modalkeys.selectBetween",
+    "args": {
+        "from": "(",
+        "to": ")"
+    }
+}
+```
+
+> **NOTE**: This command is purely textual in nature. It uses regular expressions to search your document. It cannot understand nested parenthesis and the like. Consider using an extension like [bracketeer](https://marketplace.visualstudio.com/items?itemName=pustelto.bracketeer) if you want behavior that handles nested syntactic expressions. VSCode's extension API provides no access to bracket matching, and extensions that want to support this behavior must re-implement bracket matching for all languages they want to support.
+
 ## Repeat Last Change
 
 `modalkeys.repeatLastChange` command repeats the last command (sequence) that
