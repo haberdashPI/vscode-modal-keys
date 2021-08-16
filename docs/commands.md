@@ -124,7 +124,7 @@ The command `modalkeys.selectBetween` selects a range of text between two delimi
   missing or false the search is case-insensitive.
 
 Below is an example that selects all text inside quotation marks. For more
-advanced examples check the [tutorial](./tutorial.html).
+advanced examples check the [vim presets](./presets/vim.html).
 
 ```js
 {
