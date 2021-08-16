@@ -7,6 +7,7 @@ All notable changes to the ModalKeys extension will be documented in this file.
 - **Docs**: selectBetween
 - **Feature**: selectBetween supports multiple cursors
 - **Bugfix**: Repeated search result in some edge cases
+- **Bugfix**: "Fix: Define keymap" button
 
 ## Version 0.3.1
 
