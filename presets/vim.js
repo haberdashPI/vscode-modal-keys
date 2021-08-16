@@ -6,6 +6,11 @@
 // ground up. A secondary goal is to show off some of the more advanced features of
 // ModalKeys that were not discussed in the tutorial.
 
+// If you want to modify these presets you can export and modify them using the
+// "ModalKeys: Export a preset for keybindings" command. After making any
+// desired changes you can import them with the "ModalKeys: Import preset
+// keybindings" command.
+
 // If you are not interested in how the Vim keybindings are implemented and just
 // want to use them, you can skip this discussion. Just import the presets by
 // pressing <key>Ctrl/Cmd</key>+<key>Shift</key>+<key>P</key> and running command

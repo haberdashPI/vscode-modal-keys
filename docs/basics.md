@@ -10,6 +10,11 @@ this will limit the flexibility of your bindings).
 
 ## Minimal configuration
 
+The following describes the minimal requirements for a keybindings file. You
+don't need to start from scratch with your bindings though; you can get started
+quickly by exporting one of the presets. You can do this using the command
+"ModalKeys: Export a preset for keybindings".
+
 Your keybindings should include at least one binding that will switch
 the editor to the *insert mode*, which is the same as VS Code's default mode.
 ```js
@@ -19,8 +24,8 @@ module.exports = {keybindings: {
 ```
 By default, a binding works for all modes except insert mode. Mode specific bindings are [documented below](#custom-modes).
 
-Bindings can then be set by running the command `"ModalKeys: Import preset
-keybindings"` on this file. 
+Once you have defined bindings, they can be set by running the command
+`"ModalKeys: Import preset keybindings"` on this file.  
 
 The simplest type of binding maps a series of keystrokes to a given VSCode
 command. You can find these commands by looking at the list of keybindings (e.g.

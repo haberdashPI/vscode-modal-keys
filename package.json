@@ -258,6 +258,10 @@
                 "title": "ModalKeys: Import preset keybindings"
             },
             {
+                "command": "modalkeys.exportPreset",
+                "title": "ModalKeys: Export a preset for keybindings"
+            },
+            {
                 "command": "modalkeys.toggleSelection",
                 "title": "ModalKeys: Toggle selection mode"
             },

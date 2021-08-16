@@ -252,6 +252,7 @@ const captureCharId = "modalkeys.captureChar"
 const toggleRecordingMacroId = "modalkeys.toggleRecordingMacro"
 const cancelRecordingMacroId = "modalkeys.cancelRecordingMacro"
 const replayMacroId = "modalkeys.replayMacro"
+const exportPresetId = "modalkeys.exportPreset"
 
 export function revealActive(editor: vscode.TextEditor){
     let act = new vscode.Range(editor.selection.active, editor.selection.active);
@@ -292,7 +293,8 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(importPresetsId, importPresets),
         vscode.commands.registerCommand(toggleRecordingMacroId, toggleRecordingMacro),
         vscode.commands.registerCommand(cancelRecordingMacroId, cancelRecordingMacro),
-        vscode.commands.registerCommand(replayMacroId, replayMacro)
+        vscode.commands.registerCommand(replayMacroId, replayMacro),
+        vscode.commands.registerCommand(exportPresetId, exportPreset)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
@@ -1297,4 +1299,25 @@ async function importPresets(folder?: string) {
                 `${e}`)
         }
     }
+}
+
+async function exportPreset(){
+    let presetsPath = vscode.extensions.getExtension("haberdashpi.vscode-modal-keys")!
+        .extensionPath + "/presets"
+    let fs = vscode.workspace.fs
+    let presets = ((await fs.readDirectory(vscode.Uri.file(presetsPath))).
+        map(t => t[0]))
+    let choice = await vscode.window.showQuickPick(presets).then(item => {
+        if(item){
+            let storePreset = vscode.window.showSaveDialog({
+                saveLabel: "Export",
+                title: "Export preset keybinding"+item
+            }).then(tofile => {
+                if(tofile){
+                    let from = vscode.Uri.joinPath(vscode.Uri.file(presetsPath), item);
+                    fs.copy(from, tofile)
+                }
+            })
+        }
+    })
 }
