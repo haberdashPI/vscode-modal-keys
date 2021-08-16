@@ -850,8 +850,7 @@ function highlightMatches(editor: vscode.TextEditor,
                 else anchor = sel.anchor
                 newsel = positionSearch(new vscode.Selection(anchor, active), 
                     result.value.end.character - result.value.start.character, 
-                    !searchBackwards)
-                if(!newsel.isEqual(sel)) break
+                if(!newsel.start.isEqual(sel.start) || !newsel.end.isEqual(sel.end)) break
 
                 result = matches.next()
             }
