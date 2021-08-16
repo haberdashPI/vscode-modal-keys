@@ -12,7 +12,7 @@ this will limit the flexibility of your bindings).
 
 The following describes the minimal requirements for a keybindings file. You
 don't need to start from scratch with your bindings though; you can get started
-quickly be exporting one of the presets. You can do this using the command
+quickly by exporting one of the presets. You can do this using the command
 "ModalKeys: Export a preset for keybindings".
 
 Your keybindings should include at least one binding that will switch
