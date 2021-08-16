@@ -1149,9 +1149,9 @@ async function repeatLastUsedSelection(): Promise<void> {
             let start = sel.start.translate(0, 1)
             let end = sel.end //.translate(0, -1)
             let fromMatches = searchMatches(ed.document, start, undefined,
-                args.from, args.regex, true, false, false)
+                args.from, args.regex, args.caseSensitive, false, false)
             let toMatches = searchMatches(ed.document, end, undefined,
-                args.to, args.regex, true, true, false)
+                args.to, args.regex, args.caseSensitive, true, false)
             let from = fromMatches.next()
             let to = toMatches.next()
             let betweenSel = sel
