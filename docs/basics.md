@@ -16,7 +16,7 @@ quickly by exporting one of the presets. You can do this using the command
 "ModalKeys: Export a preset for keybindings".
 
 Your keybindings should include at least one binding that will switch
-the editor to the *insert mode*, which is the same as VS Code's default mode.
+the editor to *insert mode*, which is the same as VS Code's default mode.
 ```js
 module.exports = {keybindings: {
     i: "modalkeys.enterInsert"
@@ -66,8 +66,8 @@ when you are in "evil" mode.
 
 ```js
 "modalkeys.keybinding": {
-    "D": { command: "modalkeys.enterMode", args: { mode: "evil" } },
-    "evil::D": { command: "modalkeys.enterMode", args: { mode: "normal" } },
+    "D": { "modalkeys.enterMode": { mode: "evil" } },
+    "evil::D": { "modalkeys.enterMode": { mode: "normal" } },
     "evil::j": "edit.action.clipbaordCutAction",
     "evil::k": "edit.action.clipbaordCutAction",
     "evil::h": "edit.action.clipbaordCutAction",

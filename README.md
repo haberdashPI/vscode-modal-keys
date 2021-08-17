@@ -4,32 +4,21 @@
 [![Project Documentation](https://img.shields.io/badge/docs-stable-blue)](https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html)
 [![Project Documentation](https://img.shields.io/badge/docs-dev-blue)](https://haberdashpi.github.io/vscode-modal-keys/dev/doc_index.html)
 
-ModalKeys is an extension for defining modal keybindings in VSCode. The most
-prominent [modal
+ModalKeys is an extension for defining modal keybindings in VSCode. [Vim](https://www.vim.org/) is probably the most well known [modal
 editor](https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors)
-is [Vim](https://www.vim.org/) and ModalKeys includes
+and ModalKeys includes
 [presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html)
-that resemble Vim. While you can emulate existing modal editors like Vim or
-[Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html), the real advantage
-of ModalKeys is that you can create custom modal keybindings defined in terms of
-VSCode commands. You can define modular, operator-like (noun/verb) keybindings
-built from any of the existing extensions available in VSCode, or, if you want
-to author your own extension, any behavior you can imagine.
+that resemble Vim. 
 
-As a little taste of what's possible, here are the basic movement commands in my configuration file:
+The advantages of modal bindings are the rapid, speed-of-thought manipulations you can perform on text with a well-designed keymap and sufficient practice.
 
-```typescript
-    "::using::cursorMove::": {
-        h: { to: 'left', select: "__mode !== 'normal'", value: '__count' },
-        j: { to: 'down', by: 'wrappedLine', select: "__mode !== 'normal'", value: '__count' },
-        k: { to: 'up', by: 'wrappedLine', select: "__mode !== 'normal'" , value: '__count' },
-        l: { to: 'right', select: "__mode !== 'normal'", value: '__count' },
-        gj: { to: 'down', by: 'line', select: "__mode !== 'normal'", value: '__count' },
-        gk: { to: 'up', by: 'line', select: "__mode !== 'normal'", value: '__count' },
-    },
-```
-
-When these key sequences are pressed in normal mode, the built-in VSCode command `cursorMove` will be called with the given arguments. If you don't know what normal mode is [read the tutorial](https://haberdashpi.github.io/vscode-modal-keys/stable/tutorial.html).
+The advantages of using ModalKeys specifically, compared to other modal extensions VSCode, are that (1) it integrates seamlessly with the existing features and
+extensions of VSCode, and that (2) it is highly customizable. While you can
+emulate many of the features of other modal editors like Vim or
+[Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html), you will get the
+most out of ModalKeys by creating your own keymap (usually by modifying one of
+the
+[presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html))
 
 To start creating a custom set of keybindings for ModalKeys, you have a few options:
 
@@ -37,9 +26,9 @@ To start creating a custom set of keybindings for ModalKeys, you have a few opti
 2. Start with an example from [presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html), modifying it to your taste as needed.
 3. Read through the [Documentation](https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html)
 
-If you don't care to create a custom set of keybindings, and prefer to replicate
-vim in VSCode, consider using [VSCodeVim](https://github.com/VSCodeVim/Vim) or
-[vscode-neovim](https://github.com/asvetliakov/vscode-neovim).
+If you don't care to create your own custom keybindings, and prefer to replicate
+an existing modal editor in VSCode, you may want to consider using [VSCodeVim](https://github.com/VSCodeVim/Vim),
+[vscode-neovim](https://github.com/asvetliakov/vscode-neovim), or [Dance](https://github.com/71/dance).
 
 ## Acknowledgements
 
