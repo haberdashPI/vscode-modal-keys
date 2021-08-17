@@ -1295,8 +1295,8 @@ async function importPresets(folder?: string) {
                 "ModalKeys: Keybindings imported.")
         }
         catch (e) {
-            vscode.window.showWarningMessage("ModalKeys: Bindings not imported.",
-                `${e}`)
+            vscode.window.showWarningMessage("ModalKeys: Bindings not imported."+
+                `\n ${e}`)
         }
     }
 }

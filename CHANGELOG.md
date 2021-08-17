@@ -5,6 +5,7 @@ All notable changes to the ModalKeys extension will be documented in this file.
 ## Version 0.5.0
 - **Feature**: Export presets 
 - **Bugfix**: Improved keybinding import error message
+
 ## Version 0.4.0
 
 - **Docs**: selectBetween
