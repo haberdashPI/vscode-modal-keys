@@ -725,7 +725,12 @@ function* regexMatches(matcher: RegExp, line: string, forward: boolean, offset: 
         if(offset && !forward && match.index > offset){ return }
         if(offset === undefined || !forward || match.index > offset)
             yield [match.index, match[0].length]
-        match = matcher.exec(line)
+        let newmatch = matcher.exec(line)
+        if(newmatch && newmatch.index > match.index){
+            match = newmatch
+        }else{
+            match = null
+        }
     }
 }
 
