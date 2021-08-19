@@ -12,7 +12,7 @@ that resemble Vim.
 
 The advantages of modal bindings are the rapid, speed-of-thought manipulations you can perform on text with a well-designed keymap and sufficient practice.
 
-The advantages of using ModalKeys specifically, compared to other modal extensions VSCode, are that (1) it integrates seamlessly with the existing features and
+The advantages of using ModalKeys specifically, compared to other modal extensions available in VSCode, are that (1) it integrates seamlessly with the existing features and
 extensions of VSCode, and that (2) it is highly customizable. While you can
 emulate many of the features of other modal editors like Vim or
 [Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html), you will get the
