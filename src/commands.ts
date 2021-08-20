@@ -983,7 +983,10 @@ async function acceptSearch(editor: vscode.TextEditor, len: number) {
     await enterMode(mode)
     searchLength = len
     if(searchExecuteAfter){
-        keyState.execute(searchExecuteAfter, Normal)
+        let command = expandOneCommand(searchExecuteAfter)
+        if(command){
+            keyState.execute(command, mode, searchString)
+        }
     }
 }
 
