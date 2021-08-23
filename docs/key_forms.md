@@ -146,7 +146,10 @@ just jump to next word with `cursorWordStartRight`.
 
 ## Debugging Keybindings
 
-If you are not sure that your bindings are correct, check the ModalKeys's
-output log. You can find it by opening **View - Output** and then choosing the
-**ModalKeys** from the drop-down menu. Errors in configuration will be reported
-there. If your configuration is ok, you should see the following message.
+If you use a javascript file to define your bindings you can place `console.log`
+statements in the file and they will show up under the Modal Keys output log.
+Any errors encountered when parsing or evaluating your bindings will also show
+up here.
+
+You can find this output by opening **View - Output** and then choosing the
+**ModalKeys** from the drop-down menu.
