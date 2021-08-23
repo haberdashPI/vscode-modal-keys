@@ -980,7 +980,6 @@ function positionSearch(sel: vscode.Selection, len: number, forward: boolean){
  */
 async function acceptSearch(editor: vscode.TextEditor, len: number) {
     let mode = searchOldMode
-    await enterMode(mode)
     searchLength = len
     if(searchExecuteAfter){
         let command = expandOneCommand(searchExecuteAfter)
@@ -988,6 +987,8 @@ async function acceptSearch(editor: vscode.TextEditor, len: number) {
             keyState.execute(command, mode, searchString)
         }
     }
+
+    await enterMode(mode)
 }
 
 /**
