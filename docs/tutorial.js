@@ -18,25 +18,24 @@
 // noun-verb structure: many bindings define objects (regions of text you want
 // to do something to, a.k.a. nouns) and others define operators (things you
 // want to actually do to the objects, a.k.a. verbs). Muscle memory makes these
-// combinations fast, and suddenly one finds can tap into a large, generative
-// space of possible commands. With ModalKeys, it
-// becomes easy to define new nouns and verbs based on existing extensions or
-// even new extensions you create yourself.
+// combinations fast, and suddenly there is a large generative space of possible
+// commands that you emmit at the speed-of-thought. 
 
-// In particular the value added for [ModalKeys's][ModalKeys] approach is is
-// that it utilizes VS Code's existing features and just adds the concept of
-// modal editing to the mix. This choice has two major benefits: (1) the
-// commands can integrate seamlessly with the ecosystem of packages already
-// present in VSCode, providng more long-term capabilities than emulating vim
-// alone could provide and (2) the commands can be customized in precisely the
-// way that works best for you.
+// In particular the value added for ModalKeys's approach is is that it utilizes
+// VS Code's existing features and just adds the concept of modal editing to the
+// mix. This choice has two major benefits: (1) the commands can integrate
+// seamlessly with the ecosystem of packages already present in VSCode, providng
+// more long-term capabilities than emulating vim alone could provide and (2)
+// the commands can be customized in precisely the way that works best for you.
 
 // In ModalKeys, you define a configuration file as a javascript file, and you
 // then import it using the `ModalKeys: Import preset keybindings` command.
 
 // We don't have to use Vim's standard key bindings, if we prefer not to. You
-// can map any key (sequence) to any command. But to keep things familiar, we'll
-// follow Vim's conventions in this tutorial.
+// can map any key (sequence) to any command. However, you probably want to keep
+// most of the basic commands the same, because you can then share muscle memory
+// between basic vim usage and your own keybindings. Here, to keep things
+// familiar, we'll follow most of Vim's conventions. 
 
 // To start, our preset file will export a single object, containing the
 // property `keybindings`.
