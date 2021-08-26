@@ -385,9 +385,7 @@
         "tailwindcss": "^2.2.4",
         "ts-loader": "^8.0.14",
         "typescript": "^4.1.3",
-        "vscode-test": "^1.5.0"
-    },
-    "dependencies": {
+        "vscode-test": "^1.5.0",
         "text-encoding": "^0.7.0"
     }
 }
