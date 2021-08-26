@@ -32,6 +32,16 @@
 // example delete a word you type <key>d</key> (for delete) and <key>w</key>
 // (for word). 
 
+// ### Required extensions
+
+// Unlike the tutorial, these settings are not self-contained and make use of a
+// variety of extensions to allow for a better set of features. You wil need the
+// following extensions for all bindings to work:
+
+// - [Quick and Simple Text Selection](https://marketplace.visualstudio.com/items?itemName=dbankier.vscode-quick-select)
+// - [Selection Utilities](https://marketplace.visualstudio.com/items?itemName=haberdashPI.selection-utilities)
+// - [Select by Indent](https://marketplace.visualstudio.com/items?itemName=haberdashPI.vscode-select-by-indent)
+
 // ### Functions
 
 // To begin with, we'll define to make defining the operators possible. Since
@@ -196,14 +206,6 @@ const operator_commands = {
 const around_objects = {
     w: { value: "\\W", regex: true },
     p: { value: "^\\s*$", regex: true },
-    "(": { from: "(", to: ")" },
-    "{": { from: "{", to: "}" },
-    "[": { from: "[", to: "]" },
-    "<": { from: "<", to: ">" },
-    ")": { from: "(", to: ")" },
-    "}": { from: "{", to: "}" },
-    "]": { from: "[", to: "]" },
-    ">": { from: "<", to: ">" },
     ...(Object.fromEntries(["'", "\"", "`"].map(c => [c, c])))
 }
 
@@ -291,8 +293,7 @@ module.exports = {
             "^": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__mode == "visual"' },
             "g_": { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__mode == "visual"' },
         },
-        "_": "cursorHome",
-        "visual::_": "cursorHomeSelect",
+        "_": "cursorHomeSelect",
 
 // Moving to beginning or end of the file.
         gg: "cursorTop",
@@ -397,11 +398,6 @@ module.exports = {
 // seek to mimc visual mode particularly. Basically, we just toggle a switch that allows the
 // motion commands to extend and create selections.
         v: "modalkeys.toggleSelection",
-// In visual mode `o` lets us swap the location of the the cursor between the
-// ends of a selection. We use [Selection
-// Utilities](https://github.com/haberdashPI/vscode-selection-utilities) to
-// implement this behavior.
-        "visual::o": "selection-utilities.exchangeAnchorActive",
 // ## Editing in Normal Mode
 
 // Editing commands in normal mode typically either affect current character or
@@ -528,6 +524,14 @@ module.exports = {
                 },
                 "expandLineSelection",
             ],
+            "i(": "extension.selectParenthesis",
+            "a(": "extension.selectParenthesisOuter",
+            "i[": "extension.selectSquareBrackets",
+            "a[": "extension.selectSquareBracketsOuter",
+            "i{": "extension.selectCurlyBrackets",
+            "a{": "extension.selectCurlyBracketsOuter",
+            "i<": "extension.selectAngleBrackets",
+            "a<": "extension.selectAngleBracketsOuter",
             ...(Object.fromEntries(["w", "b", "e", "W", "B", "E", "^",
                     "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
                 map(k => [k, { "modalkeys.typeKeys": { keys: "v"+k } } ]))),
@@ -546,6 +550,15 @@ module.exports = {
             map(([bind, command]) => {
            return ["visual::"+bind, command]
        }))),
+
+       "visual::i(": "extension.selectParenthesis",
+       "visual::a(": "extension.selectParenthesisOuter",
+       "visual::i[": "extension.selectSquareBrackets",
+       "visual::a[": "extension.selectSquareBracketsOuter",
+       "visual::i{": "extension.selectCurlyBrackets",
+       "visual::a{": "extension.selectCurlyBracketsOuter",
+       "visual::i<": "extension.selectAngleBrackets",
+       "visual::a<": "extension.selectAngleBracketsOuter",
 
        gd: "editor.action.revealDefinition",
        gq: "rewrap.rewrapComment",
