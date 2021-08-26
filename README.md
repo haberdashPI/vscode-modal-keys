@@ -12,7 +12,7 @@ that resemble Vim.
 
 The advantages of modal bindings are the rapid, speed-of-thought manipulations you can perform on text with a well-designed keymap and sufficient practice.
 
-The advantages of using ModalKeys specifically, compared to other modal extensions available in VSCode, are that (1) it integrates seamlessly with the existing features and
+The advantages of using ModalKeys specifically are that (1) it integrates seamlessly with the existing features and
 extensions of VSCode, and that (2) it is highly customizable. While you can
 emulate many of the features of other modal editors like Vim or
 [Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html), you will get the
@@ -43,7 +43,7 @@ Features that ModalKeys has, which ModalEdit lacks.
 2. Customized modes: You can define your own key modes, to expand the keymap more easily
 3. Search term highlighting: ModalKeys highlights search terms by default (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19) in ModalEdit)
 4. Search with regex: The [`search` command](https://haberdashpi.github.io/vscode-modal-keys/stable/commands.html#incremental-search) can optionally use regex expressions
-5. Kakoune-like 'repeat-selection': ModalKeys provides a [`repateLastUsedSelection`](https://haberdashpi.github.io/vscode-modal-keys/stable/commands.html#repeat-last-used-selection) to make implementing kakoune noun-verb workflows repeatable (in contrast with vim's verb-noun workflows)
+5. Kakoune-like 'repeat-selection': ModalKeys provides a [`repateLastUsedSelection`](https://haberdashpi.github.io/vscode-modal-keys/stable/commands.html#repeat-last-used-selection) to make kakoune noun-verb workflows repeatable (in contrast with vim's verb-noun workflows)
 6. [Keyboard macros](https://haberdashpi.github.io/vscode-modal-keys/stable/commands.html#macros)
 
 ModalKeys is missing a few features I did not want to maintain from ModalEdit: bookmarks and quick snippets. I find these features to be well covered by several existing extensions in VSCode.

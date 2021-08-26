@@ -9,7 +9,7 @@
 
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
-import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand, IKeyRecording } from './actions'
+import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand, IKeyRecording, log as actionLog } from './actions'
 import { IHash } from './util'
 import { TextDecoder } from 'text-encoding'
 
@@ -980,11 +980,15 @@ function positionSearch(sel: vscode.Selection, len: number, forward: boolean){
  */
 async function acceptSearch(editor: vscode.TextEditor, len: number) {
     let mode = searchOldMode
-    await enterMode(mode)
     searchLength = len
     if(searchExecuteAfter){
-        keyState.execute(searchExecuteAfter, Normal)
+        let command = expandOneCommand(searchExecuteAfter)
+        if(command){
+            keyState.execute(command, mode, searchString)
+        }
     }
+
+    await enterMode(mode)
 }
 
 /**
@@ -1289,7 +1293,15 @@ async function importPresets(folder?: string) {
             let js = new TextDecoder("utf-8").decode(await fs.readFile(uri))
             if (uri.fsPath.match(/jsonc?$/))
                 js = `(${js})`
-            let preset = eval(js)
+            let preset = (function(): any {
+                let old_log = console.log;
+                console.log = function(message){
+                    actionLog(`Console output: ` + message)
+                }
+                let preset = eval(js)
+                console.log = old_log;
+                return preset
+            })()
             let config = vscode.workspace.getConfiguration("modalkeys")
             if (!preset.keybindings)
                 throw new Error(

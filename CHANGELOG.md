@@ -2,6 +2,10 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+## Version 0.5.1
+- **Bugfix**: properly redirect preset output
+- **Bugfix**: `executeAfter` behavior for search command
+
 ## Version 0.5.0
 - **Feature**: Export presets 
 - **Bugfix**: Improved keybinding import error message
