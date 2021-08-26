@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Modal Keys Documentation</title><meta charset="utf-8"><link rel="stylesheet" href="https://haberdashpi.github.io/vscode-modal-keys/dev/README.f14bba23.css"></head><body> <script type="module" src="https://haberdashpi.github.io/vscode-modal-keys/dev/README.ab2e5f5c.js"></script><script src="https://haberdashpi.github.io/vscode-modal-keys/dev/README.16885970.js" nomodule="" defer></script> <div class="content"> <h1 id="heading-#advanced-vim-presets"><a class="header-anchor" id="advanced-vim-presets" href="#advanced-vim-presets"> </a>Advanced vim presets</h1> <p>This document provides a more advanced set of vim keybindings than provided in the <a href="https://haberdashpi.github.io/vscode-modal-keys/dev/tutorial.html">tutorial</a>. The goal of these bindings is to lower the barrier to entry for Vim users who don't want to spend the time defining bindings from ground up. A secondary goal is to show off some of the more advanced features of ModalKeys that were not discussed in the tutorial.</p> <p>If you want to modify these presets you can export and modify them using the &quot;ModalKeys: Export a preset for keybindings&quot; command. After making any desired changes you can import them with the &quot;ModalKeys: Import preset keybindings&quot; command.</p> <p>If you are not interested in how the Vim keybindings are implemented and just want to use them, you can skip this discussion. Just import the presets by pressing <key>Ctrl/Cmd</key>+<key>Shift</key>+<key>P</key> and running command <code>ModalKeys: Import preset keybindings</code>. You will be presented a choice to import either Vim bindings or any presets that you have created yourself. If you are planning to customize the bindings, or create Vim-style commands from scratch, this document gives you pointers on how to go about doing that.</p> <p>Unlike the tutorial, the assumption throughout this documentation is that you are familiar with vim. All concepts discussed here are introduced, at least briefly, in the tutorial.</p> <h2 id="heading-#functions"><a class="header-anchor" id="functions" href="#functions"> </a>Functions</h2> <p>To begin with, we'll define some functions for use in our keybindings. Since imported keybindings can be defined using javascript, this can help generalize our bindings, allowing us to create many keybindings at once. In vim, the cannonical use for this would be the operator/object combinations: e.g. to delete a word you type <key>d</key> (for delete) and <key>w</key> (for word). This noun-verb structure implies many possible shortcuts.</p> <p>You can see these functions in use when <a href="#editing-with-motions">we define motions</a></p> <pre><code class="language-js"><span class="hljs-comment">/**
+<!DOCTYPE html><html><head><title>Modal Keys Documentation</title><meta charset="utf-8"><link rel="stylesheet" href="https://haberdashpi.github.io/vscode-modal-keys/dev/README.f14bba23.css"></head><body> <script type="module" src="https://haberdashpi.github.io/vscode-modal-keys/dev/README.ab2e5f5c.js"></script><script src="https://haberdashpi.github.io/vscode-modal-keys/dev/README.16885970.js" nomodule="" defer></script> <div class="content"> <h1 id="heading-#advanced-vim-presets"><a class="header-anchor" id="advanced-vim-presets" href="#advanced-vim-presets"> </a>Advanced vim presets</h1> <p>This document provides a more advanced set of vim keybindings than provided in the <a href="https://haberdashpi.github.io/vscode-modal-keys/dev/tutorial.html">tutorial</a>. The goal of these bindings is to lower the barrier to entry for Vim users who don't want to spend the time defining bindings from ground up. A secondary goal is to show off some of the more advanced features of ModalKeys that were not discussed in the tutorial.</p> <p>If you want to modify these presets you can export and modify them using the &quot;ModalKeys: Export a preset for keybindings&quot; command. After making any desired changes you can import them with the &quot;ModalKeys: Import preset keybindings&quot; command.</p> <p>If you are not interested in how the Vim keybindings are implemented and just want to use them, you can skip this discussion. Just import the presets by pressing <key>Ctrl/Cmd</key>+<key>Shift</key>+<key>P</key> and running command <code>ModalKeys: Import preset keybindings</code>. You will be presented a choice to import either Vim bindings or any presets that you have created yourself. If you are planning to customize the bindings, or create Vim-style commands from scratch, this document gives you pointers on how to go about doing that.</p> <p>Unlike the tutorial, the assumption throughout this documentation is that you are familiar with vim. All concepts discussed here are introduced, at least briefly, in the tutorial.</p> <h2 id="heading-#operator-definitions"><a class="header-anchor" id="operator-definitions" href="#operator-definitions"> </a>Operator Definitions</h2> <p>We start with the most important feature of a vim-like keymap: the verb-noun format allowing a combinatorial set of commands. The verbs are called operators and they do things to some portion of text. The nouns are called objects and they define some region of text the operators modify. For example delete a word you type <key>d</key> (for delete) and <key>w</key> (for word).</p> <h3 id="heading-#functions"><a class="header-anchor" id="functions" href="#functions"> </a>Functions</h3> <p>To begin with, we'll define to make defining the operators possible. Since imported keybindings can be defined using javascript, this can help generalize our bindings, allowing us to create many keybindings at once.</p> <pre><code class="language-js"><span class="hljs-comment">/**
  * Creates a series of key mappings which select a region of text around
  * or within a given boundary (e.g. {from: &quot;(&quot;, to: &quot;)&quot;})
  * 
@@ -8,35 +8,35 @@
  * <span class="hljs-doctag">@returns</span> a map of key: command pairings. Two per entry in `mappings`
  * (one for within `i` and one for around `a` the given bounds)
  */</span>
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">aroundObjects</span>(<span class="hljs-params">mappings</span>)</span>{
-    <span class="hljs-keyword">return</span> <span class="hljs-keyword">Object</span>.fromEntries(<span class="hljs-keyword">Object</span>.entries(mappings).map(([key, bounds]) =&gt; {
+ <span class="hljs-keyword">function</span> <span class="function_ hljs-title">aroundObjects</span>(<span class="hljs-params">mappings</span>){
+    <span class="hljs-keyword">return</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">fromEntries</span>(<span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(mappings).<span class="function_ hljs-title">map</span>(<span class="hljs-function">(<span class="hljs-params">[key, bounds]</span>) =&gt;</span> {
         <span class="hljs-keyword">return</span> [
             [<span class="hljs-string">&quot;a&quot;</span>+key, { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
-                ...aroundEntry(bounds),
-                inclusive: <span class="hljs-literal">true</span>
+                ...<span class="function_ hljs-title">aroundEntry</span>(bounds),
+                <span class="hljs-attr">inclusive</span>: <span class="hljs-literal">true</span>
             }}],
             [<span class="hljs-string">&quot;i&quot;</span>+key,  { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
-                ...aroundEntry(bounds),
-                inclusive: <span class="hljs-literal">false</span>
+                ...<span class="function_ hljs-title">aroundEntry</span>(bounds),
+                <span class="hljs-attr">inclusive</span>: <span class="hljs-literal">false</span>
             }}]
         ]
-    }).flat())
+    }).<span class="function_ hljs-title">flat</span>())
 }
 
 <span class="hljs-comment">/**
  * Helper function. Expands a simpler `bounds` argument to the arguments required for
  * `selectBetween`
- * <span class="hljs-doctag">@param</span> {string | {value: string} | {from: string, to: string}} bounds - 
+ * <span class="hljs-doctag">@param</span> {<span class="hljs-type">string | {value: string</span>} | {from: string, to: string}} bounds - 
  *    the characters around which a region should be selected. Can also include
  *    a `regex: true` field to indicate that the bounds are regular expressions to
  *    match, not strings.
  */</span>
- <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">aroundEntry</span>(<span class="hljs-params">bounds</span>)</span>{
+ <span class="hljs-keyword">function</span> <span class="function_ hljs-title">aroundEntry</span>(<span class="hljs-params">bounds</span>){
     <span class="hljs-keyword">return</span> {
-        <span class="hljs-keyword">from</span>: typeof(bounds) === <span class="hljs-string">&#x27;string&#x27;</span> ? bounds : bounds.value || bounds.<span class="hljs-keyword">from</span>,
-        to: typeof(bounds) === <span class="hljs-string">&#x27;string&#x27;</span> ? bounds : bounds.value || bounds.to,
-        regex: bounds.regex !== undefined,
-        docScope: <span class="hljs-literal">true</span>
+        <span class="hljs-attr">from</span>: <span class="function_ hljs-title">typeof</span>(bounds) === <span class="hljs-string">&#x27;string&#x27;</span> ? bounds : bounds.<span class="hljs-property">value</span> || bounds.<span class="hljs-property">from</span>,
+        <span class="hljs-attr">to</span>: <span class="function_ hljs-title">typeof</span>(bounds) === <span class="hljs-string">&#x27;string&#x27;</span> ? bounds : bounds.<span class="hljs-property">value</span> || bounds.<span class="hljs-property">to</span>,
+        <span class="hljs-attr">regex</span>: bounds.<span class="hljs-property">regex</span> !== <span class="hljs-literal">undefined</span>,
+        <span class="hljs-attr">docScope</span>: <span class="hljs-literal">true</span>
     }
 }
 
@@ -54,10 +54,10 @@
  *   object pairsing: e.g. ~n^2 entries. It also defines visual mode
  *   actions for each operator and repeated action commands (e.g. `dd`).
  */</span>
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">operators</span>(<span class="hljs-params">params</span>)</span>{
-    let result = {}
-    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [opkey, opcom] of <span class="hljs-keyword">Object</span>.entries(params.operators)){
-        <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [objkey, objcom] of <span class="hljs-keyword">Object</span>.entries(params.objects)){
+<span class="hljs-keyword">function</span> <span class="function_ hljs-title">operators</span>(<span class="hljs-params">params</span>){
+    <span class="hljs-keyword">let</span> result = {}
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [opkey, opcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">operators</span>)){
+        <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [objkey, objcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">objects</span>)){
             result[<span class="hljs-string">&quot;normal::&quot;</span>+opkey + objkey] = 
                 [<span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, objcom, opcom]
             result[<span class="hljs-string">&quot;normal::&quot;</span>+opkey+opkey] =
@@ -68,7 +68,128 @@
     <span class="hljs-keyword">return</span> result
 }
 
-</code></pre> <h2 id="heading-#game-plan"><a class="header-anchor" id="game-plan" href="#game-plan"> </a>Game Plan</h2> <p>We start with basic motion commands which are mostly straightforward to implement.</p> <p>A few notes:</p> <ul> <li>Where useful, <code>__count</code> is used to provide the number argument (e.g. the <code>3</code> in 3l) to a given command.</li> <li>When in visual model, most of the commands are built to extend the selection</li> </ul> <h2 id="heading-#motions-in-normal-mode"><a class="header-anchor" id="motions-in-normal-mode" href="#motions-in-normal-mode"> </a>Motions in Normal Mode</h2> <pre><code class="language-js"><span class="hljs-keyword">module</span>.<span class="hljs-keyword">exports</span> = {
+<span class="hljs-comment">/**
+ * Operator like behavior, but for objects that require the input of some number
+ * of characters before the operator can be executed. If we just used the format
+ * for `operators` above, the operator would execute before accepting input from
+ * the user. To capture user input first, we insert the operator in the
+ * `executeAfter` close of the search-like command (see docs for
+ * [`modalkeys.search`](../commands.html#incremental-search)).
+ */</span>
+<span class="hljs-keyword">function</span> <span class="function_ hljs-title">searchOperators</span>(<span class="hljs-params">params</span>){
+    <span class="hljs-keyword">let</span> result = {}
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [opkey, opcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">operators</span>)){
+        <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [objkey, objcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">objects</span>)){
+            result[<span class="hljs-string">&quot;normal::&quot;</span>+opkey+objkey] = [
+                <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, 
+                <span class="function_ hljs-title">executeAfter</span>(objcom, opcom),
+            ]
+        }
+    }
+    <span class="hljs-keyword">return</span> result
+}
+
+<span class="hljs-keyword">function</span> <span class="function_ hljs-title">executeAfter</span>(<span class="hljs-params">command, after</span>){
+    <span class="hljs-keyword">let</span> command_name = <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">keys</span>(command).<span class="function_ hljs-title">filter</span>(<span class="hljs-function"><span class="hljs-params">str</span> =&gt;</span> str !== <span class="hljs-string">&quot;repeat&quot;</span>)[<span class="hljs-number">0</span>]
+    <span class="hljs-keyword">return</span> {
+        ...command,
+        [command_name]: {
+            ...command[command_name],
+            <span class="hljs-attr">executeAfter</span>: after,
+            <span class="hljs-attr">selectTillMatch</span>: <span class="hljs-literal">true</span>
+        }
+    }
+}
+
+</code></pre> <p>Now that we've defined the functions that generator the operator, object combinations, we need to define the individual operators and objects themselves. We define some of these as variables because they need to be re-used in several places</p> <h3 id="heading-#operators"><a class="header-anchor" id="operators" href="#operators"> </a>Operators</h3> <pre><code class="language-js">const operator_commands = {
+    <span class="hljs-attribute">d</span>: &quot;editor<span class="hljs-variable">.action</span><span class="hljs-variable">.clipboardCutAction</span>&quot;,
+    y: [ &quot;editor<span class="hljs-variable">.action</span><span class="hljs-variable">.clipboardCopyAction</span>&quot;, &quot;modalkeys<span class="hljs-variable">.cancelMultipleSelections</span>&quot; ],
+    c: {
+        if: &quot;!__selection<span class="hljs-variable">.isSingleLine</span> &amp;&amp; __selection<span class="hljs-variable">.end</span><span class="hljs-variable">.character</span> == 0 &amp;&amp; __selection<span class="hljs-variable">.start</span><span class="hljs-variable">.character</span> == 0&quot;,
+</code></pre> <p>multi-line selection</p> <pre><code class="language-js"><span class="hljs-symbol">        then:</span> [
+            <span class="hljs-string">&quot;deleteRight&quot;</span>,
+            <span class="hljs-string">&quot;editor.action.insertLineBefore&quot;</span>,
+            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+        ],
+</code></pre> <p>single line selection</p> <pre><code class="language-js"><span class="hljs-symbol">        else:</span> [ 
+            <span class="hljs-string">&quot;deleteRight&quot;</span>,
+            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+        ]
+    <span class="hljs-punctuation">}</span>,
+    <span class="hljs-string">&quot;,.&quot;</span>: [
+        <span class="hljs-punctuation">{</span>
+<span class="hljs-symbol">            if:</span> <span class="hljs-string">&quot;__language == &#x27;julia&#x27;&quot;</span>,
+<span class="hljs-symbol">            then:</span> <span class="hljs-string">&quot;language-julia.executeCodeBlockOrSelectionAndMove&quot;</span>,
+<span class="hljs-symbol">            else:</span> <span class="hljs-punctuation">{</span>
+<span class="hljs-symbol">                if:</span> <span class="hljs-string">&quot;!__selection.isSingleLine&quot;</span>,
+<span class="hljs-symbol">                then:</span> <span class="hljs-string">&quot;terminal-polyglot.send-block-text&quot;</span>,
+<span class="hljs-symbol">                else:</span> <span class="hljs-string">&quot;terminal-polyglot.send-text&quot;</span>
+            <span class="hljs-punctuation">}</span>,
+        <span class="hljs-punctuation">}</span>,
+        <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.touchDocument&quot;</span>
+    ],
+    <span class="hljs-string">&quot;,;&quot;</span>: [
+        <span class="hljs-punctuation">{</span>
+<span class="hljs-symbol">            if:</span> <span class="hljs-string">&quot;!__selection.isSingleLine&quot;</span>,
+<span class="hljs-symbol">            then:</span> <span class="hljs-string">&quot;terminal-polyglot.send-block-text&quot;</span>,
+<span class="hljs-symbol">            else:</span> <span class="hljs-string">&quot;terminal-polyglot.send-text&quot;</span>
+        <span class="hljs-punctuation">}</span>,
+        <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.touchDocument&quot;</span>
+    ],
+    <span class="hljs-string">&quot;&lt;&quot;</span>: [<span class="hljs-string">&quot;editor.action.outdentLines&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span> ],
+    <span class="hljs-string">&quot;&gt;&quot;</span>: [<span class="hljs-string">&quot;editor.action.indentLines&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span> ]
+<span class="hljs-punctuation">}</span>
+
+</code></pre> <h3 id="heading-#objects"><a class="header-anchor" id="objects" href="#objects"> </a>Objects</h3> <pre><code class="language-js">const around_objects = {
+    w: { value: <span class="hljs-string">&quot;\\W&quot;</span>, regex: <span class="hljs-literal">true</span> },
+    p: { value: <span class="hljs-string">&quot;^\\s*$&quot;</span>, regex: <span class="hljs-literal">true</span> },
+    <span class="hljs-string">&quot;(&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;(&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;)&quot;</span> },
+    <span class="hljs-string">&quot;{&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;{&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;}&quot;</span> },
+    <span class="hljs-string">&quot;[&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;[&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;]&quot;</span> },
+    <span class="hljs-string">&quot;&lt;&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;&lt;&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;&gt;&quot;</span> },
+    <span class="hljs-string">&quot;)&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;(&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;)&quot;</span> },
+    <span class="hljs-string">&quot;}&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;{&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;}&quot;</span> },
+    <span class="hljs-string">&quot;]&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;[&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;]&quot;</span> },
+    <span class="hljs-string">&quot;&gt;&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;&lt;&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;&gt;&quot;</span> },
+    <span class="hljs-built_in">..</span>.(Object.fromEntries([<span class="hljs-string">&quot;&#x27;&quot;</span>, <span class="hljs-string">&quot;\&quot;&quot;</span>, <span class="hljs-string">&quot;`&quot;</span>].map(c =&gt; [c, c])))
+}
+
+</code></pre> <h3 id="heading-#jump-to-a-character-objects"><a class="header-anchor" id="jump-to-a-character-objects" href="#jump-to-a-character-objects"> </a>Jump to a Character Objects</h3> <p>Advanced cursor motions in Vim include jump to character, which is especially powerful in connection with editing commands. With this motion, we can apply edits up to or including a specified character. The same motions work also as jump commands in normal mode.</p> <p>All of these keybindings are implemented using the <a href="https://haberdashpi.github.io/vscode-modal-keys/dev/doc_index.html#incremental-search">incremental search</a> command, just the parameters are different for each case. Basically we just perform either a forward or backward search and use the &quot;offset&quot; option to determine where the cursor should land.</p> <pre><code class="language-js">const search_<span class="hljs-attr">objects</span> <span class="hljs-operator">=</span> <span class="hljs-punctuation">{</span>
+<span class="hljs-symbol">    f:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
+            <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
+            <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;inclusive&quot;</span>,
+            <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
+        <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span>,
+<span class="hljs-symbol">    F:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
+            <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
+            <span class="hljs-string">&quot;backwards&quot;</span>: true,
+            <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;inclusive&quot;</span>,
+            <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
+        <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span>,
+<span class="hljs-symbol">    t:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
+            <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
+            <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;exclusive&quot;</span>,
+            <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
+        <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span>,
+<span class="hljs-symbol">    T:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
+            <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
+            <span class="hljs-string">&quot;backwards&quot;</span>: true,
+            <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;exclusive&quot;</span>,
+            <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
+        <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span>,
+<span class="hljs-punctuation">}</span>
+
+</code></pre> <h2 id="heading-#game-plan"><a class="header-anchor" id="game-plan" href="#game-plan"> </a>Game Plan</h2> <p>We've defined everything we need to define before-hand. Now we move to actually creating the keymap.</p> <p>We start with basic motion commands which are mostly straightforward to implement.</p> <p>A few notes:</p> <ul> <li>Where useful, <code>__count</code> is used to provide the number argument (e.g. the <code>3</code> in 3l) to a given command.</li> <li>When in visual model, most of the commands are built to extend the selection</li> </ul> <h2 id="heading-#motions-in-normal-mode"><a class="header-anchor" id="motions-in-normal-mode" href="#motions-in-normal-mode"> </a>Motions in Normal Mode</h2> <pre><code class="language-js"><span class="hljs-keyword">module</span>.<span class="hljs-keyword">exports</span> = {
     <span class="hljs-string">&quot;keybindings&quot;</span>: {
 </code></pre> <p>Cursor can be advanced in a file with enter and space. These are not technically motion commands but included for compatibility.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;\n&quot;</span>: [
             <span class="hljs-string">&quot;cursorDown&quot;</span>,
@@ -85,6 +206,8 @@
 </code></pre> <p>Move to first/last non-blank character on line. Also these ones use the <code>__selecting</code> flag to check whether we are in visual mode.</p> <pre><code class="language-js">            <span class="hljs-string">&quot;^&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineFirstNonWhitespaceCharacter&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> },
             <span class="hljs-string">&quot;g_&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineLastNonWhitespaceCharacter&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> },
         },
+        <span class="hljs-string">&quot;_&quot;</span>: <span class="hljs-string">&quot;cursorHome&quot;</span>,
+        <span class="hljs-string">&quot;visual::_&quot;</span>: <span class="hljs-string">&quot;cursorHomeSelect&quot;</span>,
 
 </code></pre> <p>Moving to beginning or end of the file.</p> <pre><code class="language-js"><span class="hljs-symbol">        gg:</span> <span class="hljs-string">&quot;cursorTop&quot;</span>,
         <span class="hljs-string">&quot;visual::gg&quot;</span>: <span class="hljs-string">&quot;cursorTopSelect&quot;</span>,
@@ -124,60 +247,32 @@
         L: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;viewPortBottom&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> } },
 </code></pre> <p>Move to matching bracket command is somewhat challenging to implement consistently in VS Code. This is due to the problem that there are no commands that do exactly what Vim's motions do, and because VSCode extensions are not allowed to access VS Code's parsing of brackets 😞, and so have to re-implement parsing (see, for example, <a href="https://marketplace.visualstudio.com/items?itemName=pustelto.bracketeer">bracketeer</a>). In normal mode we call the <code>jumpToBracket</code> command which works if the cursor is on top of a bracket, but does not allow for the selection to be extended. In visual mode we use the <code>smartSelect.expand</code> command, which is <em>roughly</em> equivlaent. In many cases, it is more useful motion than jumping to a matching bracket, but using it means that we are diverging from Vim's functionality.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;%&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.jumpToBracket&quot;</span><span class="hljs-punctuation">,</span>
         <span class="hljs-attr">&quot;visual::%&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.smartSelect.expand&quot;</span><span class="hljs-punctuation">,</span>
-</code></pre> <h2 id="heading-#jump-to-a-character"><a class="header-anchor" id="jump-to-a-character" href="#jump-to-a-character"> </a>Jump to a Character</h2> <p>Advanced cursor motions in Vim include jump to character, which is especially powerful in connection with editing commands. With this motion, we can apply edits up to or including a specified character. The same motions work also as jump commands in normal mode.</p> <p>All of these keybindings are implemented using the <a href="https://haberdashpi.github.io/vscode-modal-keys/dev/doc_index.html#incremental-search">incremental search</a> command, just the parameters are different for each case. Basically we just perform either a forward or backward search and use the &quot;offset&quot; option to determine where the cursor should land.</p> <pre><code class="language-js">        f: {
-            <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
-                <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;inclusive&quot;</span>,
-                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
-            }
-        },
-        F: {
-            <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
-                <span class="hljs-string">&quot;backwards&quot;</span>: true,
-                <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;inclusive&quot;</span>,
-                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
-            }
-        },
-        t: {
-            <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
-                <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;exclusive&quot;</span>,
-                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
-            }
-        },
-        T: {
-            <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
-                <span class="hljs-string">&quot;backwards&quot;</span>: true,
-                <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;exclusive&quot;</span>,
-                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
-            }
-        },
+
+</code></pre> <h2 id="heading-#search-operators"><a class="header-anchor" id="search-operators" href="#search-operators"> </a>Search Operators</h2> <p>Having defined the search operators above, we now insert them into the keymap</p> <pre><code class="language-js">        .<span class="hljs-built_in">..search</span>_objects,
 
 </code></pre> <p>Repeating the motions can be done simply by calling <code>nextMatch</code> or <code>previousMatch</code>.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;;&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span><span class="hljs-punctuation">,</span>
-        <span class="hljs-attr">&quot;,&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span><span class="hljs-punctuation">,</span>
-</code></pre> <h2 id="heading-#switching-between-modes"><a class="header-anchor" id="switching-between-modes" href="#switching-between-modes"> </a>Switching between Modes</h2> <p>Next, we define keybindings that switch between normal, insert, and visual mode:</p> <pre><code class="language-js"><span class="hljs-symbol">        i:</span> <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>,
+        <span class="hljs-attr">&quot;,,&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span><span class="hljs-punctuation">,</span>
+</code></pre> <h2 id="heading-#switching-between-modes"><a class="header-anchor" id="switching-between-modes" href="#switching-between-modes"> </a>Switching between Modes</h2> <p>Next, we define keybindings that switch between normal, insert, and visual mode:</p> <pre><code class="language-js">        <span class="hljs-string">&quot;normal::i&quot;</span>: <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>,
 <span class="hljs-symbol">        I:</span> [
             <span class="hljs-string">&quot;cursorHome&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
         ],
-</code></pre> <p>The <code>a</code> has to check if the cursor is at the end of line. If so, we don't move right because that would move to next line.</p> <pre><code class="language-js"><span class="hljs-symbol">        a:</span> [
-            <span class="hljs-punctuation">{</span>
+</code></pre> <p>The <code>a</code> has to check if the cursor is at the end of line. If so, we don't move right because that would move to next line.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;normal::a&quot;</span>: [
+            {
                 <span class="hljs-string">&quot;if&quot;</span>: <span class="hljs-string">&quot;__char == &#x27;&#x27;&quot;</span>,
                 <span class="hljs-string">&quot;else&quot;</span>: <span class="hljs-string">&quot;cursorRight&quot;</span>
-            <span class="hljs-punctuation">}</span>,
+            },
             <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
         ],
-<span class="hljs-symbol">        A:</span> [
+        <span class="hljs-symbol">A</span>: [
             <span class="hljs-string">&quot;cursorEnd&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
         ],
-<span class="hljs-symbol">        o:</span> [
+        o: [
             <span class="hljs-string">&quot;editor.action.insertLineAfter&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
         ],
-<span class="hljs-symbol">        O:</span> [
+        <span class="hljs-symbol">O</span>: [
             <span class="hljs-string">&quot;editor.action.insertLineBefore&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
         ],
@@ -215,25 +310,15 @@
         ],
 </code></pre> <p>The last &quot;simple&quot; keybinding we define is <key>`</key> that repeats the last command that changed the text somehow. This command is provided by ModalKeys. It checks after each key sequence is typed whether it caused a change in file. If so, it stores the seqeuence as a change. The command just runs the stored keysequence again.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;.&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.repeatLastChange&quot;</span><span class="hljs-punctuation">,</span>
 </code></pre> <h2 id="heading-#editing-with-motions"><a class="header-anchor" id="editing-with-motions" href="#editing-with-motions"> </a>Editing with Motions</h2> <p>So, far we have kept the structure of keybindings quite simple. Now we tackle the types of keybinding that work in tandem with motion commands. Examples of such commands include:</p> <p><key>c</key><key>i</key><key>b</key> - Change text inside curly braces <code>{}</code></p> <p><key>&gt;</key><key>G</key> - Indent rest of the file</p> <p><key>y</key><key>`</key><key>a</key> - Yank text from cursor position to mark <code>a</code></p> <p>We can combine any editing command with any motion, which gives us thousands of possible combinations. First type the command key and then motion which specifies the position or range you want to apply the command to.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>d</code>&lt;<em>motion</em>&gt;</td><td>Delete range specified by &lt;<em>motion</em>&gt;</td></tr> <tr><td><code>c</code>&lt;<em>motion</em>&gt;</td><td>Delete range specified by &lt;<em>motion</em>&gt; and switch to insert mode</td></tr> <tr><td><code>y</code>&lt;<em>motion</em>&gt;</td><td>Yank range specified by &lt;<em>motion</em>&gt; to clipboard</td></tr> <tr><td><code>&gt;</code>&lt;<em>motion</em>&gt;</td><td>Indent range specified by &lt;<em>motion</em>&gt;</td></tr> <tr><td><code>&lt;</code>&lt;<em>motion</em>&gt;</td><td>Outdent range specified by &lt;<em>motion</em>&gt;</td></tr> <tr><td><code>=</code>&lt;<em>motion</em>&gt;</td><td>Reindent (reformat) range specified by &lt;<em>motion</em>&gt;</td></tr> </tbody> </table> <p>We can define all commands listed above in a single keybinding block. Remember that our strategy is just to map the key sequences of the edit commands that use motions to equivalent commands that work in visual mode. We do the specified motion in visual mode selecting a range of text, and then running the command on the selection. It does not matter which editing command we run, all of them can be mapped the same way.</p> <pre><code class="language-js">       ...operators({
-        operators: {
-            d: <span class="hljs-string">&quot;editor.action.clipboardCutAction&quot;</span>,
-            y: [ <span class="hljs-string">&quot;editor.action.clipboardCopyAction&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span> ],
-            c: [
-                <span class="hljs-string">&quot;deleteRight&quot;</span>,
-                { <span class="hljs-keyword">if</span>: <span class="hljs-string">&quot;!__selection.isSingleLine&quot;</span>, <span class="hljs-keyword">then</span>: <span class="hljs-string">&quot;editor.action.insertLineBefore&quot;</span> },
-                <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
-            ],
-            <span class="hljs-string">&quot;&lt;&quot;</span>: [<span class="hljs-string">&quot;editor.action.outdentLines&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span> ],
-            <span class="hljs-string">&quot;&gt;&quot;</span>: [<span class="hljs-string">&quot;editor.action.indentLines&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span> ]
-        },
+        operators: operator_commands,
         objects: {
             j: [
                 <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
                 {
                     <span class="hljs-string">&quot;cursorMove&quot;</span>: {
-                        <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;down&#x27;</span>,
+                        to: <span class="hljs-string">&#x27;down&#x27;</span>,
                         by: <span class="hljs-string">&#x27;wrappedLine&#x27;</span>,
-                        <span class="hljs-built_in">select</span>: <span class="hljs-literal">true</span>,
+                        select: <span class="hljs-literal">true</span>,
                         value: <span class="hljs-string">&#x27;__count&#x27;</span>
                     }
                 },
@@ -243,34 +328,37 @@
                 <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
                 {
                     <span class="hljs-string">&quot;cursorMove&quot;</span>: {
-                        <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;up&#x27;</span>,
+                        to: <span class="hljs-string">&#x27;up&#x27;</span>,
                         by: <span class="hljs-string">&#x27;wrappedLine&#x27;</span>,
-                        <span class="hljs-built_in">select</span>: <span class="hljs-literal">true</span>,
+                        select: <span class="hljs-literal">true</span>,
                         value: <span class="hljs-string">&#x27;__count&#x27;</span>
                     }
                 },
                 <span class="hljs-string">&quot;expandLineSelection&quot;</span>,
             ],
-            ...(<span class="hljs-built_in">Object</span>.fromEntries([<span class="hljs-string">&quot;f&quot;</span>, <span class="hljs-string">&quot;F&quot;</span>, <span class="hljs-string">&quot;t&quot;</span>, <span class="hljs-string">&quot;T&quot;</span>, <span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-string">&quot;b&quot;</span>, <span class="hljs-string">&quot;e&quot;</span>, <span class="hljs-string">&quot;W&quot;</span>, <span class="hljs-string">&quot;B&quot;</span>, <span class="hljs-string">&quot;E&quot;</span>, <span class="hljs-string">&quot;^&quot;</span>,
+            ...(<span class="hljs-built_in">Object</span>.fromEntries([<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-string">&quot;b&quot;</span>, <span class="hljs-string">&quot;e&quot;</span>, <span class="hljs-string">&quot;W&quot;</span>, <span class="hljs-string">&quot;B&quot;</span>, <span class="hljs-string">&quot;E&quot;</span>, <span class="hljs-string">&quot;^&quot;</span>,
                     <span class="hljs-string">&quot;$&quot;</span>, <span class="hljs-string">&quot;0&quot;</span>, <span class="hljs-string">&quot;G&quot;</span>, <span class="hljs-string">&quot;H&quot;</span>, <span class="hljs-string">&quot;M&quot;</span>, <span class="hljs-string">&quot;L&quot;</span>, <span class="hljs-string">&quot;%&quot;</span>, <span class="hljs-string">&quot;g_&quot;</span>, <span class="hljs-string">&quot;gg&quot;</span>].
-                map(k =&gt; [k, { <span class="hljs-string">&quot;modalkeys.typeKeys&quot;</span>: { <span class="hljs-built_in">keys</span>: <span class="hljs-string">&quot;v&quot;</span>+k } } ]))),
-            ...aroundObjects({
-                w: { value: <span class="hljs-string">&quot;\\W&quot;</span>, regex: <span class="hljs-literal">true</span> },
-                p: { value: <span class="hljs-string">&quot;(?&lt;=\\r?\\n)\\s*\\r?\\n&quot;</span>, regex: <span class="hljs-literal">true</span> },
-                <span class="hljs-string">&quot;(&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;(&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;)&quot;</span> },
-                <span class="hljs-string">&quot;{&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;{&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;}&quot;</span> },
-                <span class="hljs-string">&quot;[&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;[&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;]&quot;</span> },
-                <span class="hljs-string">&quot;&lt;&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;&lt;&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;&gt;&quot;</span> },
-                <span class="hljs-string">&quot;)&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;(&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;)&quot;</span> },
-                <span class="hljs-string">&quot;}&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;{&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;}&quot;</span> },
-                <span class="hljs-string">&quot;]&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;[&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;]&quot;</span> },
-                <span class="hljs-string">&quot;&gt;&quot;</span>: { <span class="hljs-keyword">from</span>: <span class="hljs-string">&quot;&lt;&quot;</span>, <span class="hljs-keyword">to</span>: <span class="hljs-string">&quot;&gt;&quot;</span> },
-                ...(<span class="hljs-built_in">Object</span>.fromEntries([<span class="hljs-string">&quot;&#x27;&quot;</span>, <span class="hljs-string">&quot;\&quot;&quot;, &quot;</span>`<span class="hljs-string">&quot;].map(c =&gt; [c, c])))
-            }),
+                <span class="hljs-keyword">map</span>(k =&gt; [k, { <span class="hljs-string">&quot;modalkeys.typeKeys&quot;</span>: { keys: <span class="hljs-string">&quot;v&quot;</span>+k } } ]))),
+            ...aroundObjects(around_objects),
+            <span class="hljs-string">&quot;[&quot;</span>: <span class="hljs-string">&quot;vscode-select-by-indent.select-inner&quot;</span>,
+            <span class="hljs-string">&quot;{&quot;</span>: <span class="hljs-string">&quot;vscode-select-by-indent.select-outer&quot;</span>,
         }
        }),
 
-</span></code></pre> <h2 id="heading-#searching"><a class="header-anchor" id="searching" href="#searching"> </a>Searching</h2> <p>Searching introduces a pseudo-mode that captures the keyboard and suspends other commands as long as search is on. Searching commands are shown below.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>/</code></td><td>Start case-sensitive search forwards</td></tr> <tr><td><code>?</code></td><td>Start case-sensitive search backwards</td></tr> <tr><td><code>n</code></td><td>Select the next match</td></tr> <tr><td><code>p</code></td><td>Select the previous match</td></tr> </tbody> </table> <p><strong>Note</strong>: Searching commands work also with multiple cursors. As in Vim, search wraps around if top or bottom of file is encountered.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;/&quot;</span>: [
+       ...searchOperators({
+            operators: operator_commands,
+            objects: search_objects,
+       }),
+
+       ...(<span class="hljs-built_in">Object</span>.fromEntries(<span class="hljs-built_in">Object</span>.entries(aroundObjects(around_objects)).
+            <span class="hljs-keyword">map</span>(([bind, command]) =&gt; {
+           <span class="hljs-keyword">return</span> [<span class="hljs-string">&quot;visual::&quot;</span>+bind, command]
+       }))),
+
+       gd: <span class="hljs-string">&quot;editor.action.revealDefinition&quot;</span>,
+       gq: <span class="hljs-string">&quot;rewrap.rewrapComment&quot;</span>,
+
+</code></pre> <h2 id="heading-#searching"><a class="header-anchor" id="searching" href="#searching"> </a>Searching</h2> <p>Searching introduces a pseudo-mode that captures the keyboard and suspends other commands as long as search is on. Searching commands are shown below.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>/</code></td><td>Start case-sensitive search forwards</td></tr> <tr><td><code>?</code></td><td>Start case-sensitive search backwards</td></tr> <tr><td><code>n</code></td><td>Select the next match</td></tr> <tr><td><code>p</code></td><td>Select the previous match</td></tr> </tbody> </table> <p><strong>Note</strong>: Searching commands work also with multiple cursors. As in Vim, search wraps around if top or bottom of file is encountered.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;/&quot;</span>: [
             {
                 <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
                     <span class="hljs-string">&quot;caseSensitive&quot;</span>: <span class="hljs-literal">true</span>,
