@@ -397,6 +397,11 @@ module.exports = {
 // seek to mimc visual mode particularly. Basically, we just toggle a switch that allows the
 // motion commands to extend and create selections.
         v: "modalkeys.toggleSelection",
+// In visual mode `o` lets us swap the location of the the cursor between the
+// ends of a selection. We use [Selection
+// Utilities](https://github.com/haberdashPI/vscode-selection-utilities) to
+// implement this behavior.
+        "visual::o": "selection-utilities.exchangeAnchorActive",
 // ## Editing in Normal Mode
 
 // Editing commands in normal mode typically either affect current character or
