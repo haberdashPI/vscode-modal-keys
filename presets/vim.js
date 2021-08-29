@@ -23,16 +23,30 @@
 // are familiar with vim. All concepts discussed here are introduced, at least
 // briefly, in the tutorial.
 
-// ## Functions
+// ## Operator Definitions
 
-// To begin with, we'll define some functions for use in our keybindings. Since
+// We start with the most important feature of a vim-like keymap: the verb-noun
+// format allowing a combinatorial set of commands. The verbs are called
+// operators and they do things to some portion of text. The nouns are called
+// objects and they define some region of text the operators modify. For
+// example delete a word you type <key>d</key> (for delete) and <key>w</key>
+// (for word). 
+
+// ### Required extensions
+
+// Unlike the tutorial, these settings are not self-contained and make use of a
+// variety of extensions to allow for a better set of features. You wil need the
+// following extensions for all bindings to work:
+
+// - [Quick and Simple Text Selection](https://marketplace.visualstudio.com/items?itemName=dbankier.vscode-quick-select)
+// - [Selection Utilities](https://marketplace.visualstudio.com/items?itemName=haberdashPI.selection-utilities)
+// - [Select by Indent](https://marketplace.visualstudio.com/items?itemName=haberdashPI.vscode-select-by-indent)
+
+// ### Functions
+
+// To begin with, we'll define to make defining the operators possible. Since
 // imported keybindings can be defined using javascript, this can help generalize
-// our bindings, allowing us to create many keybindings at once. In vim, the
-// cannonical use for this would be the operator/object combinations: e.g. to
-// delete a word you type <key>d</key> (for delete) and <key>w</key> (for word). This noun-verb
-// structure implies many possible shortcuts.
-
-// You can see these functions in use when [we define motions](#editing-with-motions)
+// our bindings, allowing us to create many keybindings at once. 
 
 /**
  * Creates a series of key mappings which select a region of text around
@@ -44,7 +58,7 @@
  * @returns a map of key: command pairings. Two per entry in `mappings`
  * (one for within `i` and one for around `a` the given bounds)
  */
-function aroundObjects(mappings){
+ function aroundObjects(mappings){
     return Object.fromEntries(Object.entries(mappings).map(([key, bounds]) => {
         return [
             ["a"+key, { "modalkeys.selectBetween": {
@@ -104,8 +118,146 @@ function operators(params){
     return result
 }
 
+/**
+ * Operator like behavior, but for objects that require the input of some number
+ * of characters before the operator can be executed. If we just used the format
+ * for `operators` above, the operator would execute before accepting input from
+ * the user. To capture user input first, we insert the operator in the
+ * `executeAfter` close of the search-like command (see docs for
+ * [`modalkeys.search`](../commands.html#incremental-search)).
+ */
+function searchOperators(params){
+    let result = {}
+    for(const [opkey, opcom] of Object.entries(params.operators)){
+        for(const [objkey, objcom] of Object.entries(params.objects)){
+            result["normal::"+opkey+objkey] = [
+                "modalkeys.cancelMultipleSelections", 
+                executeAfter(objcom, opcom),
+            ]
+        }
+    }
+    return result
+}
+
+function executeAfter(command, after){
+    let command_name = Object.keys(command).filter(str => str !== "repeat")[0]
+    return {
+        ...command,
+        [command_name]: {
+            ...command[command_name],
+            executeAfter: after,
+            selectTillMatch: true
+        }
+    }
+}
+
+// Now that we've defined the functions that generator the operator, object
+// combinations, we need to define the individual operators and objects
+// themselves. We define some of these as variables because they need to be
+// re-used in several places 
+
+// ### Operators
+
+const operator_commands = {
+    d: "editor.action.clipboardCutAction",
+    y: [ "editor.action.clipboardCopyAction", "modalkeys.cancelMultipleSelections" ],
+    c: {
+        if: "!__selection.isSingleLine && __selection.end.character == 0 && __selection.start.character == 0",
+        // multi-line selection
+        then: [
+            "deleteRight",
+            "editor.action.insertLineBefore",
+            "modalkeys.enterInsert"
+        ],
+        // single line selection
+        else: [ 
+            "deleteRight",
+            "modalkeys.enterInsert"
+        ]
+    },
+    ",.": [
+        {
+            if: "__language == 'julia'",
+            then: "language-julia.executeCodeBlockOrSelectionAndMove",
+            else: {
+                if: "!__selection.isSingleLine",
+                then: "terminal-polyglot.send-block-text",
+                else: "terminal-polyglot.send-text"
+            },
+        },
+        "modalkeys.cancelMultipleSelections",
+        "modalkeys.touchDocument"
+    ],
+    ",;": [
+        {
+            if: "!__selection.isSingleLine",
+            then: "terminal-polyglot.send-block-text",
+            else: "terminal-polyglot.send-text"
+        },
+        "modalkeys.cancelMultipleSelections",
+        "modalkeys.touchDocument"
+    ],
+    "<": ["editor.action.outdentLines", "modalkeys.cancelMultipleSelections" ],
+    ">": ["editor.action.indentLines", "modalkeys.cancelMultipleSelections" ]
+}
+
+// ### Objects
+
+const around_objects = {
+    w: { value: "\\W", regex: true },
+    p: { value: "^\\s*$", regex: true },
+    ...(Object.fromEntries(["'", "\"", "`"].map(c => [c, c])))
+}
+
+// ### Jump to a Character Objects
+
+// Advanced cursor motions in Vim include jump to character, which is especially powerful in
+// connection with editing commands. With this motion, we can apply edits up to or including a
+// specified character. The same motions work also as jump commands in normal mode. 
+
+// All of these keybindings are implemented using the [incremental
+// search](../doc_index.html#incremental-search) command, just the parameters are different for
+// each case. Basically we just perform either a forward or backward search and use the
+// "offset" option to determine where the cursor should land.
+
+const search_objects = {
+    f: {
+        "modalkeys.search": {
+            "acceptAfter": 1,
+            "offset": "inclusive",
+            "selectTillMatch": "__mode == 'visual'",
+        }
+    },
+    F: {
+        "modalkeys.search": {
+            "acceptAfter": 1,
+            "backwards": true,
+            "offset": "inclusive",
+            "selectTillMatch": "__mode == 'visual'",
+        }
+    },
+    t: {
+        "modalkeys.search": {
+            "acceptAfter": 1,
+            "offset": "exclusive",
+            "selectTillMatch": "__mode == 'visual'",
+        }
+    },
+    T: {
+        "modalkeys.search": {
+            "acceptAfter": 1,
+            "backwards": true,
+            "offset": "exclusive",
+            "selectTillMatch": "__mode == 'visual'",
+        }
+    },
+}
+
 // 
 // ## Game Plan
+
+// We've defined everything we need to define before-hand. Now we move to
+// actually creating the keymap.
 
 // We start with basic motion commands which are mostly straightforward to
 // implement. 
@@ -141,6 +293,7 @@ module.exports = {
             "^": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__mode == "visual"' },
             "g_": { to: 'wrappedLineLastNonWhitespaceCharacter', select: '__mode == "visual"' },
         },
+        "_": "cursorHomeSelect",
 
 // Moving to beginning or end of the file.
         gg: "cursorTop",
@@ -203,62 +356,26 @@ module.exports = {
 // bracket, but using it means that we are diverging from Vim's functionality.
         "%": "editor.action.jumpToBracket",
         "visual::%": "editor.action.smartSelect.expand",
-// ## Jump to a Character
 
-// Advanced cursor motions in Vim include jump to character, which is especially powerful in
-// connection with editing commands. With this motion, we can apply edits up to or including a
-// specified character. The same motions work also as jump commands in normal mode. 
-
-// All of these keybindings are implemented using the [incremental
-// search](../doc_index.html#incremental-search) command, just the parameters are different for
-// each case. Basically we just perform either a forward or backward search and use the
-// "offset" option to determine where the cursor should land.
-        f: {
-            "modalkeys.search": {
-                "acceptAfter": 1,
-                "offset": "inclusive",
-                "selectTillMatch": "__mode == 'visual'",
-            }
-        },
-        F: {
-            "modalkeys.search": {
-                "acceptAfter": 1,
-                "backwards": true,
-                "offset": "inclusive",
-                "selectTillMatch": "__mode == 'visual'",
-            }
-        },
-        t: {
-            "modalkeys.search": {
-                "acceptAfter": 1,
-                "offset": "exclusive",
-                "selectTillMatch": "__mode == 'visual'",
-            }
-        },
-        T: {
-            "modalkeys.search": {
-                "acceptAfter": 1,
-                "backwards": true,
-                "offset": "exclusive",
-                "selectTillMatch": "__mode == 'visual'",
-            }
-        },
+// ## Search Operators
+// Having defined the search operators above, we now insert them into the keymap
+        ...search_objects,
 
 // Repeating the motions can be done simply by calling `nextMatch` or
 // `previousMatch`.
         ";": "modalkeys.nextMatch",
-        ",": "modalkeys.previousMatch",
+        ",,": "modalkeys.previousMatch",
 // ## Switching between Modes
 
 // Next, we define keybindings that switch between normal, insert, and visual mode:
-        i: "modalkeys.enterInsert",
+        "normal::i": "modalkeys.enterInsert",
         I: [
             "cursorHome",
             "modalkeys.enterInsert"
         ],
 // The `a` has to check if the cursor is at the end of line. If so, we don't move
 // right because that would move to next line.
-        a: [
+        "normal::a": [
             {
                 "if": "__char == ''",
                 "else": "cursorRight"
@@ -381,17 +498,7 @@ module.exports = {
 // on the selection. It does not matter which editing command we run, all of them
 // can be mapped the same way.
        ...operators({
-        operators: {
-            d: "editor.action.clipboardCutAction",
-            y: [ "editor.action.clipboardCopyAction", "modalkeys.cancelMultipleSelections" ],
-            c: [
-                "deleteRight",
-                { if: "!__selection.isSingleLine", then: "editor.action.insertLineBefore" },
-                "modalkeys.enterInsert"
-            ],
-            "<": ["editor.action.outdentLines", "modalkeys.cancelMultipleSelections" ],
-            ">": ["editor.action.indentLines", "modalkeys.cancelMultipleSelections" ]
-        },
+        operators: operator_commands,
         objects: {
             j: [
                 "modalkeys.cancelMultipleSelections",
@@ -417,24 +524,44 @@ module.exports = {
                 },
                 "expandLineSelection",
             ],
-            ...(Object.fromEntries(["f", "F", "t", "T", "w", "b", "e", "W", "B", "E", "^",
+            "i(": "extension.selectParenthesis",
+            "a(": "extension.selectParenthesisOuter",
+            "i[": "extension.selectSquareBrackets",
+            "a[": "extension.selectSquareBracketsOuter",
+            "i{": "extension.selectCurlyBrackets",
+            "a{": "extension.selectCurlyBracketsOuter",
+            "i<": "extension.selectAngleBrackets",
+            "a<": "extension.selectAngleBracketsOuter",
+            ...(Object.fromEntries(["w", "b", "e", "W", "B", "E", "^",
                     "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
                 map(k => [k, { "modalkeys.typeKeys": { keys: "v"+k } } ]))),
-            ...aroundObjects({
-                w: { value: "\\W", regex: true },
-                p: { value: "(?<=\\r?\\n)\\s*\\r?\\n", regex: true },
-                "(": { from: "(", to: ")" },
-                "{": { from: "{", to: "}" },
-                "[": { from: "[", to: "]" },
-                "<": { from: "<", to: ">" },
-                ")": { from: "(", to: ")" },
-                "}": { from: "{", to: "}" },
-                "]": { from: "[", to: "]" },
-                ">": { from: "<", to: ">" },
-                ...(Object.fromEntries(["'", "\"", "`"].map(c => [c, c])))
-            }),
+            ...aroundObjects(around_objects),
+            "[": "vscode-select-by-indent.select-inner",
+            "{": "vscode-select-by-indent.select-outer",
         }
        }),
+
+       ...searchOperators({
+            operators: operator_commands,
+            objects: search_objects,
+       }),
+
+       ...(Object.fromEntries(Object.entries(aroundObjects(around_objects)).
+            map(([bind, command]) => {
+           return ["visual::"+bind, command]
+       }))),
+
+       "visual::i(": "extension.selectParenthesis",
+       "visual::a(": "extension.selectParenthesisOuter",
+       "visual::i[": "extension.selectSquareBrackets",
+       "visual::a[": "extension.selectSquareBracketsOuter",
+       "visual::i{": "extension.selectCurlyBrackets",
+       "visual::a{": "extension.selectCurlyBracketsOuter",
+       "visual::i<": "extension.selectAngleBrackets",
+       "visual::a<": "extension.selectAngleBracketsOuter",
+
+       gd: "editor.action.revealDefinition",
+       gq: "rewrap.rewrapComment",
 
 // ## Searching
 
