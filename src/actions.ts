@@ -273,15 +273,7 @@ function validateAndResolveKeymaps(keybindings: Keymap) {
             let target = keybindings[key]
             if (isKeymap(target))
                 validateAndResolveKeymaps(target)
-            else if (typeof target === 'number') {
-                let id = target
-                target = keymapsById[id]
-                if (!target)
-                    error(`Undefined keymap id: ${id}`)
-                else
-                    keybindings[key] = target
-            }
-            if (key.match(/[0-9]+/) || (key.length > 1 && key !== '__keymap'))
+            if (key.length > 1 && key !== '__keymap')
                 error(`Invalid key binding: "${key}"`)
         }
     }
@@ -832,7 +824,16 @@ export class KeyState {
         if (command){
             this.capturedKeys.push(key)
             await this.executeVSCommand(command, key)
-        }else if (newKeymap && newKeymap[key]) {
+        }
+        // if a count is already starting to be entered, additional numbers will
+        // contribute to this count, even if there are commands that accept that
+        // include those numbers: e.g. 0 can be used as a command, unless it
+        // proceedes other numbers.
+        else if(this.argumentCount !== undefined && !this.countFinalized &&
+            key.match('[0-9]+')){
+            this.updateCount(Number(key))
+        }
+        else if (newKeymap && newKeymap[key]) {
             if(await this.execute(newKeymap[key], keyMode)){
                 this.reset()
             }
