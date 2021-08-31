@@ -44,9 +44,10 @@
 
 // ### Functions
 
-// To begin with, we'll define to make defining the operators possible. Since
-// imported keybindings can be defined using javascript, this can help generalize
-// our bindings, allowing us to create many keybindings at once. 
+// To begin with, we'll define some function to make creating the operators
+// easier. Since imported keybindings can be defined using javascript, this can
+// help generalize our bindings, allowing us to create many keybindings at once.
+// 
 
 /**
  * Creates a series of key mappings which select a region of text around
@@ -547,6 +548,28 @@ module.exports = {
                     "cursorMove": {
                         to: 'up',
                         by: 'wrappedLine',
+                        select: true,
+                        value: '__count'
+                    }
+                },
+                "expandLineSelection",
+            ],
+            h: [
+                "modalkeys.cancelMultipleSelections",
+                {
+                    "cursorMove": {
+                        to: 'left',
+                        select: true,
+                        value: '__count'
+                    }
+                },
+                "expandLineSelection",
+            ],
+            l: [
+                "modalkeys.cancelMultipleSelections",
+                {
+                    "cursorMove": {
+                        to: 'right',
                         select: true,
                         value: '__count'
                     }
