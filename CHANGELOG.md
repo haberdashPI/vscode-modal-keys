@@ -4,6 +4,8 @@ All notable changes to the ModalKeys extension will be documented in this file.
 
 ## Veresion 0.5.2
 - **Bugfix**: Improve vim presents; search-based operations now work (e.g. `df[c]`).
+- **Feature**: Added `{` and `}` motions to vim preset.
+- **Bugfix**: Search edge case near newlines.
 
 ## Version 0.5.1
 - **Bugfix**: properly redirect preset output
