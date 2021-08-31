@@ -214,7 +214,7 @@
         <span class="hljs-string">&quot;visual::b&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartLeftSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
         W: {
             <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\W+&quot;</span>,
+                <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\S+&quot;</span>,
                 <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-symbol">&#x27;inclusive</span>&#x27;,
                 <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
                 <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-symbol">&#x27;__mode</span> == <span class="hljs-string">&quot;visual&quot;</span>&#x27;,
@@ -224,7 +224,32 @@
         },
         B: {
             <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\W+&quot;</span>,
+                <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\S+&quot;</span>,
+                <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-symbol">&#x27;inclusive</span>&#x27;,
+                <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
+                <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
+                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-symbol">&#x27;__mode</span> == <span class="hljs-string">&quot;visual&quot;</span>&#x27;,
+                <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
+            },
+            <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-symbol">&#x27;__count</span>&#x27;,
+        },
+
+</code></pre> <p>To jump paragraphs we just search for the first blank line. When moving forward, we need to use <code>executeAfter</code> (which runs a command after search is accepterd). We use this to move one extra character forward to get to the actual empty line because of the way search works with newlines.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;}&quot;</span>: {
+            <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+                <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;^\\s*$&quot;</span>,
+                <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-symbol">&#x27;inclusive</span>&#x27;,
+                <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
+                <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">false</span>,
+                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-symbol">&#x27;__mode</span> == <span class="hljs-string">&quot;visual&quot;</span>&#x27;,
+                <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
+                <span class="hljs-string">&quot;executeAfter&quot;</span>: { <span class="hljs-string">&quot;cursorMove&quot;</span>: 
+                    { to: <span class="hljs-symbol">&#x27;right</span>&#x27;, select: <span class="hljs-symbol">&#x27;__mode</span> == <span class="hljs-string">&quot;visual&quot;</span>&#x27; } }
+            },
+            <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-symbol">&#x27;__count</span>&#x27;,
+        },
+        <span class="hljs-string">&quot;{&quot;</span>: {
+            <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+                <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;^\\s*$&quot;</span>,
                 <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-symbol">&#x27;inclusive</span>&#x27;,
                 <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
                 <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
