@@ -319,7 +319,7 @@ module.exports = {
         "visual::b": { "cursorWordStartLeftSelect": {}, "repeat": "__count" },
         W: {
             "modalkeys.search": {
-                "text": "\\W+",
+                "text": "\\S+",
                 "offset": 'inclusive',
                 "regex": true,
                 "selectTillMatch": '__mode == "visual"',
@@ -329,7 +329,36 @@ module.exports = {
         },
         B: {
             "modalkeys.search": {
-                "text": "\\W+",
+                "text": "\\S+",
+                "offset": 'inclusive',
+                "regex": true,
+                "backwards": true,
+                "selectTillMatch": '__mode == "visual"',
+                "highlightMatches": false,
+            },
+            "repeat": '__count',
+        },
+
+// To jump paragraphs we just search for the first blank line. When moving
+// forward, we need to use `executeAfter` (which runs a command after search is
+// accepterd). We use this to move one extra character forward to get to the
+// actual empty line because of the way search works with newlines.
+        "}": {
+            "modalkeys.search": {
+                "text": "^\\s*$",
+                "offset": 'inclusive',
+                "regex": true,
+                "backwards": false,
+                "selectTillMatch": '__mode == "visual"',
+                "highlightMatches": false,
+                "executeAfter": { "cursorMove": 
+                    { to: 'right', select: '__mode == "visual"' } }
+            },
+            "repeat": '__count',
+        },
+        "{": {
+            "modalkeys.search": {
+                "text": "^\\s*$",
                 "offset": 'inclusive',
                 "regex": true,
                 "backwards": true,
