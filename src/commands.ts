@@ -484,6 +484,35 @@ async function runActionForKey(key: string, mode: string = keyMode, state: KeySt
     return !state.waitingForKey()
 }
 
+
+/**
+ * Translate the position, wrapping across lines.
+ * 
+ * @param x position to modify
+ * @param doc document the position is from
+ * @param val the amount to move by (in characters)
+ * @returns the newly translated position
+ */
+function wrappedTranslate(x: vscode.Position, doc: vscode.TextDocument, val: number){
+    if(val < 0){
+        let result = x
+        while(result.character + val < 0){
+            val += 1;
+            result = result.translate(-1, 0);
+            result = result.translate(0, doc.lineAt(result).range.end.character)
+        }
+        return result.translate(0, val);
+    }else{
+        let result = x;
+        while(result.character + val > doc.lineAt(result).range.end.character){
+            val -= 1;
+            result = new vscode.Position(result.line+1, 0)
+        }
+        return result.translate(0, val);
+    }
+}
+
+
 function handleTypeSubscription(newmode: string){
     if(newmode !== Insert){
         if(!typeSubscription) typeSubscription = vscode.commands.registerCommand("type", onType)
@@ -855,7 +884,7 @@ function highlightMatches(editor: vscode.TextEditor,
                     [result.value.end, result.value.start]
                 if (!searchSelectTillMatch) anchor = active
                 else anchor = sel.anchor
-                newsel = positionSearch(new vscode.Selection(anchor, active), 
+                newsel = positionSearch(new vscode.Selection(anchor, active), doc,
                     result.value.end.character - result.value.start.character, 
                     !searchBackwards)
                 if(!newsel.start.isEqual(sel.start) || !newsel.end.isEqual(sel.end)) break
@@ -943,7 +972,7 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
     }
 }
 
-function positionSearch(sel: vscode.Selection, len: number, forward: boolean){
+function positionSearch(sel: vscode.Selection, doc: vscode.TextDocument, len: number, forward: boolean){
     let offset = 0;
     if(searchOffset === 'exclusive'){
         offset = forward ? -len : len
@@ -966,7 +995,7 @@ function positionSearch(sel: vscode.Selection, len: number, forward: boolean){
     }
 
     if(offset !== 0){
-        let newpos = sel.active.translate(0, offset)
+        let newpos = wrappedTranslate(sel.active, doc, offset)
         return new vscode.Selection(searchSelectTillMatch ? sel.anchor : newpos, newpos)
     }
     return sel
@@ -1157,7 +1186,7 @@ async function repeatLastUsedSelection(): Promise<void> {
     if (editor){
         let ed = editor
         ed.selections = ed.selections.map((sel: vscode.Selection) => {
-            let start = sel.start.translate(0, 1)
+            let start = wrappedTranslate(sel.start, ed.document, 1)
             let end = sel.end //.translate(0, -1)
             let fromMatches = searchMatches(ed.document, start, undefined,
                 args.from, args.regex, args.caseSensitive, false, false)
