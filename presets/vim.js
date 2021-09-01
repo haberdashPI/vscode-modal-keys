@@ -531,7 +531,6 @@ module.exports = {
         operators: operator_commands,
         objects: {
             j: [
-                "modalkeys.cancelMultipleSelections",
                 {
                     "cursorMove": {
                         to: 'down',
@@ -543,7 +542,6 @@ module.exports = {
                 "expandLineSelection",
             ],
             k: [
-                "modalkeys.cancelMultipleSelections",
                 {
                     "cursorMove": {
                         to: 'up',
@@ -555,7 +553,6 @@ module.exports = {
                 "expandLineSelection",
             ],
             h: [
-                "modalkeys.cancelMultipleSelections",
                 {
                     "cursorMove": {
                         to: 'left',
@@ -563,19 +560,14 @@ module.exports = {
                         value: '__count'
                     }
                 },
-                "expandLineSelection",
             ],
-            l: [
-                "modalkeys.cancelMultipleSelections",
-                {
-                    "cursorMove": {
-                        to: 'right',
-                        select: true,
-                        value: '__count'
-                    }
-                },
-                "expandLineSelection",
-            ],
+            l: {
+                "cursorMove": {
+                    to: 'right',
+                    select: true,
+                    value: '__count'
+                }
+            },
             "i(": "extension.selectParenthesis",
             "a(": "extension.selectParenthesisOuter",
             "i[": "extension.selectSquareBrackets",
