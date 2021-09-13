@@ -204,13 +204,18 @@ const operator_commands = {
 
 // ### Objects
 
+// #### Objects around delimeters
+
+// These objects are defined by the delimeters that surround them. Note
+// that these are purely textual, and do not handle nesting.
+
 const around_objects = {
     w: { value: "\\W", regex: true },
     p: { value: "^\\s*$", regex: true },
     ...(Object.fromEntries(["'", "\"", "`"].map(c => [c, c])))
 }
 
-// ### Jump to a Character Objects
+// #### Jump to a Character 
 
 // Advanced cursor motions in Vim include jump to character, which is especially powerful in
 // connection with editing commands. With this motion, we can apply edits up to or including a
@@ -251,6 +256,44 @@ const search_objects = {
             "offset": "exclusive",
             "selectTillMatch": "__mode == 'visual'",
         }
+    },
+}
+
+const word_motions = {
+    // The logic of separating words is bit different in VS Code and Vim, so we will
+    // not aim to immitate Vim exaclty. If that's something you want, you might
+    // consider looking at [Selection
+    // Utilities](https://github.com/haberdashPI/vscode-selection-utilities). 
+    // These keys are mapped to the most similar motion available. The <key>W</key> and
+    // <key>B</key> move past all non-space characters, and are implemented using the
+    // search command, with appropriate options. To handling of count arguments, we use
+    // the `repeat` option.
+    w: { "cursorWordStartRight": {}, "repeat": "__count" },
+    "visual::w": { "cursorWordStartRightSelect": {}, "repeat": "__count" },
+    e: { "cursorWordEndRight": {}, "repeat": "__count" },
+    "visual::e": { "cursorWordEndRightSelect": {}, "repeat": "__count" },
+    b: { "cursorWordStartLeft": {}, "repeat": "__count" },
+    "visual::b": { "cursorWordStartLeftSelect": {}, "repeat": "__count" },
+    W: {
+        "modalkeys.search": {
+            "text": "\\S+",
+            "offset": 'inclusive',
+            "regex": true,
+            "selectTillMatch": '__mode == "visual"',
+            "highlightMatches": false,
+        },
+        "repeat": '__count',
+    },
+    B: {
+        "modalkeys.search": {
+            "text": "\\S+",
+            "offset": 'inclusive',
+            "regex": true,
+            "backwards": true,
+            "selectTillMatch": '__mode == "visual"',
+            "highlightMatches": false,
+        },
+        "repeat": '__count',
     },
 }
 
@@ -304,41 +347,8 @@ module.exports = {
 // Switch to next and previous tab.
         gt: "workbench.action.nextEditor",
         gT: "workbench.action.previousEditor",
-// The logic of separating words is bit different in VS Code and Vim, so we will
-// not aim to immitate Vim exaclty. If that's something you want, you might
-// consider looking at [Selection
-// Utilities](https://github.com/haberdashPI/vscode-selection-utilities). 
-// These keys are mapped to the most similar motion available. The <key>W</key> and
-// <key>B</key> move past all non-space characters, and are implemented using the
-// search command, with appropriate options. To handling of count arguments, we use
-// the `repeat` option.
-        w: { "cursorWordStartRight": {}, "repeat": "__count" },
-        "visual::w": { "cursorWordStartRightSelect": {}, "repeat": "__count" },
-        e: { "cursorWordEndRight": {}, "repeat": "__count" },
-        "visual::e": { "cursorWordEndRightSelect": {}, "repeat": "__count" },
-        b: { "cursorWordStartLeft": {}, "repeat": "__count" },
-        "visual::b": { "cursorWordStartLeftSelect": {}, "repeat": "__count" },
-        W: {
-            "modalkeys.search": {
-                "text": "\\S+",
-                "offset": 'inclusive',
-                "regex": true,
-                "selectTillMatch": '__mode == "visual"',
-                "highlightMatches": false,
-            },
-            "repeat": '__count',
-        },
-        B: {
-            "modalkeys.search": {
-                "text": "\\S+",
-                "offset": 'inclusive',
-                "regex": true,
-                "backwards": true,
-                "selectTillMatch": '__mode == "visual"',
-                "highlightMatches": false,
-            },
-            "repeat": '__count',
-        },
+// Insert the previously defined word motions
+        ...word_motions,
 
 // To jump paragraphs we just search for the first blank line. When moving
 // forward, we need to use `executeAfter` (which runs a command after search is
@@ -576,10 +586,14 @@ module.exports = {
             "a{": "extension.selectCurlyBracketsOuter",
             "i<": "extension.selectAngleBrackets",
             "a<": "extension.selectAngleBracketsOuter",
-            ...(Object.fromEntries(["w", "b", "e", "W", "B", "E", "^",
+            // TODO: use variables to define below objects
+            // so we can use them here, and above as part of 
+            // normal motions
+            ...(Object.fromEntries(["^",
                     "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
                 map(k => [k, { "modalkeys.typeKeys": { keys: "v"+k } } ]))),
             ...aroundObjects(around_objects),
+            ...word_motions,
             "[": "vscode-select-by-indent.select-inner",
             "{": "vscode-select-by-indent.select-outer",
         }
