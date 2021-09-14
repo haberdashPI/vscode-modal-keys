@@ -259,44 +259,6 @@ const search_objects = {
     },
 }
 
-const word_motions = {
-    // The logic of separating words is bit different in VS Code and Vim, so we will
-    // not aim to immitate Vim exaclty. If that's something you want, you might
-    // consider looking at [Selection
-    // Utilities](https://github.com/haberdashPI/vscode-selection-utilities). 
-    // These keys are mapped to the most similar motion available. The <key>W</key> and
-    // <key>B</key> move past all non-space characters, and are implemented using the
-    // search command, with appropriate options. To handling of count arguments, we use
-    // the `repeat` option.
-    w: { "cursorWordStartRight": {}, "repeat": "__count" },
-    "visual::w": { "cursorWordStartRightSelect": {}, "repeat": "__count" },
-    e: { "cursorWordEndRight": {}, "repeat": "__count" },
-    "visual::e": { "cursorWordEndRightSelect": {}, "repeat": "__count" },
-    b: { "cursorWordStartLeft": {}, "repeat": "__count" },
-    "visual::b": { "cursorWordStartLeftSelect": {}, "repeat": "__count" },
-    W: {
-        "modalkeys.search": {
-            "text": "\\S+",
-            "offset": 'inclusive',
-            "regex": true,
-            "selectTillMatch": '__mode == "visual"',
-            "highlightMatches": false,
-        },
-        "repeat": '__count',
-    },
-    B: {
-        "modalkeys.search": {
-            "text": "\\S+",
-            "offset": 'inclusive',
-            "regex": true,
-            "backwards": true,
-            "selectTillMatch": '__mode == "visual"',
-            "highlightMatches": false,
-        },
-        "repeat": '__count',
-    },
-}
-
 // 
 // ## Game Plan
 
@@ -347,8 +309,41 @@ module.exports = {
 // Switch to next and previous tab.
         gt: "workbench.action.nextEditor",
         gT: "workbench.action.previousEditor",
-// Insert the previously defined word motions
-        ...word_motions,
+// The logic of separating words is bit different in VS Code and Vim, so we will
+// not aim to immitate Vim exaclty. If that's something you want, you might
+// consider looking at [Selection
+// Utilities](https://github.com/haberdashPI/vscode-selection-utilities). 
+// These keys are mapped to the most similar motion available. The <key>W</key> and
+// <key>B</key> move past all non-space characters, and are implemented using the
+// search command, with appropriate options. To handling of count arguments, we use
+// the `repeat` option.
+        w: { "cursorWordStartRight": {}, "repeat": "__count" },
+        "visual::w": { "cursorWordStartRightSelect": {}, "repeat": "__count" },
+        e: { "cursorWordEndRight": {}, "repeat": "__count" },
+        "visual::e": { "cursorWordEndRightSelect": {}, "repeat": "__count" },
+        b: { "cursorWordStartLeft": {}, "repeat": "__count" },
+        "visual::b": { "cursorWordStartLeftSelect": {}, "repeat": "__count" },
+        W: {
+            "modalkeys.search": {
+                "text": "\\S+",
+                "offset": 'inclusive',
+                "regex": true,
+                "selectTillMatch": '__mode == "visual"',
+                "highlightMatches": false,
+            },
+            "repeat": '__count',
+        },
+        B: {
+            "modalkeys.search": {
+                "text": "\\S+",
+                "offset": 'inclusive',
+                "regex": true,
+                "backwards": true,
+                "selectTillMatch": '__mode == "visual"',
+                "highlightMatches": false,
+            },
+            "repeat": '__count',
+        },
 
 // To jump paragraphs we just search for the first blank line. When moving
 // forward, we need to use `executeAfter` (which runs a command after search is
@@ -581,19 +576,41 @@ module.exports = {
             "i(": "extension.selectParenthesis",
             "a(": "extension.selectParenthesisOuter",
             "i[": "extension.selectSquareBrackets",
-            "a[": "extension.selectSquareBracketsOuter",
+            "a[": "extension.selectSquareBracketsOuter", 
             "i{": "extension.selectCurlyBrackets",
-            "a{": "extension.selectCurlyBracketsOuter",
+            "a{": "extensiondselectCurlyBracketsOuter",
             "i<": "extension.selectAngleBrackets",
             "a<": "extension.selectAngleBracketsOuter",
-            // TODO: use variables to define below objects
-            // so we can use them here, and above as part of 
-            // normal motions
             ...(Object.fromEntries(["^",
                     "$", "0", "G", "H", "M", "L", "%", "g_", "gg"].
                 map(k => [k, { "modalkeys.typeKeys": { keys: "v"+k } } ]))),
             ...aroundObjects(around_objects),
-            ...word_motions,
+            // Word motions need to be repeated here: otherwise `__count`
+            // will be dropped and the motions won't accept numeric arguments
+            "w": { "cursorWordStartRightSelect": {}, "repeat": "__count" },
+            "e": { "cursorWordEndRightSelect": {}, "repeat": "__count" },
+            "b": { "cursorWordStartLeftSelect": {}, "repeat": "__count" },
+            W: {
+                "modalkeys.search": {
+                    "text": "\\S+",
+                    "offset": 'inclusive',
+                    "regex": true,
+                    "selectTillMatch": true,
+                    "highlightMatches": false,
+                },
+                "repeat": '__count',
+            },
+            B: {
+                "modalkeys.search": {
+                    "text": "\\S+",
+                    "offset": 'inclusive',
+                    "regex": true,
+                    "backwards": true,
+                    "selectTillMatch": true,
+                    "highlightMatches": false,
+                },
+                "repeat": '__count',
+            },
             "[": "vscode-select-by-indent.select-inner",
             "{": "vscode-select-by-indent.select-outer",
         }
