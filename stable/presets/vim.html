@@ -142,13 +142,13 @@
     <span class="hljs-string">&quot;&gt;&quot;</span>: [<span class="hljs-string">&quot;editor.action.indentLines&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span> ]
 <span class="hljs-punctuation">}</span>
 
-</code></pre> <h3 id="heading-#objects"><a class="header-anchor" id="objects" href="#objects"> </a>Objects</h3> <pre><code class="language-js">const around_objects = {
+</code></pre> <h3 id="heading-#objects"><a class="header-anchor" id="objects" href="#objects"> </a>Objects</h3> <h4>Objects around delimeters</h4> <p>These objects are defined by the delimeters that surround them. Note that these are purely textual, and do not handle nesting.</p> <pre><code class="language-js">const around_objects = {
     w: { value: <span class="hljs-string">&quot;\\W&quot;</span>, regex: <span class="hljs-literal">true</span> },
     p: { value: <span class="hljs-string">&quot;^\\s*$&quot;</span>, regex: <span class="hljs-literal">true</span> },
     ...(<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">Object</span>.</span></span>from<span class="hljs-constructor">Entries([<span class="hljs-string">&quot;&#x27;&quot;</span>, <span class="hljs-string">&quot;\&quot;&quot;</span>, <span class="hljs-string">&quot;`&quot;</span>].<span class="hljs-params">map</span>(<span class="hljs-params">c</span> =&gt; [<span class="hljs-params">c</span>, <span class="hljs-params">c</span>])</span>))
 }
 
-</code></pre> <h3 id="heading-#jump-to-a-character-objects"><a class="header-anchor" id="jump-to-a-character-objects" href="#jump-to-a-character-objects"> </a>Jump to a Character Objects</h3> <p>Advanced cursor motions in Vim include jump to character, which is especially powerful in connection with editing commands. With this motion, we can apply edits up to or including a specified character. The same motions work also as jump commands in normal mode.</p> <p>All of these keybindings are implemented using the <a href="https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html#incremental-search">incremental search</a> command, just the parameters are different for each case. Basically we just perform either a forward or backward search and use the &quot;offset&quot; option to determine where the cursor should land.</p> <pre><code class="language-js">const search_<span class="hljs-attr">objects</span> <span class="hljs-operator">=</span> <span class="hljs-punctuation">{</span>
+</code></pre> <h4>Jump to a Character</h4> <p>Advanced cursor motions in Vim include jump to character, which is especially powerful in connection with editing commands. With this motion, we can apply edits up to or including a specified character. The same motions work also as jump commands in normal mode.</p> <p>All of these keybindings are implemented using the <a href="https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html#incremental-search">incremental search</a> command, just the parameters are different for each case. Basically we just perform either a forward or backward search and use the &quot;offset&quot; option to determine where the cursor should land.</p> <pre><code class="language-js">const search_<span class="hljs-attr">objects</span> <span class="hljs-operator">=</span> <span class="hljs-punctuation">{</span>
 <span class="hljs-symbol">    f:</span> <span class="hljs-punctuation">{</span>
         <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
             <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
@@ -329,7 +329,6 @@
         operators: operator_commands,
         objects: {
             j: [
-                <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
                 {
                     <span class="hljs-string">&quot;cursorMove&quot;</span>: {
                         <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;down&#x27;</span>,
@@ -341,7 +340,6 @@
                 <span class="hljs-string">&quot;expandLineSelection&quot;</span>,
             ],
             k: [
-                <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
                 {
                     <span class="hljs-string">&quot;cursorMove&quot;</span>: {
                         <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;up&#x27;</span>,
@@ -353,7 +351,6 @@
                 <span class="hljs-string">&quot;expandLineSelection&quot;</span>,
             ],
             h: [
-                <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
                 {
                     <span class="hljs-string">&quot;cursorMove&quot;</span>: {
                         <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;left&#x27;</span>,
@@ -361,31 +358,50 @@
                         value: <span class="hljs-string">&#x27;__count&#x27;</span>
                     }
                 },
-                <span class="hljs-string">&quot;expandLineSelection&quot;</span>,
             ],
-            l: [
-                <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
-                {
-                    <span class="hljs-string">&quot;cursorMove&quot;</span>: {
-                        <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;right&#x27;</span>,
-                        <span class="hljs-built_in">select</span>: <span class="hljs-literal">true</span>,
-                        value: <span class="hljs-string">&#x27;__count&#x27;</span>
-                    }
-                },
-                <span class="hljs-string">&quot;expandLineSelection&quot;</span>,
-            ],
+            l: {
+                <span class="hljs-string">&quot;cursorMove&quot;</span>: {
+                    <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;right&#x27;</span>,
+                    <span class="hljs-built_in">select</span>: <span class="hljs-literal">true</span>,
+                    value: <span class="hljs-string">&#x27;__count&#x27;</span>
+                }
+            },
             <span class="hljs-string">&quot;i(&quot;</span>: <span class="hljs-string">&quot;extension.selectParenthesis&quot;</span>,
             <span class="hljs-string">&quot;a(&quot;</span>: <span class="hljs-string">&quot;extension.selectParenthesisOuter&quot;</span>,
             <span class="hljs-string">&quot;i[&quot;</span>: <span class="hljs-string">&quot;extension.selectSquareBrackets&quot;</span>,
-            <span class="hljs-string">&quot;a[&quot;</span>: <span class="hljs-string">&quot;extension.selectSquareBracketsOuter&quot;</span>,
+            <span class="hljs-string">&quot;a[&quot;</span>: <span class="hljs-string">&quot;extension.selectSquareBracketsOuter&quot;</span>, 
             <span class="hljs-string">&quot;i{&quot;</span>: <span class="hljs-string">&quot;extension.selectCurlyBrackets&quot;</span>,
-            <span class="hljs-string">&quot;a{&quot;</span>: <span class="hljs-string">&quot;extension.selectCurlyBracketsOuter&quot;</span>,
+            <span class="hljs-string">&quot;a{&quot;</span>: <span class="hljs-string">&quot;extensiondselectCurlyBracketsOuter&quot;</span>,
             <span class="hljs-string">&quot;i&lt;&quot;</span>: <span class="hljs-string">&quot;extension.selectAngleBrackets&quot;</span>,
             <span class="hljs-string">&quot;a&lt;&quot;</span>: <span class="hljs-string">&quot;extension.selectAngleBracketsOuter&quot;</span>,
-            ...(<span class="hljs-built_in">Object</span>.fromEntries([<span class="hljs-string">&quot;w&quot;</span>, <span class="hljs-string">&quot;b&quot;</span>, <span class="hljs-string">&quot;e&quot;</span>, <span class="hljs-string">&quot;W&quot;</span>, <span class="hljs-string">&quot;B&quot;</span>, <span class="hljs-string">&quot;E&quot;</span>, <span class="hljs-string">&quot;^&quot;</span>,
+            ...(<span class="hljs-built_in">Object</span>.fromEntries([<span class="hljs-string">&quot;^&quot;</span>,
                     <span class="hljs-string">&quot;$&quot;</span>, <span class="hljs-string">&quot;0&quot;</span>, <span class="hljs-string">&quot;G&quot;</span>, <span class="hljs-string">&quot;H&quot;</span>, <span class="hljs-string">&quot;M&quot;</span>, <span class="hljs-string">&quot;L&quot;</span>, <span class="hljs-string">&quot;%&quot;</span>, <span class="hljs-string">&quot;g_&quot;</span>, <span class="hljs-string">&quot;gg&quot;</span>].
                 map(k =&gt; [k, { <span class="hljs-string">&quot;modalkeys.typeKeys&quot;</span>: { <span class="hljs-built_in">keys</span>: <span class="hljs-string">&quot;v&quot;</span>+k } } ]))),
             ...aroundObjects(around_objects),
+</code></pre> <p>Word motions need to be repeated here: otherwise <code>__count</code> will be dropped and the motions won't accept numeric arguments</p> <pre><code class="language-js">            <span class="hljs-string">&quot;w&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartRightSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
+            <span class="hljs-string">&quot;e&quot;</span>: { <span class="hljs-string">&quot;cursorWordEndRightSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
+            <span class="hljs-string">&quot;b&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartLeftSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
+            W: {
+                <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+                    <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\S+&quot;</span>,
+                    <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&#x27;inclusive&#x27;</span>,
+                    <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
+                    <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-literal">true</span>,
+                    <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
+                },
+                <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&#x27;__count&#x27;</span>,
+            },
+            B: {
+                <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+                    <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\S+&quot;</span>,
+                    <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&#x27;inclusive&#x27;</span>,
+                    <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
+                    <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
+                    <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-literal">true</span>,
+                    <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
+                },
+                <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&#x27;__count&#x27;</span>,
+            },
             <span class="hljs-string">&quot;[&quot;</span>: <span class="hljs-string">&quot;vscode-select-by-indent.select-inner&quot;</span>,
             <span class="hljs-string">&quot;{&quot;</span>: <span class="hljs-string">&quot;vscode-select-by-indent.select-outer&quot;</span>,
         }
@@ -397,8 +413,8 @@
        }),
 
        ...(<span class="hljs-built_in">Object</span>.fromEntries(<span class="hljs-built_in">Object</span>.entries(aroundObjects(around_objects)).
-            map(([bind, command]) =&gt; {
-           return [<span class="hljs-string">&quot;visual::&quot;</span>+bind, command]
+            map(<span class="hljs-function"><span class="hljs-params">([bind, command])</span> =&gt;</span> {
+           <span class="hljs-keyword">return</span> [<span class="hljs-string">&quot;visual::&quot;</span>+bind, command]
        }))),
 
        <span class="hljs-string">&quot;visual::i(&quot;</span>: <span class="hljs-string">&quot;extension.selectParenthesis&quot;</span>,
