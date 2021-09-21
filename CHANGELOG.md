@@ -2,8 +2,12 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+## Version 0.5.4
+- **Minor improvement**: Add doc link to keybinding errors.
+- **Bugfix**: properly handle undefined keybinding preference.
+
 ## Version 0.5.3
-- **Bugdfix**: vim-presets: word motions accept counts
+- **Bugfix**: vim-presets: word motions accept counts
 
 ## Veresion 0.5.2
 - **Bugfix**: Improve vim presents; search-based operations now work (e.g. `df[c]`).
