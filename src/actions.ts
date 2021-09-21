@@ -125,7 +125,7 @@ let startInNormalMode: boolean
  * The root of the action configuration is keymap. This defines what key
  * sequences will be run when keys are pressed in normal mode.
  */
-let rootKeymodes: Keymodes
+let rootKeymodes: Keymodes | undefined
 /**
  * The current active keymap is stored here. The active keymap changes when the
  * user invokes a multi-key action sequence.
@@ -545,10 +545,16 @@ export class KeyState {
     }
 
     error(){
-        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""), "Fix: Define keymap").
+        
+        const define = "Fix: Define keymap"
+        const docs = "Keymap Documentation"
+        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""), define, docs).
         then(selection => {
-            if(selection === "Fix: Define keymap"){
+            if(selection === define){
                 vscode.commands.executeCommand("modalkeys.importPresets")
+            }else if(selection === docs){
+                let url = 'https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html'
+                vscode.env.openExternal(vscode.Uri.parse(url));
             }
         })
         this.reset()
@@ -793,7 +799,7 @@ export class KeyState {
     // as expected. This is probably best managed by using a class
     // KeyHandler
     async handleKey(key: string, keyMode: string) {
-        let newKeymap: undefined | Keymap = this.currentKeymap || rootKeymodes[keyMode]
+        let newKeymap: undefined | Keymap = this.currentKeymap || (rootKeymodes && rootKeymodes[keyMode])
 
         // record this key press if there is an actively recording macro
         if(this.macro){
@@ -845,17 +851,23 @@ export class KeyState {
             const type = "Fix: Let me type!"
             const define = "Fix: Define a keymap"
             const ignore = "Ignore"
-            if(!rootKeymodes[keyMode]){
+            const docs = "Read Keymap Documentation"
+            if(!(rootKeymodes && rootKeymodes[keyMode])){
                 vscode.window.showInformationMessage
                 vscode.window.showErrorMessage(`
                     ModalKeys - no keymap defined for ${keyMode} mode.
-                `,{modal: true}, type, define, ignore).
+                `,{modal: true}, type, define, docs, ignore).
                 then(selection => {
                     if(selection === type){
                         vscode.commands.executeCommand("modalkeys.enterMode",
                             { mode: "insert" })
                     }else if(selection === define){
                         vscode.commands.executeCommand("modalkeys.importPresets")
+                    }else if(selection === docs){
+                        let url = 'https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html'
+                        vscode.env.openExternal(vscode.Uri.parse(url));
+                        vscode.commands.executeCommand("modalkeys.enterMode",
+                            { mode: "insert" })
                     }else{
                         return
                     }
