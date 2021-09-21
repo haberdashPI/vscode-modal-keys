@@ -294,7 +294,8 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(toggleRecordingMacroId, toggleRecordingMacro),
         vscode.commands.registerCommand(cancelRecordingMacroId, cancelRecordingMacro),
         vscode.commands.registerCommand(replayMacroId, replayMacro),
-        vscode.commands.registerCommand(exportPresetId, exportPreset)
+        vscode.commands.registerCommand(exportPresetId, exportPreset),
+        vscode.commands.registerCommand("type", onType)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
@@ -350,6 +351,9 @@ function keySeq(word: IKeyRecording | undefined){
  * variables needed by the `repeatLastChange` command and the status bar.
  */
 async function onType(event: { text: string }) {
+    if(!handleType){
+        return vscode.commands.executeCommand('default:type', event)
+    }
     if(!repeatedSequence){
         if (textChanged && !ignoreChangedText) {
             lastSentence = { ...pendingSentence, verb: keyState.lastWord }
@@ -513,12 +517,13 @@ function wrappedTranslate(x: vscode.Position, doc: vscode.TextDocument, val: num
 }
 
 
+let handleType = false
 function handleTypeSubscription(newmode: string){
     if(newmode !== Insert){
-        if(!typeSubscription) typeSubscription = vscode.commands.registerCommand("type", onType)
+        handleType = true
         vscode.commands.executeCommand('hideSuggestWidget')
-    }else if(newmode === Insert && typeSubscription){
-        typeSubscription.dispose()
+    }else if(newmode === Insert){
+        handleType = false
         typeSubscription = undefined
     }
 }
