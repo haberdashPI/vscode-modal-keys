@@ -575,6 +575,7 @@ export class KeyState {
         let __selections
         let __selection
         let __selectionstr
+        let __wordstr
         let editor = vscode.window.activeTextEditor
         if (editor) {
             let cursor = editor.selection.active
@@ -588,6 +589,8 @@ export class KeyState {
             __selection = editor.selection
             __selections = editor.selections
             __selectionstr = editor.document.getText(editor.selection)
+            let range = editor.document.getWordRangeAtPosition(editor.selection.start)
+            __wordstr = __selectionstr || editor.document.getText(range)
         }
         return eval(`(${str})`)
     }

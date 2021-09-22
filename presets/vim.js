@@ -674,6 +674,21 @@ module.exports = {
         },
         n: { "modalkeys.nextMatch": {register: "search"}},
         N: { "modalkeys.previousMatch": {register: "search"}},
+        "*": [
+            { "modalkeys.search": {
+                text: "__wordstr",
+                wrapAround: true,
+                register: "search"
+            }}
+        ],
+        "#": [
+            { "modalkeys.search": {
+                text: "__wordstr",
+                wrapAround: true,
+                backwards: true,
+                register: "search"
+            }}
+        ],
 // ## Miscellaneous Commands
 
 // Rest of the normal mode commands are not motion or editing commands, but do
