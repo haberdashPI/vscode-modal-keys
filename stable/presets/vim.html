@@ -448,6 +448,21 @@
         },
         n: { <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span>: {<span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>}},
         N: { <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span>: {<span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>}},
+        <span class="hljs-string">&quot;*&quot;</span>: [
+            { <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+                text: <span class="hljs-string">&quot;__wordstr&quot;</span>,
+                wrapAround: <span class="hljs-literal">true</span>,
+                <span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>
+            }}
+        ],
+        <span class="hljs-string">&quot;#&quot;</span>: [
+            { <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+                text: <span class="hljs-string">&quot;__wordstr&quot;</span>,
+                wrapAround: <span class="hljs-literal">true</span>,
+                backwards: <span class="hljs-literal">true</span>,
+                <span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>
+            }}
+        ],
 </code></pre> <h2 id="heading-#miscellaneous-commands"><a class="header-anchor" id="miscellaneous-commands" href="#miscellaneous-commands"> </a>Miscellaneous Commands</h2> <p>Rest of the normal mode commands are not motion or editing commands, but do miscellaenous things.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>:</code></td><td>Show command menu (same as <key>Ctrl/Cmd</key><key>Shift</key><key>P</key>)</td></tr> <tr><td><code>zz</code></td><td>Center cursor on screen</td></tr> <tr><td><code>ZZ</code></td><td>Save file and close the current editor (tab)</td></tr> <tr><td><code>ZQ</code></td><td>Close the current editor without saving</td></tr> </tbody> </table> <p>Note that <key>Z</key><key>Q</key> command still asks to save the file, if it has been changed. There is no way to get around this in VS Code.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;:&quot;</span>: <span class="hljs-string">&quot;workbench.action.showCommands&quot;</span>,
         zz: { <span class="hljs-string">&quot;revealLine&quot;</span>: { lineNumber: <span class="hljs-string">&#x27;__line&#x27;</span>, at: <span class="hljs-string">&#x27;center&#x27;</span> } },
         <span class="hljs-symbol">ZZ</span>: [
