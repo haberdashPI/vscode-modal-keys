@@ -2,6 +2,12 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+## Version 0.6.0
+- **Feature**: commands can use `__wordstr` to get the current word under the cursor or the current selection
+- **Feature**: search registers; different search commands can use different registers to maintain separate state
+- **Feature**: Vim preset's `;` and `N` now perform distinct actions, using the new search registers feature.
+- **Feature**: Vim preset uses `__wordstr` to implement `*` and `#`.
+
 ## Version 0.5.4
 - **Minor improvement**: Add doc link to keybinding errors.
 - **Bugfix**: properly handle undefined keybinding preference.

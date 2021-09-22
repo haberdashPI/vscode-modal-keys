@@ -47,6 +47,7 @@ variables are recognized during this evaluation.
 | `__selections`  | [`Selection[]`](https://code.visualstudio.com/api/references/vscode-api#Selection) | The selection objects of the current editor
 | `__selection`   | [`Selection`](https://code.visualstudio.com/api/references/vscode-api#Selection)  | The primary selection object of the current editor
 | `__selectionstr` | `string`  | The text of the primary selection
+| `__wordstr` .    | `string`  | Same as `__selectionstr` unless there is no selection, and then this is equal to the current word under the cursor.
 | `__selecting`    | `bool`    | True if text should be selected (e.g. we're in visual mode).
 | `__mode`        | `string`    | A string specifying the current mode
 | `__count`       | `number`   | A number indicating the prefixed numerical values in front of a command: see below.
