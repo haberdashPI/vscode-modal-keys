@@ -799,7 +799,7 @@ async function search(args: SearchArgs | string): Promise<void> {
          */
         enterMode(Search)
         
-        currentSearch = args.register || "default"
+        currentSearch = args?.register || "default"
         if(!searchStates[currentSearch]){
             searchStates[currentSearch] = {args: {}}
         }
@@ -1080,7 +1080,7 @@ function deleteCharFromSearch() {
  */
 async function nextMatch(args: {register?: string}): Promise<void> {
     let editor = vscode.window.activeTextEditor
-    let state = searchStates[args.register || currentSearch]
+    let state = searchStates[args?.register || "default"]
     if (editor && state.string) {
         highlightMatches(state.string, editor, editor.selections, state)
         revealActive(editor);
@@ -1092,7 +1092,7 @@ async function nextMatch(args: {register?: string}): Promise<void> {
  */
 async function previousMatch(args: {register?: string}): Promise<void> {
     let editor = vscode.window.activeTextEditor
-    let state = searchStates[args.register || currentSearch]
+    let state = searchStates[args?.register || "default"]
     if (editor && state.string) {
         state.args.backwards = !state.args.backwards
         highlightMatches(state.string, editor, editor.selections, state)
