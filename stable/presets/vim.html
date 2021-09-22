@@ -429,11 +429,12 @@
        gd: <span class="hljs-string">&quot;editor.action.revealDefinition&quot;</span>,
        gq: <span class="hljs-string">&quot;rewrap.rewrapComment&quot;</span>,
 
-</code></pre> <h2 id="heading-#searching"><a class="header-anchor" id="searching" href="#searching"> </a>Searching</h2> <p>Searching introduces a pseudo-mode that captures the keyboard and suspends other commands as long as search is on. Searching commands are shown below.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>/</code></td><td>Start case-sensitive search forwards</td></tr> <tr><td><code>?</code></td><td>Start case-sensitive search backwards</td></tr> <tr><td><code>n</code></td><td>Select the next match</td></tr> <tr><td><code>p</code></td><td>Select the previous match</td></tr> </tbody> </table> <p><strong>Note</strong>: Searching commands work also with multiple cursors. As in Vim, search wraps around if top or bottom of file is encountered.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;/&quot;</span>: [
+</code></pre> <h2 id="heading-#searching"><a class="header-anchor" id="searching" href="#searching"> </a>Searching</h2> <p>Searching introduces a pseudo-mode that captures the keyboard and suspends other commands as long as search is on. Searching commands are shown below.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>/</code></td><td>Start case-sensitive search forwards</td></tr> <tr><td><code>?</code></td><td>Start case-sensitive search backwards</td></tr> <tr><td><code>n</code></td><td>Select the next match</td></tr> <tr><td><code>p</code></td><td>Select the previous match</td></tr> </tbody> </table> <p><strong>Note</strong>: Searching commands work also with multiple cursors. As in Vim, search wraps around if top or bottom of file is encountered. Note that we use a separate register (&quot;search&quot;) so that the state of the last search (for next and previous matches) are different from the <code>modalkeys.search</code> commands that are called to implement <key>f</key> and friends.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;/&quot;</span>: [
             {
                 <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
                     <span class="hljs-string">&quot;caseSensitive&quot;</span>: <span class="hljs-literal">true</span>,
-                    <span class="hljs-string">&quot;wrapAround&quot;</span>: <span class="hljs-literal">true</span>
+                    <span class="hljs-string">&quot;wrapAround&quot;</span>: <span class="hljs-literal">true</span>,
+                    <span class="hljs-string">&quot;register&quot;</span>: <span class="hljs-string">&quot;search&quot;</span>
                 }
             }
         ],
@@ -441,11 +442,12 @@
             <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
                 <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
                 <span class="hljs-string">&quot;caseSensitive&quot;</span>: <span class="hljs-literal">true</span>,
-                <span class="hljs-string">&quot;wrapAround&quot;</span>: <span class="hljs-literal">true</span>
+                <span class="hljs-string">&quot;wrapAround&quot;</span>: <span class="hljs-literal">true</span>,
+                <span class="hljs-string">&quot;register&quot;</span>: <span class="hljs-string">&quot;search&quot;</span>
             }
         },
-        n: <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span>,
-        N: <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span>,
+        n: { <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span>: {<span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>},
+        N: { <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span>: {<span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>}},
 </code></pre> <h2 id="heading-#miscellaneous-commands"><a class="header-anchor" id="miscellaneous-commands" href="#miscellaneous-commands"> </a>Miscellaneous Commands</h2> <p>Rest of the normal mode commands are not motion or editing commands, but do miscellaenous things.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>:</code></td><td>Show command menu (same as <key>Ctrl/Cmd</key><key>Shift</key><key>P</key>)</td></tr> <tr><td><code>zz</code></td><td>Center cursor on screen</td></tr> <tr><td><code>ZZ</code></td><td>Save file and close the current editor (tab)</td></tr> <tr><td><code>ZQ</code></td><td>Close the current editor without saving</td></tr> </tbody> </table> <p>Note that <key>Z</key><key>Q</key> command still asks to save the file, if it has been changed. There is no way to get around this in VS Code.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;:&quot;</span>: <span class="hljs-string">&quot;workbench.action.showCommands&quot;</span>,
         zz: { <span class="hljs-string">&quot;revealLine&quot;</span>: { lineNumber: <span class="hljs-string">&#x27;__line&#x27;</span>, at: <span class="hljs-string">&#x27;center&#x27;</span> } },
         <span class="hljs-symbol">ZZ</span>: [
