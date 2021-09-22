@@ -650,13 +650,17 @@ module.exports = {
 // | `n`       | Select the next match
 // | `p`       | Select the previous match
 
-// **Note**: Searching commands work also with multiple cursors. As in Vim, search
-// wraps around if top or bottom of file is encountered.
+// **Note**: Searching commands work also with multiple cursors. As in Vim,
+// search wraps around if top or bottom of file is encountered. Note that we use
+// a separate register ("search") so that the state of the last search (for next
+// and previous matches) are different from the `modalkeys.search` commands that
+// are called to implement <key>f</key> and friends.
         "/": [
             {
                 "modalkeys.search": {
                     "caseSensitive": true,
-                    "wrapAround": true
+                    "wrapAround": true,
+                    "register": "search"
                 }
             }
         ],
@@ -664,11 +668,12 @@ module.exports = {
             "modalkeys.search": {
                 "backwards": true,
                 "caseSensitive": true,
-                "wrapAround": true
+                "wrapAround": true,
+                "register": "search"
             }
         },
-        n: "modalkeys.nextMatch",
-        N: "modalkeys.previousMatch",
+        n: { "modalkeys.nextMatch": {register: "search"},
+        N: { "modalkeys.previousMatch": {register: "search"}},
 // ## Miscellaneous Commands
 
 // Rest of the normal mode commands are not motion or editing commands, but do
