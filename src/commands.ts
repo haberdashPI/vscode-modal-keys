@@ -36,6 +36,7 @@ interface SearchArgs {
     executeAfter?: Command
     text?: string
     regex?: boolean
+    register?: string
 }
 
 interface CaptureCharArgs {
@@ -174,14 +175,6 @@ const replayDelay = 50
 let keyMode = Normal
 let editorModes: IHash<string> = {}
 /**
- * Search state variables.
- */
-let searchString: string
-let searchStartSelections: vscode.Selection[]
-let searchInfo: string | null = null
-let searchChanged: boolean = false;
-let searchLength: number = 0
-/**
  * Search text decoration (to highlight the current and any other visible matches)
  */
 let searchDecorator: vscode.TextEditorDecorationType;
@@ -190,20 +183,21 @@ let searchOtherDecorator: vscode.TextEditorDecorationType;
 let bookMarkDecorator: vscode.TextEditorDecorationType;
 
 /**
- * Current search parameters.
+ * Search states
  */
-let searchBackwards = false
-let searchCaseSensitive = false
-let searchWrapAround = false
-let searchAcceptAfter = Number.POSITIVE_INFINITY
-let searchSelectTillMatch = false
-let searchOffset: string
-let searchOldMode = Normal
-let searchAtStart: boolean
-let searchExecuteAfter: Command | undefined
-let searchRegex: boolean
-let searchHighlightMatches: boolean
-let searchMatchLength: number = 0
+interface SearchState{
+    args: SearchArgs
+    string?: string
+    offset?: string
+    oldMode?: string
+    startSelections?: vscode.Selection[]
+    length?: number
+}
+let searchStates: IHash<SearchState> = {default: {args: {}}}
+let currentSearch: string = "default"
+let highlightsChanged: boolean = false
+let matchStatusText: string = ""
+
 /**
  * Bookmarks are stored here.
  */
@@ -384,11 +378,11 @@ async function onType(event: { text: string }) {
     updateCursorAndStatusBar(vscode.window.activeTextEditor, keyState.getHelp())
     // clear any search decorators if this key did not alter search state
     // (meaning it was not a search command)
-    if(!searchChanged){
+    if(!highlightsChanged){
         vscode.window.activeTextEditor?.setDecorations(searchDecorator, []);
         vscode.window.activeTextEditor?.setDecorations(searchOtherDecorator, []);
     }
-    searchChanged = false;
+    highlightsChanged = false;
 }
 /**
  * Whenever text changes in an active editor, we set a flag. This flag is
@@ -537,7 +531,9 @@ let modeHooks: any = {
         enter: async (m: string) => { keyState.reset() }
     },
     [Search]: {
-        enter: async (oldmode: string) => {searchOldMode = oldmode}
+        enter: async (oldmode: string) => {
+            searchStates[currentSearch].oldMode = oldmode
+        }
     },
     __default__: {
         enter: async (oldmode: string) => {
@@ -613,9 +609,10 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined, 
         /**
          * Update the main status bar.
          */
+        let search = searchStates[currentSearch]
         mainStatusBar.text = keyMode === Search ?
-            `${text} [${searchBackwards ? "B" : "F"
-            }${searchCaseSensitive ? "S" : ""}]` :
+            `${text} [${search.args.backwards ? "B" : "F"
+            }${search.args.caseSensitive ? "S" : ""}]` :
             text
         mainStatusBar.color = color
         mainStatusBar.show()
@@ -628,11 +625,11 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined, 
         let sec = " " + keySeq(keyState.curWord)
         if (help)
             sec = `${sec}    ${help}`
-        if (searchInfo) {
+        if (matchStatusText) {
             if (sec.trim() == "")
-                sec = searchInfo
+                sec = matchStatusText
             else
-                searchInfo = null
+                matchStatusText = ""
         }
         secondaryStatusBar.text = sec
         secondaryStatusBar.show()
@@ -726,23 +723,23 @@ function* linesOf(doc: vscode.TextDocument, pos: vscode.Position,
     }
 }
 function* searchMatches(doc: vscode.TextDocument, start: vscode.Position, end: vscode.Position | undefined,
-    target: string, regex: boolean, matchCase: boolean, forward: boolean, wrap: boolean){
+    target: string, args: SearchArgs){
 
     let matchesFn: (line: string, offset: number | undefined) => Generator<[number, number]>
-    if(regex){
-        let matcher = RegExp(target, "g" + (!matchCase ? "i" : ""))
-        matchesFn = (line, offset) => regexMatches(matcher, line, forward, offset)
+    if(args.regex){
+        let matcher = RegExp(target, "g" + (!args.caseSensitive ? "" : "i"))
+        matchesFn = (line, offset) => regexMatches(matcher, line, !args.backwards, offset)
     }else{
-        let matcher = matchCase ? target : target.toLowerCase()
-        matchesFn = (line, offset) => stringMatches(matcher, matchCase, line, forward, offset)
+        let matcher = !args.caseSensitive ? target : target.toLowerCase()
+        matchesFn = (line, offset) => stringMatches(matcher, !args.caseSensitive, line, !args.backwards, offset)
     }
 
     let offset: number | undefined = start.character
-    for(const [line, i] of linesOf(doc, start, wrap, forward)){
+    for(const [line, i] of linesOf(doc, start, args.wrapAround || false, !args.backwards)){
         if(end && i > end.line){ return }
 
         let matchesItr = matchesFn(line, offset)
-        let matches = forward ? matchesItr : Array.from(matchesItr).reverse()
+        let matches = !args.backwards ? matchesItr : Array.from(matchesItr).reverse()
 
         yield* mapIter(matches, ([start, len]) => new vscode.Range(
             new vscode.Position(i, start),
@@ -803,42 +800,47 @@ async function search(args: SearchArgs | string): Promise<void> {
          */
         enterMode(Search)
         
-        searchString = args.text || ""
-        searchStartSelections = editor.selections
-        searchBackwards = args.backwards || false
-        searchCaseSensitive = args.caseSensitive || false
-        searchWrapAround = args.wrapAround || false
-        searchAcceptAfter = args.acceptAfter || Number.POSITIVE_INFINITY
-        searchSelectTillMatch = args.selectTillMatch || false
-        searchOffset = args.offset || 'inclusive'
-        searchExecuteAfter = args.executeAfter
-        searchRegex = args.regex || false
-        searchHighlightMatches = args.highlightMatches === undefined ? true : args.highlightMatches
+        currentSearch = args.register || "default"
+        let state = searchStates[currentSearch]
+        let text = args.text || ""
+        state.string = text
+        state.startSelections = editor.selections
+        state.args.backwards = args.backwards || false
+        state.args.caseSensitive = args.caseSensitive || false
+        state.args.wrapAround = args.wrapAround || false
+        state.args.acceptAfter = args.acceptAfter || Number.POSITIVE_INFINITY
+        state.args.selectTillMatch = args.selectTillMatch || false
+        state.offset = args.offset || 'inclusive'
+        state.args.executeAfter = args.executeAfter
+        state.args.regex = args.regex || false
+        state.args.highlightMatches = args.highlightMatches === undefined ? true : args.highlightMatches
 
         /**
          * If we've been passed text to search as part of the command, immediately find
          * and accept the matches
          */
-        if(searchString.length > 0){
-            highlightMatches(editor, searchStartSelections)
-            await acceptSearch(editor, searchMatchLength)
+        if(text.length > 0){
+            highlightMatches(text, editor, state.startSelections || editor.selections, state)
+            await acceptSearch(editor, state)
         }
     }
     else if (args == "\n")
         /**
          * If we get an enter character we accept the search.
          */
-        await acceptSearch(editor, searchMatchLength)
+        await acceptSearch(editor, searchStates[currentSearch])
     else {
         /**
          * Otherwise we just add the character to the search string and find
          * the next match. If `acceptAfter` argument is given, and we have a
          * sufficiently long search string, we accept the search automatically.
          */
-        searchString += args
-        highlightMatches(editor, searchStartSelections)
-        if (searchString.length >= searchAcceptAfter)
-            await acceptSearch(editor, searchMatchLength)
+        let state = searchStates[currentSearch]
+        let text = (state.string || "") + args
+        state.string = text
+        highlightMatches(text, editor, state.startSelections || editor.selections, state)
+        if (!state.args.acceptAfter || state.string.length >= state.args.acceptAfter)
+            await acceptSearch(editor, state)
     }
 }
 
@@ -854,15 +856,15 @@ async function search(args: SearchArgs | string): Promise<void> {
  * matches are unique. In case the matches overlap, the number of selections
  * will decrease.
  */
-function highlightMatches(editor: vscode.TextEditor,
-    selections: vscode.Selection[]) {
-    searchInfo = null
-    if (searchString == ""){
+function highlightMatches(text: string, editor: vscode.TextEditor,
+    selections: vscode.Selection[], state: SearchState) {
+    matchStatusText = ""
+    if (state.string == ""){
         /**
          * If search string is empty, we return to the start positions.
          * (cleaering the deceorators)
          */
-        editor.selections = searchStartSelections
+        if(state.startSelections) editor.selections = state.startSelections
         editor.setDecorations(searchDecorator, []);
         editor.setDecorations(searchOtherDecorator, []);
     }else {
@@ -879,30 +881,28 @@ function highlightMatches(editor: vscode.TextEditor,
         let searchRanges: vscode.Range[] = [];
 
         editor.selections = selections.map(sel => {
-            let matches = searchMatches(doc, sel.active, undefined, searchString,
-                searchRegex, searchCaseSensitive, !searchBackwards, searchWrapAround)
+            let matches = searchMatches(doc, sel.active, undefined, text, state.args)
             let result = matches.next()
             let newsel = sel
             while(!result.done){
-                let [active, anchor] = searchBackwards ?
+                let [active, anchor] = state.args.backwards ?
                     [result.value.start, result.value.end] :
                     [result.value.end, result.value.start]
-                if (!searchSelectTillMatch) anchor = active
+                if (!state.args.selectTillMatch) anchor = active
                 else anchor = sel.anchor
                 newsel = positionSearch(new vscode.Selection(anchor, active), doc,
                     result.value.end.character - result.value.start.character, 
-                    !searchBackwards)
+                    state.args)
                 if(!newsel.start.isEqual(sel.start) || !newsel.end.isEqual(sel.end)) break
 
                 result = matches.next()
             }
             if(result.done){
-                searchInfo = "Pattern not found"
+                matchStatusText = "Pattern not found"
                 return sel
             }else{
                 searchRanges.push(result.value)
 
-                searchMatchLength = result.value.end.character - result.value.start.character
                 return newsel
             }
         })
@@ -915,11 +915,11 @@ function highlightMatches(editor: vscode.TextEditor,
          * them; we want to mark those that aren't a "current" match (found above)
          * differently so we make sure that they are not part of `searchRanges`
          */
-         if(searchHighlightMatches){
+         if(state.args.highlightMatches){
             let searchOtherRanges: vscode.Range[] = [];
             editor.visibleRanges.forEach(range => {
-                let matches = searchMatches(doc, range.start, range.end, searchString,
-                    searchRegex, searchCaseSensitive, true, searchWrapAround)
+                let matches = searchMatches(doc, range.start, range.end, text,
+                    state.args)
                 for(const matchRange of matches){
                     if(!searchRanges.find(x =>
                         x.start.isEqual(matchRange.start) && x.end.isEqual(matchRange.end))){
@@ -934,7 +934,7 @@ function highlightMatches(editor: vscode.TextEditor,
             editor.setDecorations(searchDecorator, searchRanges);
             editor.setDecorations(searchOtherDecorator, searchOtherRanges);
         }
-        searchChanged = true;
+        highlightsChanged = true;
     }
 }
 
@@ -977,31 +977,28 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
     }
 }
 
-function positionSearch(sel: vscode.Selection, doc: vscode.TextDocument, len: number, forward: boolean){
+function positionSearch(sel: vscode.Selection, doc: vscode.TextDocument, len: number, args: SearchArgs){
     let offset = 0;
-    if(searchOffset === 'exclusive'){
+    let forward = !args.backwards
+    if(args.offset === 'exclusive'){
         offset = forward ? -len : len
-        if(!searchSelectTillMatch) offset += forward ? -1 : 0
-        else searchAtStart = forward
-    }else if(searchOffset === 'start'){
+        if(!args.selectTillMatch) offset += forward ? -1 : 0
+    }else if(args.offset === 'start'){
         if(forward){ offset = -len }
-        searchAtStart = true
-    }else if(searchOffset === 'end'){
+    }else if(args.offset === 'end'){
         if(!forward){ offset = len }
-        searchAtStart = false
-    }else if(searchOffset === 'inclusive'){
-        if(!searchSelectTillMatch){
+    }else if(args.offset === 'inclusive'){
+        if(!args.selectTillMatch){
             offset += forward ? -1 : 0
-            searchAtStart = true
-        }else searchAtStart = !forward 
+        }
     }else{
-        vscode.window.showErrorMessage(`Unexpected search offset "${searchOffset}"`)
+        vscode.window.showErrorMessage(`Unexpected search offset "${args.offset}"`)
         return sel
     }
 
     if(offset !== 0){
         let newpos = wrappedTranslate(sel.active, doc, offset)
-        return new vscode.Selection(searchSelectTillMatch ? sel.anchor : newpos, newpos)
+        return new vscode.Selection(args.selectTillMatch ? sel.anchor : newpos, newpos)
     }
     return sel
 }
@@ -1012,17 +1009,15 @@ function positionSearch(sel: vscode.Selection, doc: vscode.TextDocument, len: nu
  * Accepting the search resets the mode variables. Additionally, if
  * `typeAfterAccept` argument is set we run the given normal mode commands.
  */
-async function acceptSearch(editor: vscode.TextEditor, len: number) {
-    let mode = searchOldMode
-    searchLength = len
-    if(searchExecuteAfter){
-        let command = expandOneCommand(searchExecuteAfter)
+async function acceptSearch(editor: vscode.TextEditor, state: SearchState) {
+    if(state.args.executeAfter){
+        let command = expandOneCommand(state.args.executeAfter)
         if(command){
-            keyState.execute(command, mode, searchString)
+            keyState.execute(command, state.oldMode || Normal, state.string)
         }
     }
 
-    await enterMode(mode)
+    await enterMode(state.oldMode || Normal)
 }
 
 /**
@@ -1032,11 +1027,12 @@ async function acceptSearch(editor: vscode.TextEditor, len: number) {
  * position.
  */
 async function cancelSearch(): Promise<void> {
+    let state = searchStates[currentSearch]
     if (keyMode == Search) {
-        await enterMode(searchOldMode)
+        await enterMode(state.oldMode || Normal)
         let editor = vscode.window.activeTextEditor
         if (editor) {
-            editor.selections = searchStartSelections
+            if(state.startSelections) editor.selections = state.startSelections
             revealActive(editor);
         }
     }
@@ -1063,10 +1059,12 @@ async function cancelSearch(): Promise<void> {
  */
 function deleteCharFromSearch() {
     let editor = vscode.window.activeTextEditor
-    if (editor && keyMode === Search && searchString.length > 0) {
-        searchString = searchString.slice(0, searchString.length - 1)
+    let state = searchStates[currentSearch]
+    let text = (state.string || "")
+    if (editor && keyMode === Search && text.length > 0) {
+        state.string = text.slice(0, text.length - 1)
         keyState.deleteSearchChar()
-        highlightMatches(editor, searchStartSelections)
+        highlightMatches(text, editor, state.startSelections || editor.selections, state)
         updateCursorAndStatusBar(editor)
     }
 }
@@ -1081,10 +1079,11 @@ function deleteCharFromSearch() {
  * `typeAfterNextMatch` argument. If so, we invoke the user-specified commands
  * before and/or after we jump to the next match.
  */
-async function nextMatch(): Promise<void> {
+async function nextMatch(args: {register?: string}): Promise<void> {
     let editor = vscode.window.activeTextEditor
-    if (editor && searchString) {
-        highlightMatches(editor, editor.selections)
+    let state = searchStates[args.register || currentSearch]
+    if (editor && state.string) {
+        highlightMatches(state.string, editor, editor.selections, state)
         revealActive(editor);
     }
 }
@@ -1092,24 +1091,15 @@ async function nextMatch(): Promise<void> {
  * When finding the previous match we flip the search direction but otherwise do
  * the same routine as in the previous function.
  */
-async function previousMatch(): Promise<void> {
+async function previousMatch(args: {register?: string}): Promise<void> {
     let editor = vscode.window.activeTextEditor
-    if (editor && searchString) {
-        searchBackwards = !searchBackwards
-        highlightMatches(editor, editor.selections)
+    let state = searchStates[args.register || currentSearch]
+    if (editor && state.string) {
+        state.args.backwards = !state.args.backwards
+        highlightMatches(state.string, editor, editor.selections, state)
         revealActive(editor);
-        searchBackwards = !searchBackwards
+        state.args.backwards = !state.args.backwards
     }
-}
-
-/**
- * This helper function changes the selection range in the active editor. It
- * also makes sure that the selection is visible.
- */
-function changeSelection(editor: vscode.TextEditor, anchor: vscode.Position,
-    active: vscode.Position) {
-    editor.selection = new vscode.Selection(anchor, active)
-    revealActive(editor);
 }
 
 /**
@@ -1194,9 +1184,9 @@ async function repeatLastUsedSelection(): Promise<void> {
             let start = wrappedTranslate(sel.start, ed.document, 1)
             let end = sel.end //.translate(0, -1)
             let fromMatches = searchMatches(ed.document, start, undefined,
-                args.from, args.regex, args.caseSensitive, false, false)
+                args.from, {...args, backwards: true, wrapAround: false})
             let toMatches = searchMatches(ed.document, end, undefined,
-                args.to, args.regex, args.caseSensitive, true, false)
+                args.to, {...args, backwards: false, wrapAround: false})
             let from = fromMatches.next()
             let to = toMatches.next()
             let betweenSel = sel
@@ -1213,7 +1203,7 @@ async function repeatLastUsedSelection(): Promise<void> {
                 from = fromMatches.next()
             }
             if(to.done || from.done){
-                searchInfo = "Pattern not found"
+                matchStatusText = "Pattern not found"
                 return sel
             }else{
                 if(sel.isEmpty || !sel.isReversed)
