@@ -288,8 +288,12 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(cancelRecordingMacroId, cancelRecordingMacro),
         vscode.commands.registerCommand(replayMacroId, replayMacro),
         vscode.commands.registerCommand(exportPresetId, exportPreset),
-        vscode.commands.registerCommand("type", onType)
     )
+    try{
+        vscode.commands.registerCommand("type", onType)
+    }catch(e){
+        vscode.window.showErrorMessage("Another extension is overwritting the 'type' command. (E.g. VSCodeVim). ModalKeys will not work properly.")
+    }
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
     mainStatusBar.command = toggleId

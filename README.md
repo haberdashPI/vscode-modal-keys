@@ -37,7 +37,7 @@ I am in debt to the hard and thoughtful work from that extension along with its
 meticulous documentation. There are some important features that differ between
 the two extensions.
 
-Features that ModalKeys has, which ModalEdit lacks.
+What follows are are just *some* of the features ModalKeys has which ModalEdit lacks.
 
 1. Concise keymap format: I've created a terser, simplified keymap format
 2. Customized modes: You can define your own key modes, to expand the keymap more easily
