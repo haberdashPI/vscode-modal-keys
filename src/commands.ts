@@ -531,7 +531,8 @@ let modeHooks: any = {
     },
     [Search]: {
         enter: async (oldmode: string) => {
-            searchStates[currentSearch].oldMode = oldmode
+            let state = searchState(currentSearch)
+            state.oldMode = oldmode
         }
     },
     __default__: {
@@ -608,7 +609,7 @@ export function updateCursorAndStatusBar(editor: vscode.TextEditor | undefined, 
         /**
          * Update the main status bar.
          */
-        let search = searchStates[currentSearch]
+        let search = searchState(currentSearch)
         mainStatusBar.text = keyMode === Search ?
             `${text} [${search.args.backwards ? "B" : "F"
             }${search.args.caseSensitive ? "S" : ""}]` :
@@ -799,11 +800,7 @@ async function search(args: SearchArgs | string): Promise<void> {
          */
         enterMode(Search)
         
-        currentSearch = args?.register || "default"
-        if(!searchStates[currentSearch]){
-            searchStates[currentSearch] = {args: {}}
-        }
-        let state = searchStates[currentSearch]
+        let state = searchState(args?.register)
         let text = args.text || ""
         state.string = text
         state.startSelections = editor.selections
@@ -830,14 +827,14 @@ async function search(args: SearchArgs | string): Promise<void> {
         /**
          * If we get an enter character we accept the search.
          */
-        await acceptSearch(editor, searchStates[currentSearch])
+        await acceptSearch(editor, searchState(currentSearch))
     else {
         /**
          * Otherwise we just add the character to the search string and find
          * the next match. If `acceptAfter` argument is given, and we have a
          * sufficiently long search string, we accept the search automatically.
          */
-        let state = searchStates[currentSearch]
+        let state = searchState(currentSearch)
         let text = (state.string || "") + args
         state.string = text
         highlightMatches(text, editor, state.startSelections || editor.selections, state)
@@ -1026,7 +1023,7 @@ async function acceptSearch(editor: vscode.TextEditor, state: SearchState) {
  * position.
  */
 async function cancelSearch(): Promise<void> {
-    let state = searchStates[currentSearch]
+    let state = searchState(currentSearch)
     if (keyMode == Search) {
         await enterMode(state.oldMode || Normal)
         let editor = vscode.window.activeTextEditor
@@ -1058,7 +1055,7 @@ async function cancelSearch(): Promise<void> {
  */
 function deleteCharFromSearch() {
     let editor = vscode.window.activeTextEditor
-    let state = searchStates[currentSearch]
+    let state = searchState(currentSearch)
     let text = (state.string || "")
     if (editor && keyMode === Search && text.length > 0) {
         state.string = text.slice(0, text.length - 1)
@@ -1067,6 +1064,18 @@ function deleteCharFromSearch() {
         updateCursorAndStatusBar(editor)
     }
 }
+
+function searchState(register: string | undefined): SearchState{
+    let val = register || "default"
+    if(!searchStates[val]){
+        let state = {args: {}}
+        searchStates[val] = state
+        return state
+    }else{
+        return searchStates[val]
+    }
+}
+
 /**
  * ### Finding Previous and Next Match
  *
@@ -1080,7 +1089,7 @@ function deleteCharFromSearch() {
  */
 async function nextMatch(args: {register?: string}): Promise<void> {
     let editor = vscode.window.activeTextEditor
-    let state = searchStates[args?.register || "default"]
+    let state = searchState(args?.register)
     if (editor && state.string) {
         highlightMatches(state.string, editor, editor.selections, state)
         revealActive(editor);
@@ -1092,7 +1101,7 @@ async function nextMatch(args: {register?: string}): Promise<void> {
  */
 async function previousMatch(args: {register?: string}): Promise<void> {
     let editor = vscode.window.activeTextEditor
-    let state = searchStates[args?.register || "default"]
+    let state = searchState(args?.register)
     if (editor && state.string) {
         state.args.backwards = !state.args.backwards
         highlightMatches(state.string, editor, editor.selections, state)
