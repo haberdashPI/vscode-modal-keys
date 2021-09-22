@@ -48,6 +48,9 @@ The command takes following arguments. All of them are optional.
 | `executeAfter`            | `<command>` |           | The given commands are run after accepting a search
 | `text`                    | `string`  | ""          | If non-empty, run a non-interactive search using the given text
 | `regex`                   | `boolean` | `false`     | If true, interpret search query as a regular expression
+| `register`                | `string`  | `"default"`   | Register used to store the search text, and current match of that text.
+
+Changing the register will change what `nextMatch` and `previousMatch` consider to be the current search term and location. This allows for multiple channels of searching (e.g. so that emulation of vim's `f` and `/` commands can have independent state).
 
 ### `modalkeys.cancelSearch`
 
@@ -62,12 +65,12 @@ is bound to this command when ModalKeys is active and in search mode.
 ### `modalkeys.nextMatch`
 
 Moves to the next match and selectes it. Which way to search depends on the
-search direction.
+search direction. Takes a single argument (`register`), which defaults to "default" if unspecified. (See `modalkeys.search` for details)
 
 ### `modalkeys.previousMatch`
 
 Moves to the previous match and selectes it. Which way to search depends on the
-search direction.
+search direction. Takes a single argument (`register`), which defaults to "default" if unspecified. (See `modalkeys.search` for details)
 
 ### `modalkeys.enterMode`
 
