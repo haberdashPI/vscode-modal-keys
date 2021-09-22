@@ -307,7 +307,7 @@ const normalFirst = (x: [string, any]) =>
 function expandCommands(x: any): Command {
     try{
         return expandCommands__(x)
-    }catch(e){
+    }catch(e: any){
         log("ERROR: "+e.message)
     }
     return "UNKNOWN_COMMAND_FORM"
@@ -316,7 +316,7 @@ function expandCommands(x: any): Command {
 export function expandOneCommand(x: Command): Command | undefined {
     try{
         return expandCommands__(x)
-    }catch(e){
+    }catch(e: any){
         vscode.window.showErrorMessage(e.message)
     }
     return undefined
@@ -595,7 +595,7 @@ export class KeyState {
         try {
             return this.evalString__(str, __mode, __captured)
         }
-        catch (error) {
+        catch (error: any) {
             vscode.window.showErrorMessage("Evaluation error: " + error.message)
             return undefined
         }
@@ -743,7 +743,7 @@ export class KeyState {
         try {
             await vscode.commands.executeCommand(command, ...rest)
         }
-        catch (error) {
+        catch (error: any) {
             vscode.window.showErrorMessage(error.message)
         }
     }
