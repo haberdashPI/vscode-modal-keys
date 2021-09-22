@@ -188,7 +188,6 @@ let bookMarkDecorator: vscode.TextEditorDecorationType;
 interface SearchState{
     args: SearchArgs
     string?: string
-    offset?: string
     oldMode?: string
     startSelections?: vscode.Selection[]
     length?: number
@@ -801,6 +800,9 @@ async function search(args: SearchArgs | string): Promise<void> {
         enterMode(Search)
         
         currentSearch = args.register || "default"
+        if(!searchStates[currentSearch]){
+            searchStates[currentSearch] = {args: {}}
+        }
         let state = searchStates[currentSearch]
         let text = args.text || ""
         state.string = text
@@ -810,7 +812,7 @@ async function search(args: SearchArgs | string): Promise<void> {
         state.args.wrapAround = args.wrapAround || false
         state.args.acceptAfter = args.acceptAfter || Number.POSITIVE_INFINITY
         state.args.selectTillMatch = args.selectTillMatch || false
-        state.offset = args.offset || 'inclusive'
+        state.args.offset = args.offset || 'inclusive'
         state.args.executeAfter = args.executeAfter
         state.args.regex = args.regex || false
         state.args.highlightMatches = args.highlightMatches === undefined ? true : args.highlightMatches
@@ -919,7 +921,7 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
             let searchOtherRanges: vscode.Range[] = [];
             editor.visibleRanges.forEach(range => {
                 let matches = searchMatches(doc, range.start, range.end, text,
-                    state.args)
+                    {...state.args, backwards: false})
                 for(const matchRange of matches){
                     if(!searchRanges.find(x =>
                         x.start.isEqual(matchRange.start) && x.end.isEqual(matchRange.end))){
@@ -987,13 +989,10 @@ function positionSearch(sel: vscode.Selection, doc: vscode.TextDocument, len: nu
         if(forward){ offset = -len }
     }else if(args.offset === 'end'){
         if(!forward){ offset = len }
-    }else if(args.offset === 'inclusive'){
+    }else{ // args.offset === 'inclusive' (default)
         if(!args.selectTillMatch){
             offset += forward ? -1 : 0
         }
-    }else{
-        vscode.window.showErrorMessage(`Unexpected search offset "${args.offset}"`)
-        return sel
     }
 
     if(offset !== 0){
