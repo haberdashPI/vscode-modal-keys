@@ -672,7 +672,7 @@ module.exports = {
                 "register": "search"
             }
         },
-        n: { "modalkeys.nextMatch": {register: "search"},
+        n: { "modalkeys.nextMatch": {register: "search"}},
         N: { "modalkeys.previousMatch": {register: "search"}},
 // ## Miscellaneous Commands
 
