@@ -289,11 +289,6 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(replayMacroId, replayMacro),
         vscode.commands.registerCommand(exportPresetId, exportPreset),
     )
-    try{
-        vscode.commands.registerCommand("type", onType)
-    }catch(e){
-        vscode.window.showErrorMessage("Another extension is overwritting the 'type' command. (E.g. VSCodeVim). ModalKeys will not work properly.")
-    }
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
     mainStatusBar.command = toggleId
@@ -348,9 +343,6 @@ function keySeq(word: IKeyRecording | undefined){
  * variables needed by the `repeatLastChange` command and the status bar.
  */
 async function onType(event: { text: string }) {
-    if(!handleType){
-        return vscode.commands.executeCommand('default:type', event)
-    }
     if(!repeatedSequence){
         if (textChanged && !ignoreChangedText) {
             lastSentence = { ...pendingSentence, verb: keyState.lastWord }
@@ -514,13 +506,18 @@ function wrappedTranslate(x: vscode.Position, doc: vscode.TextDocument, val: num
 }
 
 
-let handleType = false
 function handleTypeSubscription(newmode: string){
     if(newmode !== Insert){
-        handleType = true
+        if(!typeSubscription){
+            try{
+                typeSubscription = vscode.commands.registerCommand("type", onType)
+            }catch(e){
+                vscode.window.showErrorMessage("Another extension is overwritting the 'type' command. (E.g. VSCodeVim). ModalKeys will not behave properly.")
+            }
+        }
         vscode.commands.executeCommand('hideSuggestWidget')
-    }else if(newmode === Insert){
-        handleType = false
+    }else if(newmode === Insert && typeSubscription){
+        typeSubscription.dispose()
         typeSubscription = undefined
     }
 }
