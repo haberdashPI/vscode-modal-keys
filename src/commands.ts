@@ -1340,6 +1340,7 @@ async function importPresets(folder?: string) {
             if (!preset.keybindings)
                 throw new Error(
                     `Could not find "keybindings" or "selectbindings" in ${uri}`)
+            // TODO: update to include `extensions` property if present
             if (preset.keybindings)
                 config.update("keybindings", preset.keybindings, true)
             vscode.window.showInformationMessage(

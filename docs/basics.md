@@ -4,7 +4,7 @@ ModalKeys has two built in modes, and as many custom modes as you want. By defau
 
 To define the key mappings for these modes, you should create a javascript file
 (e.g. `mybindings.js`). When run, the file should export a single object with
-the single property `keybindings`; this should define all of your bindings. If
+the property `keybindings`; this should define all of your bindings. If
 your bindings are simple enough you can also use a `json` or `jsonc` file (but
 this will limit the flexibility of your bindings).
 
@@ -74,3 +74,7 @@ when you are in "evil" mode.
     "evil::l": "edit.action.clipbaordCutAction"
 }
 ```
+
+## Required Extensions
+
+If you wish to include commands in your keybindings that come from particular extensions it is a good idea to list those extensions as requried. Just add another property to the top-level object of your config file called `extensions`; it should be an array of strings. ModalKeys will check for these extensions and show a helpful error message if they're not installed. List each extension by it's identifier (you can find this on the column to the right of an extension's main page under the extensions panel).

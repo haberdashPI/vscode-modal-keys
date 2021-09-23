@@ -32,16 +32,6 @@
 // example delete a word you type <key>d</key> (for delete) and <key>w</key>
 // (for word). 
 
-// ### Required extensions
-
-// Unlike the tutorial, these settings are not self-contained and make use of a
-// variety of extensions to allow for a better set of features. You wil need the
-// following extensions for all bindings to work:
-
-// - [Quick and Simple Text Selection](https://marketplace.visualstudio.com/items?itemName=dbankier.vscode-quick-select)
-// - [Selection Utilities](https://marketplace.visualstudio.com/items?itemName=haberdashPI.selection-utilities)
-// - [Select by Indent](https://marketplace.visualstudio.com/items?itemName=haberdashPI.vscode-select-by-indent)
-
 // ### Functions
 
 // To begin with, we'll define some function to make creating the operators
@@ -274,9 +264,25 @@ const search_objects = {
 // (e.g. the `3` in 3l) to a given command.
 // - When in visual model, most of the commands are built to extend the selection
 
+// ### Required extensions
+
+// Unlike the tutorial, these settings are not self-contained and make use of a
+// variety of extensions to allow for a better set of features. You wil need the
+// following extensions for all bindings to work properly:
+
+// - [Quick and Simple Text Selection](https://marketplace.visualstudio.com/items?itemName=dbankier.vscode-quick-select)
+// - [Selection Utilities](https://marketplace.visualstudio.com/items?itemName=haberdashPI.selection-utilities)
+// - [Select by Indent](https://marketplace.visualstudio.com/items?itemName=haberdashPI.vscode-select-by-indent)
+
+module.exports = {
+    "extensions": [
+        "dbankier.vscode-quick-select",
+        "haberdashpi.vscode-select-by-indent",
+        "haberdashpi.selection-utilities"
+    ],
+
 // ## Motions in Normal Mode
 // 
-module.exports = {
     "keybindings": {
 // Cursor can be advanced in a file with enter and space. These are not
 // technically motion commands but included for compatibility.

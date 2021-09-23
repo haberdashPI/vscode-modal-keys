@@ -222,6 +222,8 @@ export function updateFromConfig(): void {
 function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     log("Validating keybindings in 'settings.json'...")
     keymapsById = {}
+
+    checkExtensions(config.get<string[]>("extensions"))
     let [modes, errors] = expandBindings(config.get<any>("keybindings"))
     if(!isKeymap(modes?.normal))
         log("ERROR: Missing valid normal mode keybindings. Keybindings not updated.")
@@ -238,6 +240,21 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
             "Keybindings might not work correctly.")
     else
         log("Validation completed successfully.")
+}
+
+function checkExtensions(extension_ids: string[] | undefined){
+    if(!extension_ids) return
+    for(const id of extension_ids){
+        if(!vscode.extensions.getExtension(id)){
+            vscode.window.showErrorMessage(`The current ModalKeys keybindings
+                expected to find an extension with the id $id, but no such 
+                extension exists. Try searching for this id in the extensions 
+                tab and installing it.`,"Search for Extension").then(sel => {
+                    vscode.commands.executeCommand("workbench.view.extensions")
+                })
+        }
+
+    }
 }
 /**
  * The keymap ranges are recognized with the following regular expression.
