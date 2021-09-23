@@ -2,6 +2,10 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+## Version 0.6.1
+- **Bugfix**: typing lag in insert mode
+- **Bugfix**: search failed to catpure keys
+
 ## Version 0.6.0
 - **Feature**: commands can use `__wordstr` to get the current word under the cursor or the current selection
 - **Feature**: search registers; different search commands can use different registers to maintain separate state
