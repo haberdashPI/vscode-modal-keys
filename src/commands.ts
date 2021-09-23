@@ -804,7 +804,8 @@ async function search(args: SearchArgs | string): Promise<void> {
          */
         enterMode(Search)
         
-        let state = searchState(args?.register)
+        currentSearch = args?.register || "default"
+        let state = searchState(currentSearch)
         let text = args.text || ""
         state.string = text
         state.startSelections = editor.selections
