@@ -222,6 +222,7 @@ export function updateFromConfig(): void {
 function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     log("Validating keybindings in 'settings.json'...")
     keymapsById = {}
+
     let [modes, errors] = expandBindings(config.get<any>("keybindings"))
     if(!isKeymap(modes?.normal))
         log("ERROR: Missing valid normal mode keybindings. Keybindings not updated.")
@@ -239,6 +240,7 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     else
         log("Validation completed successfully.")
 }
+
 /**
  * The keymap ranges are recognized with the following regular expression.
  * Examples of valid key sequences include:
