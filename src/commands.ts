@@ -1340,9 +1340,9 @@ async function importPresets(folder?: string) {
             if (!preset.keybindings)
                 throw new Error(
                     `Could not find "keybindings" or "selectbindings" in ${uri}`)
-            // TODO: update to include `extensions` property if present
-            if (preset.keybindings)
+            if(preset.keybindings)
                 config.update("keybindings", preset.keybindings, true)
+            checkExtensions(preset.extensions)
             vscode.window.showInformationMessage(
                 "ModalKeys: Keybindings imported.")
         }
@@ -1350,6 +1350,25 @@ async function importPresets(folder?: string) {
             vscode.window.showWarningMessage("ModalKeys: Bindings not imported."+
                 `\n ${e}`)
         }
+    }
+}
+
+function checkExtensions(extension_ids: string[] | undefined){
+    if(!extension_ids) return
+    for(const id of extension_ids){
+        if(!vscode.extensions.getExtension(id)){
+            const install = "Install Extension"
+            const view = "View Extension"
+            vscode.window.showErrorMessage(`The current ModalKeys keybindings
+                expected to find an extension (\`${id}\`), but it is not installed.`,view, install).then(sel => {
+                    if(sel === view){
+                        vscode.commands.executeCommand("workbench.extensions.search", id)
+                    }else if(sel === install){
+                        vscode.commands.executeCommand("workbench.extensions.installExtension", id)
+                    }
+                })
+        }
+
     }
 }
 
