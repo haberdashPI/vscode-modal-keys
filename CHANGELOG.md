@@ -2,6 +2,10 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.7.0
+- **Feature**: Preset files can identify a list of required extensions. If the extension is not present, an error message with an option to install the required extension is displayed.
+- **Feature**: The vim presets now list required extensions.
+
 ## Version 0.6.1
 - **Bugfix**: typing lag in insert mode
 - **Bugfix**: search failed to catpure keys
