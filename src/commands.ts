@@ -334,6 +334,19 @@ function keySeq(word: IKeyRecording | undefined){
     }
 }
 
+export class DocViewProvider implements vscode.WebviewViewProvider {
+    constructor(
+        private readonly _extensionUri: vscode.Uri
+    ){}
+
+    public resolveWebviewView(webviewView: vscode.WebviewView, 
+        context: vscode.WebviewViewResolveContext,
+        _token: vscode.CancellationToken){
+        
+        // TODO: create a static html/css display of a keyboard, to start
+    }
+}
+
 /**
  * ## Keyboard Event Handler
  *

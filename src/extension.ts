@@ -30,6 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 	/**
 	 * Then we subscribe to events we want to react to.
 	 */
+	const docProvider = new commands.DocViewProvider(context.extensionUri);
 	context.subscriptions.push(
 		channel,
 		vscode.workspace.onDidChangeConfiguration(actions.updateFromConfig),
@@ -38,6 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 			commands.onSelectionChanged(e)
 			commands.updateCursorAndStatusBar(e.textEditor)
 		}),
+		vscode.window.registerWebviewViewProvider(commands.DocViewProvider.viewType, provider),
 		vscode.workspace.onDidChangeTextDocument(commands.onTextChanged))
 	/**
 	 * Next we update the active settings from the config file, and at last,

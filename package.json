@@ -42,6 +42,25 @@
         }
     },
     "contributes": {
+        "viewContainers": {
+            "panel": [
+                {
+                    "id": "modal-key-panel",
+                    "title": "Modal Key Bindings",
+                    "icon": "icon.svg"
+                }
+            ]
+        },
+        "views": {
+            "model-key-panel": [
+                {
+                    "id": "modal-key-docs",
+                    "name": "Modal Key Bindings",
+                    "contextualTitle": "Modal Keys",
+                    "icon": "icon.svg"
+                }
+            ]
+        },
         "configuration": {
             "type": "object",
             "title": "Modal Keys",
