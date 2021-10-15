@@ -274,6 +274,10 @@ const search_objects = {
 // - [Selection Utilities](https://marketplace.visualstudio.com/items?itemName=haberdashPI.selection-utilities)
 // - [Select by Indent](https://marketplace.visualstudio.com/items?itemName=haberdashPI.vscode-select-by-indent)
 
+// Because we've listed these extensions below, ModalKeys will check for these
+// extensions when you import this preset, and give you the option to install
+// the extensions.
+
 module.exports = {
     "extensions": [
         "dbankier.vscode-quick-select",
