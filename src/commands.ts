@@ -334,6 +334,7 @@ function keySeq(word: IKeyRecording | undefined){
     }
 }
 
+// generates the webview for a provider
 export class DocViewProvider implements vscode.WebviewViewProvider {
     constructor(
         private readonly _extensionUri: vscode.Uri
@@ -343,7 +344,34 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
         context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken){
         
-        // TODO: create a static html/css display of a keyboard, to start
+        this._view = webviewView;
+        webviewView.webview.options = {
+            enableScripts: false,
+            localResourceRoots: [ vscode.Uri.joinPath(this._extensionUri, 'docview')]
+        };
+        webviewView.webview.html = this._getHtml(webviewView.webview)
+
+        // TODO: send messages to the webview
+    }
+
+    public _getHtml(webview: vscode.Webview){
+        let style = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'docview', 'style.css'))
+        let keyboard = "hello world!"
+        return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; ">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="${style}" rel="stylesheet">
+
+            </head>
+            <body>
+            ${keyboard}
+            </body>
+            </html>
+        `
     }
 }
 
