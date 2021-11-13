@@ -336,11 +336,14 @@ function keySeq(word: IKeyRecording | undefined){
 
 // generates the webview for a provider
 export class DocViewProvider implements vscode.WebviewViewProvider {
+    public static readonly viewType = 'modalkeys.bindingView';
+    public _view?: vscode.WebviewView
     constructor(
         private readonly _extensionUri: vscode.Uri
     ){}
 
-    public resolveWebviewView(webviewView: vscode.WebviewView, 
+    public resolveWebviewView(
+        webviewView: vscode.WebviewView, 
         context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken){
         
@@ -350,8 +353,6 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [ vscode.Uri.joinPath(this._extensionUri, 'docview')]
         };
         webviewView.webview.html = this._getHtml(webviewView.webview)
-
-        // TODO: send messages to the webview
     }
 
     public _getHtml(webview: vscode.Webview){

@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 			commands.onSelectionChanged(e)
 			commands.updateCursorAndStatusBar(e.textEditor)
 		}),
-		vscode.window.registerWebviewViewProvider(commands.DocViewProvider.viewType, provider),
+		vscode.window.registerWebviewViewProvider(commands.DocViewProvider.viewType, docProvider),
 		vscode.workspace.onDidChangeTextDocument(commands.onTextChanged))
 	/**
 	 * Next we update the active settings from the config file, and at last,
