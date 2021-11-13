@@ -43,11 +43,11 @@
     },
     "contributes": {
         "views": {
-            "explorer": [
+            "modalKeyBindingView": [
                 {
                     "type": "webview",
                     "id": "modalkeys.bindingView",
-                    "name": "ModalKey Bindings",
+                    "name": "ModalKeys Bindings",
                     "contextualTitle": "Modal Keys",
                     "icon": "icon.svg",
                     "visibility": "visible"
@@ -57,8 +57,8 @@
         "viewsContainers": {
             "panel": [
                 {
-                    "id": "modalKeyPanel",
-                    "title": "ModalKey Bindings",
+                    "id": "modalKeyBindingView",
+                    "title": "ModalKeys Bindings",
                     "icon": "icon.svg"
                 }
             ]
