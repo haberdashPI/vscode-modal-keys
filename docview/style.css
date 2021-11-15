@@ -1,0 +1,31 @@
+.keyboard-row {
+    display: flex;
+    max-width: 90rem;
+    min-width: 50rem;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+.key {
+    font-family: var(--vscode-font-family);
+    min-width: 2rem;
+    height: 1.75rem;
+    display: grid;
+    background-color: var(--vscode-panel-background);
+    color: var(--vscode-foreground);
+    border: 1px solid var(--vscode-foreground);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+/* TODO: how to setup the grid properly (debug in easy to refresh plain html */
+.key-length-1 { flex: 1; }
+.key-length-1-25 { flex: 1.25; }
+.key-length-1-5 { flex: 1.5; }
+.key-length-1-75 { flex: 1.75; }
+.key-length-2-25 { flex: 2.25; }
+.key-length-5 { flex: 7; }
+
+.label {
+    height: 0.75rem;
+    font-size: 0.75rem;
+    text-align: left;
+}
