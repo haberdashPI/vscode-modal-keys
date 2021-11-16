@@ -808,6 +808,10 @@ export class KeyState {
         this.curWord?.seq.pop()
     }
 
+    getCurrentHelp(mode: string){
+        return this.currentKeymap || (rootKeymodes && rootKeymodes.command && rootKeymodes.help[mode])
+    }
+
     /**
      * ## Key Press Handler
      *
