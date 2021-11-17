@@ -1,9 +1,11 @@
 import * as vscode from 'vscode'
 import { Keyhelp, KeyState } from './actions'
 import { IHash } from './util'
+import { merge } from 'lodash'
 
 // TODO: use KeyboardLayoutMap to improve behavior
 // acorss non-english / non-standard layouts
+// TODO: ensure all special character have alphanumeric alias for id's
 const keyRows = [
     [
         {top: "~", bottom: "`"},
@@ -35,7 +37,7 @@ const keyRows = [
         {top: "P", bottom: "p"},
         {top: "{", bottom: "["},
         {top: "}", bottom: "]"},
-        {top: "|", bottom: "\\"}
+        {top: "|", bottom: "back_slash", bottom_name: "\\"}
     ],
     [    
         {bottom: "caps lock", length: '1-75'},
@@ -49,7 +51,7 @@ const keyRows = [
         {top: "K", bottom: "k"},
         {top: "L", bottom: "l"},
         {top: ":", bottom: ";"},
-        {top: '"', bottom: "'"},
+        {top: 'quote', top_name: '"', bottom: "'"},
         {bottom: "return", length: '1-75'}
     ],
     [
@@ -74,6 +76,18 @@ const keyRows = [
         {}, {}, {}, {}
     ]
 ];
+
+const count_help = {
+    '1': {label: "arg", kind: "count", detail: "Pass 1 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '2': {label: "arg", kind: "count", detail: "Pass 2 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '3': {label: "arg", kind: "count", detail: "Pass 3 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '4': {label: "arg", kind: "count", detail: "Pass 4 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '5': {label: "arg", kind: "count", detail: "Pass 5 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '6': {label: "arg", kind: "count", detail: "Pass 6 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '7': {label: "arg", kind: "count", detail: "Pass 7 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '8': {label: "arg", kind: "count", detail: "Pass 8 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '9': {label: "arg", kind: "count", detail: "Pass 9 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+}
 
 function get(x: any, key: string, def: any){
     if(key in x){
@@ -114,7 +128,7 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
     public update(state: KeyState, mode: string){
         let help_map = state.getCurrentHelp(mode)
         this._mode = mode
-        this._help_map = help_map ? help_map : {};
+        this._help_map = help_map ? merge(count_help, help_map) : {};
         this.refresh()
     }
     

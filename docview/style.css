@@ -36,4 +36,5 @@
     height: 1.2rem;
     font-size: 0.6rem;
     text-align: right;
+    word-break: break-all;
 }

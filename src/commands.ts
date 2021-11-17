@@ -303,7 +303,7 @@ export function register(context: vscode.ExtensionContext, _docKeymap: DocViewPr
         new vscode.ThemeColor('statusBarItem.errorBackground')
 
     docKeymap = _docKeymap;
-    docKeymap?.update(keyState, keyMode)
+    docKeymap?.update(keyState, realMode(keyMode))
 
     updateSearchHighlights();
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
@@ -478,9 +478,13 @@ export function onSelectionChanged(e: vscode.TextEditorSelectionChangeEvent){
  * is needed to decide whether the `lastKeySequence` variable is updated.
  */
 async function runActionForKey(key: string, mode: string = keyMode, state: KeyState = keyState) {
-    await state.handleKey(key, isSelecting() && mode === Normal ? Visual : mode)
-    docKeymap!.update(state, mode)
+    await state.handleKey(key, realMode(mode))
+    docKeymap!.update(state, realMode(keyMode))
     return !state.waitingForKey()
+}
+
+function realMode(mode: string){
+    return isSelecting() && mode === Normal ? Visual : mode
 }
 
 
@@ -574,7 +578,7 @@ export async function enterMode(args: string | EnterModeArgs) {
         updateCursorAndStatusBar(editor)
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
     }
-    docKeymap?.update(keyState, keyMode)
+    docKeymap?.update(keyState, realMode(keyMode))
 }
 
 export async function restoreEditorMode(editor: vscode.TextEditor | undefined){

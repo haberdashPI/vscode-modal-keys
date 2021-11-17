@@ -78,6 +78,7 @@ export interface Keymap {
 export interface Keyhelp{
     label: string,
     kind: string
+    detail?: string,
     keys?: IHash<Keyhelp>
 }
 
@@ -827,6 +828,9 @@ export class KeyState {
             if(help){
                 if(this.keySequence){
                     for(const key of this.keySequence){
+                        if(!help[key]){
+                            return undefined
+                        }
                         let next = help[key].keys
                         if(next){
                             help = next
