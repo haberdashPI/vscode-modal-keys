@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
-import { KeyState } from './actions'
+import { Keyhelp, KeyState } from './actions'
+import { IHash } from './util'
 
 // TODO: use KeyboardLayoutMap to improve behavior
 // acorss non-english / non-standard layouts
@@ -93,16 +94,30 @@ export function register(context: vscode.ExtensionContext){
 export class DocViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'modalkeys.bindingView';
     public _view?: vscode.WebviewView
+    public _help_map?: IHash<Keyhelp>
+    public _mode?: string
+
     constructor(
-        private readonly _extensionUri: vscode.Uri
+        private readonly _extensionUri: vscode.Uri,
     ){}
 
-    public update(state: KeyState, mode: string){
-        let help_map = state.getCurrentHelp(mode)
-        if(help_map){
-            this._view!.webview.postMessage(help_map)
+    public refresh(){
+        if(this._view?.webview){
+            this._view?.webview.postMessage(this._help_map)
         }
     }
+    public updateStatic(mode: string){
+        this._mode = mode;
+        this._help_map = KeyState.getHelp(mode);
+        if(this._help_map){ this.refresh() }
+    }
+    public update(state: KeyState, mode: string){
+        let help_map = state.getCurrentHelp(mode)
+        this._mode = mode
+        this._help_map = help_map ? help_map : {};
+        this.refresh()
+    }
+    
     public resolveWebviewView(
         webviewView: vscode.WebviewView, 
         context: vscode.WebviewViewResolveContext,
@@ -114,6 +129,8 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [ vscode.Uri.joinPath(this._extensionUri, 'docview')]
         };
         webviewView.webview.html = this._getHtml(webviewView.webview)
+        webviewView.onDidChangeVisibility(event => this.refresh())
+        this.refresh()
     }
 
     public _getHtml(webview: vscode.Webview){

@@ -13,7 +13,7 @@ window.addEventListener('message', event => {
     const message = event.data;
     console.dir(message)
     for(key of allKeys){
-        if(message[key]){
+        if(message && message[key]){
             document.getElementById('key-'+key).innerHTML = message[key].label
         }else{
             let el = document.getElementById('key-'+key)

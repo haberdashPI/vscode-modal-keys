@@ -303,6 +303,7 @@ export function register(context: vscode.ExtensionContext, _docKeymap: DocViewPr
         new vscode.ThemeColor('statusBarItem.errorBackground')
 
     docKeymap = _docKeymap;
+    docKeymap?.update(keyState, keyMode)
 
     updateSearchHighlights();
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
@@ -550,7 +551,7 @@ let modeHooks: any = {
     },
 }
 
-export async function enterNormal(){ enterMode('normal') }
+export async function enterNormal(){ enterMode('normal'); keyState.reset() }
 export async function enterInsert(){ enterMode('insert') }
 
 export async function enterMode(args: string | EnterModeArgs) {
@@ -573,6 +574,7 @@ export async function enterMode(args: string | EnterModeArgs) {
         updateCursorAndStatusBar(editor)
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
     }
+    docKeymap?.update(keyState, keyMode)
 }
 
 export async function restoreEditorMode(editor: vscode.TextEditor | undefined){

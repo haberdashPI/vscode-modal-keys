@@ -8,7 +8,7 @@
  * @module
  */
 
-import { mergeWith, uniq, cloneDeep } from 'lodash'
+import { mergeWith, merge, uniq, cloneDeep } from 'lodash'
 import { IHash } from './util'
 
 import * as vscode from 'vscode'
@@ -69,19 +69,20 @@ export interface Parameterized {
  * The `help` field contains help text that is shown in the status bar when the
  * keymap is active.
  */
-interface Keymap {
+export interface Keymap {
     id: number
     help: string
     [key: string]: Action
 }
 
-interface Keyhelp{
+export interface Keyhelp{
     label: string,
     kind: string
+    keys?: IHash<Keyhelp>
 }
 
 export interface Keymodes {
-    help: IHash<Keyhelp>,
+    help: IHash<IHash<Keyhelp>>,
     command: IHash<Keymap>,
 }
 
@@ -383,7 +384,14 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
             let [ match, g1, givenMode, seq ] = res
             let obj: any = docBinding ? val : expandCommands(val)
             for(let i = seq.length-1; i>=0; i--){
-                obj = {[seq[i]]: obj}
+                if(docBinding){
+                    obj = {keys: {[seq[i]]: obj}}
+                }else{
+                    obj = {[seq[i]]: obj}
+                }
+            }
+            if(docBinding && obj.keys){
+                obj = obj.keys
             }
             let modes = (givenMode ? givenMode.split('|') : ['__all__'])
             let newErrors = false
@@ -391,7 +399,7 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
                 if(docBinding){
                     for(const mode of modes){
                         keymodes.help[mode] = keymodes.help[mode] === undefined ? obj :
-                            mergeWith(keymodes.help[mode], obj, overloadCommands)
+                            merge(keymodes.help[mode], obj)
                     }
                 }else{
                     if(state.sequencesFor[mode]?.some((oldseq: string) => {
@@ -808,8 +816,28 @@ export class KeyState {
         this.curWord?.seq.pop()
     }
 
-    getCurrentHelp(mode: string){
-        return this.currentKeymap || (rootKeymodes && rootKeymodes.command && rootKeymodes.help[mode])
+    static getHelp(mode: string): IHash<Keyhelp> | undefined {
+        if(rootKeymodes?.help){
+            return rootKeymodes.help[mode]
+        }
+    }
+    getCurrentHelp(mode: string): IHash<Keyhelp> | undefined {
+        if(rootKeymodes?.help){
+            let help = rootKeymodes.help[mode]
+            if(help){
+                if(this.keySequence){
+                    for(const key of this.keySequence){
+                        let next = help[key].keys
+                        if(next){
+                            help = next
+                        }else{
+                            break
+                        }
+                    }
+                    return help
+                }
+            }
+        }
     }
 
     /**
