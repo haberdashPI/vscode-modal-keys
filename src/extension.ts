@@ -39,6 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 		channel,
 		vscode.workspace.onDidChangeConfiguration(e => {
 			actions.updateFromConfig()
+			keymap.updateFromConfig()
 			commands.enterMode('normal')
 		}),
 		vscode.window.onDidChangeActiveTextEditor(commands.restoreEditorMode),
@@ -52,6 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 * we enter into normal or edit mode depending on the settings.
 	 */
 	actions.updateFromConfig()
+	keymap.updateFromConfig()
 	if (actions.getStartInNormalMode())
         commands.enterMode('normal')
 	else

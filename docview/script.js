@@ -110,17 +110,40 @@ const allKeys = [
     "shift-right", 
     "space"
 ]
+
+function setColor(element, color){
+    let oldcolor = undefined
+    for(let className of element.classList.values()){
+        if(className.match(/batlow/)){
+            oldcolor = className
+            break
+        }
+    }
+    if(oldcolor){ element.classList.remove(oldcolor) }
+    element.classList.add(`batlow-${color || 'none'}`)
+}
 window.addEventListener('message', event => {
     const message = event.data;
     console.dir(message) // TODO: remove me!!!
+    let keymap = message.keymap;
+    let colormap = message.colors;
+
+    // update keys
     for(i in allKeys){
-        if(message && message[names[i]]){
-            document.getElementById('key-'+allKeys[i]).innerHTML = message[names[i]].label
-        }else{
-            let el = document.getElementById('key-'+allKeys[i])
-            if(el){
-                el.innerHTML = ""
+        let name = document.getElementById('key-name-'+allKeys[i])
+        let label = document.getElementById('key-label-'+allKeys[i])
+        if(keymap && keymap[names[i]]){
+            name.innerHTML = keymap[names[i]].label
+            if(colormap){
+                setColor(name, colormap[keymap[names[i]].kind])
+                setColor(label, colormap[keymap[names[i]].kind])
             }
+        }else{
+            if(name){ 
+                name.innerHTML = "" 
+                setColor(name)
+            }
+            if(label){ setColor(label) }
         }
     }
 })

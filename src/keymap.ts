@@ -89,6 +89,12 @@ const count_help = {
     '9': {label: "arg", kind: "count", detail: "Pass 9 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
 }
 
+let docColors: IHash<number> | undefined
+export function updateFromConfig(): void {
+    const config = vscode.workspace.getConfiguration("modalkeys")
+    docColors = config.get("docColors", {});
+}
+
 function get(x: any, key: string, def: any){
     if(key in x){
         return x[key]
@@ -117,7 +123,7 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
 
     public refresh(){
         if(this._view?.webview){
-            this._view?.webview.postMessage(this._help_map)
+            this._view?.webview.postMessage({keymap: this._help_map, colors: docColors})
         }
     }
     public updateStatic(mode: string){
@@ -155,14 +161,17 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
             <div class="keyboard">
                 ${keyRows.map(row => `
                     <div class="keyboard-row">
-                        ${row.map((key: any) => `
-                            <div class="key key-length-${get(key, 'length', 1)}">
-                                <div class="label">${get(key, 'top', '')}</div>
-                                <div id="key-${get(key, 'top_id', get(key, 'top', "blank"+num++))}" class="name"></div>
-                                <div class="label">${get(key, 'bottom', '')}</div>
-                                <div id="key-${get(key, 'bottom_id', get(key, 'bottom', "blank"+num++))}" class="name"></div>
-                            </div>
-                        `).join('\n')}
+                        ${row.map((key: any) => {
+                            let top_id = get(key, 'top_id', get(key, 'top', "blank"+num++))
+                            let bottom_id = get(key, 'bottom_id', get(key, 'bottom', "blank"+num++))
+                            return `
+                                <div class="key key-length-${get(key, 'length', 1)}">
+                                    <div id="key-label-${top_id}" class="top label">${get(key, 'top', '')}</div>
+                                    <div id="key-name-${top_id}" class="top name"></div>
+                                    <div id="key-label-${bottom_id}" class="bottom label">${get(key, 'bottom', '')}</div>
+                                    <div id="key-name-${bottom_id}" class="bottom name"></div>
+                                </div>`
+                        }).join('\n')}
                     </div>
                 `).join('\n')}
             </div>

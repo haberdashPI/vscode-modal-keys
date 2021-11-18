@@ -1,3 +1,27 @@
+:root {
+    --key-padding: 0.3rem;
+    --key-radius: 0.5rem;
+    --key-border-width: 1.5pt;
+    --key-height: 3.25rem;
+}
+
+.batlow-1 { background-color: #185562aa }
+.batlow-2 { background-color: #1F5D61aa; }
+.batlow-3 { background-color: #2A655Eaa; }
+.batlow-4 { background-color: #386B58aa; }
+.batlow-5 { background-color: #477150aa }
+.batlow-6 { background-color: #577647aa }
+.batlow-7 { background-color: #677B3Eaa; }
+.batlow-8 { background-color: #788036aa }
+.batlow-9 { background-color: #8B852Eaa; }
+.batlow-10 { background-color: #9F892Baa; }
+.batlow-11 { background-color: #B38E2Faa; }
+.batlow-12 { background-color: #C6913Aaa; }
+.batlow-13 { background-color: #D89449aa; }
+.batlow-14 { background-color: #E8995Baa; }
+.batlow-15 { background-color: #F49E71aa; }
+.batlow-16 { background-color: #FBA689aa; }
+
 .keyboard-row {
     display: flex;
     max-width: 75rem;
@@ -8,17 +32,17 @@
 .key {
     font-family: var(--vscode-font-family);
     min-width: 2rem;
-    height: 3rem;
+    height: var(--key-height);
     display: grid;
     grid-template-columns: 1fr 2fr;
     grid-template-rows: 1fr 1fr;
-    background-color: var(--vscode-panel-background);
     color: var(--vscode-foreground);
-    border: 1px solid var(--vscode-foreground);
-    padding: 0.3rem;
-    border-radius: 0.5rem;
+    text-shadow: -0.5px 0.5px 0 var(--vscode-editor-background),
+                 0.5px 0.5px 0 var(--vscode-editor-background),
+                 0.5px -0.5px 0 var(--vscode-editor-background),
+                 -0.5px -0.5px 0 var(--vscode-editor-background);
 }
-/* TODO: how to setup the grid properly (debug in easy to refresh plain html */
+
 .key-length-1 { flex: 1; }
 .key-length-1-25 { flex: 1.25; }
 .key-length-1-5 { flex: 1.5; }
@@ -31,10 +55,40 @@
     font-size: 1rem;
     text-align: left;
 }
+.label.top{
+    padding-top: var(--key-padding);
+    padding-left: var(--key-padding);
+    border-top-left-radius: var(--key-radius);
+    border-left: var(--key-border-width) solid var(--vscode-foreground);
+    border-top: var(--key-border-width) solid var(--vscode-foreground);
+}
+.label.bottom{
+    padding-bottom: var(--key-padding);
+    padding-left: var(--key-padding);
+    border-bottom-left-radius: var(--key-radius);
+    border-left: var(--key-border-width) solid var(--vscode-foreground);
+    border-bottom: var(--key-border-width) solid var(--vscode-foreground);
+}
 
 .name {
     height: 1.2rem;
     font-size: 0.6rem;
     text-align: right;
-    word-break: break-all;
+    word-break: break-word;
+    hyphens: auto;
 }
+.name.top{
+    padding-top: var(--key-padding);
+    padding-right: var(--key-padding);
+    border-top-right-radius: var(--key-radius);
+    border-right: var(--key-border-width) solid var(--vscode-foreground);
+    border-top: var(--key-border-width) solid var(--vscode-foreground);
+}
+.name.bottom{
+    padding-bottom: var(--key-padding);
+    padding-right: var(--key-padding);
+    border-bottom-right-radius: var(--key-radius);
+    border-right: var(--key-border-width) solid var(--vscode-foreground);
+    border-bottom: var(--key-border-width) solid var(--vscode-foreground);
+}
+

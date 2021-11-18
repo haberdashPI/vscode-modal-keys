@@ -67,6 +67,11 @@
             "type": "object",
             "title": "Modal Keys",
             "properties": {
+                "modalkeys.docColors": {
+                    "type": "object",
+                    "description": "Color coding of keybinding documention (by kind)",
+                    "default": {}
+                },
                 "modalkeys.keybindings": {
                     "type": "object",
                     "description": "Keybindings map key → VS Code commands",

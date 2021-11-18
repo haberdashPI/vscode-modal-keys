@@ -1348,12 +1348,14 @@ async function importPresets(folder?: string) {
                 return preset
             })()
             let config = vscode.workspace.getConfiguration("modalkeys")
-            if (!preset.keybindings)
-                throw new Error(
-                    `Could not find "keybindings" or "selectbindings" in ${uri}`)
-            if(preset.keybindings)
+            if(!preset.keybindings)
+                throw new Error(`Could not find "keybindings" in ${uri}`)
+            else
                 config.update("keybindings", preset.keybindings, true)
             checkExtensions(preset.extensions)
+            if(preset.docColors){
+                config.update("docColors", preset.docColors, true)
+            }
             vscode.window.showInformationMessage(
                 "ModalKeys: Keybindings imported.")
         }
