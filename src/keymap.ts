@@ -168,8 +168,11 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
                                 <div class="key key-length-${get(key, 'length', 1)}">
                                     <div id="key-label-${top_id}" class="top label">${get(key, 'top', '')}</div>
                                     <div id="key-name-${top_id}" class="top name"></div>
+                                    <div id="key-detail-${top_id}" class="detail"></div>
+                                    
                                     <div id="key-label-${bottom_id}" class="bottom label">${get(key, 'bottom', '')}</div>
                                     <div id="key-name-${bottom_id}" class="bottom name"></div>
+                                    <div id="key-detail-${bottom_id}" class="detail"></div>
                                 </div>`
                         }).join('\n')}
                     </div>

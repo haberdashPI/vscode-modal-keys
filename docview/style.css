@@ -1,8 +1,31 @@
 :root {
-    --key-padding: 0.3rem;
+    --key-padding: 0.2rem;
     --key-radius: 0.5rem;
     --key-border-width: 1.5pt;
     --key-height: 3.25rem;
+}
+
+.detail {
+    display: none;
+}
+.name:hover + .detail.empty {
+    display: none
+}
+.name:hover + .detail {
+    bottom: 1rem;
+    left: 1rem;
+    position: absolute;
+    display: block;
+    z-index: 10;
+    min-width: 30rem;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    padding-left: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-color: var(--vscode-statusBar-foreground);
+    background-color: var(--vscode-statusBar-background)
 }
 
 .batlow-1 { background-color: #185562aa }
@@ -21,6 +44,10 @@
 .batlow-14 { background-color: #E8995Baa; }
 .batlow-15 { background-color: #F49E71aa; }
 .batlow-16 { background-color: #FBA689aa; }
+
+.keyboard {
+    /* position: relative; */
+}
 
 .keyboard-row {
     display: flex;
@@ -51,7 +78,7 @@
 .key-length-5 { flex: 7; }
 
 .label {
-    height: 1.2rem;
+    height: calc(var(--key-height) / 2 - var(--key-padding));
     font-size: 1rem;
     text-align: left;
 }
@@ -71,7 +98,7 @@
 }
 
 .name {
-    height: 1.2rem;
+    height: calc(var(--key-height) / 2 - var(--key-padding));
     font-size: 0.6rem;
     text-align: right;
     word-break: break-word;

@@ -132,13 +132,20 @@ window.addEventListener('message', event => {
     for(i in allKeys){
         let name = document.getElementById('key-name-'+allKeys[i])
         let label = document.getElementById('key-label-'+allKeys[i])
+        let detail = document.getElementById('key-detail-'+allKeys[i])
         if(keymap && keymap[names[i]]){
             name.innerHTML = keymap[names[i]].label
+            detail.innerHTML = keymap[names[i]].detail
+            detail.classList.remove('empty')
             if(colormap){
                 setColor(name, colormap[keymap[names[i]].kind])
                 setColor(label, colormap[keymap[names[i]].kind])
             }
         }else{
+            if(detail){ 
+                detail.innerHTML = "" 
+                detail.classList.add('empty')
+            }
             if(name){ 
                 name.innerHTML = "" 
                 setColor(name)

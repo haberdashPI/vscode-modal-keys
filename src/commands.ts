@@ -247,6 +247,7 @@ const toggleRecordingMacroId = "modalkeys.toggleRecordingMacro"
 const cancelRecordingMacroId = "modalkeys.cancelRecordingMacro"
 const replayMacroId = "modalkeys.replayMacro"
 const exportPresetId = "modalkeys.exportPreset"
+const toggleKeymapId = "modalkeys.toggleKeymap"
 
 export function revealActive(editor: vscode.TextEditor){
     let act = new vscode.Range(editor.selection.active, editor.selection.active);
@@ -291,6 +292,7 @@ export function register(context: vscode.ExtensionContext, _docKeymap: DocViewPr
         vscode.commands.registerCommand(cancelRecordingMacroId, cancelRecordingMacro),
         vscode.commands.registerCommand(replayMacroId, replayMacro),
         vscode.commands.registerCommand(exportPresetId, exportPreset),
+        vscode.commands.registerCommand(toggleKeymapId, toggleKeymap)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
@@ -1404,4 +1406,8 @@ async function exportPreset(){
             })
         }
     })
+}
+
+async function toggleKeymap(){
+    // TODO!!
 }

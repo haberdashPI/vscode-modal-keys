@@ -256,6 +256,10 @@
         },
         "commands": [
             {
+                "command": "modalkeys.revealKeymap",
+                "title": "modalKeys: Reveal keymap documentation"
+            },
+            {
                 "command": "type",
                 "title": "Type keys"
             },
