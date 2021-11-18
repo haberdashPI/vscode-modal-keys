@@ -1,26 +1,26 @@
 import * as vscode from 'vscode'
 import { Keyhelp, KeyState } from './actions'
 import { IHash } from './util'
-import { merge } from 'lodash'
+import { merge, cloneDeep } from 'lodash'
 
 // TODO: use KeyboardLayoutMap to improve behavior
 // acorss non-english / non-standard layouts
 // TODO: ensure all special character have alphanumeric alias for id's
 const keyRows = [
     [
-        {top: "~", bottom: "`"},
-        {top: "!", bottom: "1"},
-        {top: "@", bottom: "2"},
-        {top: "#", bottom: "3"},
-        {top: "$", bottom: "4"},
-        {top: "%", bottom: "5"},
-        {top: "^", bottom: "6"},
-        {top: "&", bottom: "7"},
-        {top: "*", bottom: "8"},
-        {top: "(", bottom: "9"},
-        {top: ")", bottom: "0"},
-        {top: "_", bottom: "-"},
-        {top: "+", bottom: "="},
+        {top_id: "tilde", top: "~", bottom_id: "tick", bottom: "`"},
+        {top_id: "bang", top: "!", bottom: "1"},
+        {top_id: "at", top: "@", bottom: "2"},
+        {top_id: "hash", top: "#", bottom: "3"},
+        {top_id: "dollar", top: "$", bottom: "4"},
+        {top_id: "percent", top: "%", bottom: "5"},
+        {top_id: "karat", top: "^", bottom: "6"},
+        {top_id: "amper", top: "&", bottom: "7"},
+        {top_id: "star", top: "*", bottom: "8"},
+        {top_id: "paren-left", top: "(", bottom: "9"},
+        {top_id: "paren-right", top: ")", bottom: "0"},
+        {top_id: "underscore", top: "_", bottom: "-"},
+        {top_id: "plus", top: "+", bottom_id: "equals", bottom: "="},
         {bottom: "delete", length: '1-5'}
     ],
     [
@@ -35,12 +35,12 @@ const keyRows = [
         {top: "I", bottom: "i"},
         {top: "O", bottom: "o"},
         {top: "P", bottom: "p"},
-        {top: "{", bottom: "["},
-        {top: "}", bottom: "]"},
-        {top: "|", bottom: "back_slash", bottom_name: "\\"}
+        {top_id: "bracket-left", top: "{", bottom_id: "brace-left", bottom: "["},
+        {top_id: "bracket-right", top: "}", bottom_id: "brace-right", bottom: "]"},
+        {top_id: "pipe", top: "|", bottom_id: "back_slash", bottom: "\\"}
     ],
     [    
-        {bottom: "caps lock", length: '1-75'},
+        {bottom_id: "caps-lock", bottom: "caps lock", length: '1-75'},
         {top: "A", bottom: "a"},
         {top: "S", bottom: "s"},
         {top: "D", bottom: "d"},
@@ -50,12 +50,12 @@ const keyRows = [
         {top: "J", bottom: "j"},
         {top: "K", bottom: "k"},
         {top: "L", bottom: "l"},
-        {top: ":", bottom: ";"},
-        {top: 'quote', top_name: '"', bottom: "'"},
+        {top_id: "colon", top: ":", bottom_id: "semicolon", bottom: ";"},
+        {top_id: 'quote', top: '"', bottom: "'"},
         {bottom: "return", length: '1-75'}
     ],
     [
-        {bottom: "shift-left", bottom_name: "shift", length: '2-25'},
+        {bottom_id: "shift-left", bottom: "shift", length: '2-25'},
         {top: "Z", bottom: "z"},
         {top: "X", bottom: "x"},
         {top: "C", bottom: "c"},
@@ -63,15 +63,15 @@ const keyRows = [
         {top: "B", bottom: "b"},
         {top: "N", bottom: "n"},
         {top: "M", bottom: "m"},
-        {top: "<", bottom: ","},
-        {top: ">", bottom: "."},
-        {top: "?", bottom: "/"},
-        {bottom: "shift-right", bottom_name: "shift", length: '2-25'}
+        {top_id: "karet-left", top: "<", bottom_id: "comma", bottom: ","},
+        {top_id: "karet-right", top: ">", bottom_id: "period", bottom: "."},
+        {top_id: "question", top: "?", bottom_id: "slash", bottom: "/"},
+        {bottom_id: "shift-right", bottom: "shift", length: '2-25'}
     ],
     [
         {}, {}, {},
         {length: '1-25'},
-        {length: '5', bottom: "space", bottom_name: ""},
+        {length: '5', bottom_id: "space", bottom: ""},
         {length: '1-25'},
         {}, {}, {}, {}
     ]
@@ -128,7 +128,7 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
     public update(state: KeyState, mode: string){
         let help_map = state.getCurrentHelp(mode)
         this._mode = mode
-        this._help_map = help_map ? merge(count_help, help_map) : {};
+        this._help_map = help_map ? merge(cloneDeep(count_help), help_map) : {};
         this.refresh()
     }
     
@@ -157,10 +157,10 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
                     <div class="keyboard-row">
                         ${row.map((key: any) => `
                             <div class="key key-length-${get(key, 'length', 1)}">
-                                <div class="label">${get(key, 'top_name', get(key, 'top', ''))}</div>
-                                <div id="key-${get(key, 'top', "blank"+num++)}" class="name"></div>
-                                <div class="label">${get(key, 'bottom_name', get(key, 'bottom', ''))}</div>
-                                <div id="key-${get(key, 'bottom', "blank"+num++)}" class="name"></div>
+                                <div class="label">${get(key, 'top', '')}</div>
+                                <div id="key-${get(key, 'top_id', get(key, 'top', "blank"+num++))}" class="name"></div>
+                                <div class="label">${get(key, 'bottom', '')}</div>
+                                <div id="key-${get(key, 'bottom_id', get(key, 'bottom', "blank"+num++))}" class="name"></div>
                             </div>
                         `).join('\n')}
                     </div>
