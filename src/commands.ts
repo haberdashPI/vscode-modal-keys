@@ -1409,5 +1409,9 @@ async function exportPreset(){
 }
 
 async function toggleKeymap(){
-    // TODO!!
+    if(!docKeymap?.visible()){
+        await vscode.commands.executeCommand('workbench.view.extension.modalKeyBindingView')
+    }else{
+        await vscode.commands.executeCommand('workbench.action.togglePanel')
+    }
 }

@@ -47,7 +47,7 @@
                 {
                     "type": "webview",
                     "id": "modalkeys.bindingView",
-                    "name": "ModalKeys Bindings",
+                    "name": "Modal Key Bindings",
                     "contextualTitle": "Modal Keys",
                     "icon": "icon.svg",
                     "visibility": "visible"
@@ -58,7 +58,7 @@
             "panel": [
                 {
                     "id": "modalKeyBindingView",
-                    "title": "ModalKeys Bindings",
+                    "title": "Modal Key Bindings",
                     "icon": "icon.svg"
                 }
             ]
@@ -256,8 +256,8 @@
         },
         "commands": [
             {
-                "command": "modalkeys.revealKeymap",
-                "title": "modalKeys: Reveal keymap documentation"
+                "command": "modalkeys.toggleKeymap",
+                "title": "modalKeys: Toggle keymap documentation visibility"
             },
             {
                 "command": "type",

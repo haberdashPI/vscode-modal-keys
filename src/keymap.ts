@@ -137,7 +137,11 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
         this._help_map = help_map ? merge(cloneDeep(count_help), help_map) : {};
         this.refresh()
     }
-    
+
+    public visible(){
+        return this._view && this._view.visible
+    }
+
     public resolveWebviewView(
         webviewView: vscode.WebviewView, 
         context: vscode.WebviewViewResolveContext,
