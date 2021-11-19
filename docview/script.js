@@ -39,7 +39,7 @@ const names = [
     "L", "l",
     ":", ";",
     '"', "'",
-    "return",
+    "\n",
     "shift", 
     "Z", "z",
     "X", "x",
@@ -134,12 +134,13 @@ window.addEventListener('message', event => {
         let label = document.getElementById('key-label-'+allKeys[i])
         let detail = document.getElementById('key-detail-'+allKeys[i])
         if(keymap && keymap[names[i]]){
-            name.innerHTML = keymap[names[i]].label
-            detail.innerHTML = keymap[names[i]].detail
+            let binding = keymap[names[i]]
+            name.innerHTML = binding.label
+            detail.innerHTML = binding.detail
             detail.classList.remove('empty')
             if(colormap){
-                setColor(name, colormap[keymap[names[i]].kind])
-                setColor(label, colormap[keymap[names[i]].kind])
+                setColor(name, colormap[binding.kind])
+                setColor(label, colormap[binding.kind])
             }
         }else{
             if(detail){ 
