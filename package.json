@@ -7,7 +7,7 @@
         "url": "https://github.com/haberdashPI/vscode-modal-keys"
     },
     "icon": "logo.png",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "engines": {
         "vscode": "^1.55.0"
     },
@@ -345,6 +345,11 @@
             }
         ],
         "keybindings": [
+            {
+                "key": "ctrl+shift+/",
+                "mac": "ctrl+cmd+/",
+                "command": "modalkeys.toggleKeymap"
+            },
             {
                 "key": "Escape",
                 "command": "modalkeys.enterNormal",
