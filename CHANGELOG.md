@@ -2,6 +2,10 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.8.0
+- **Feature**: New command `toggleKeymap` shows/hides visual documentation of the current modal keybindings in the panel. 
+- **Feature**: Your own keybindings can support the visual docummentation using `::doc::` entries (see extension documentation).
+
 # Version 0.7.0
 - **Feature**: Preset files can identify a list of required extensions. If the extension is not present, an error message with an option to install the required extension is displayed.
 - **Feature**: The vim presets now list required extensions.
