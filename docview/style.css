@@ -58,6 +58,9 @@
     border-color: var(--vscode-statusBar-foreground);
     background-color: var(--vscode-statusBar-background)
 }
+.detail-text {
+    margin-top: 0.25em;
+}
 
 .keyboard {
     /* position: relative; */
@@ -66,13 +69,12 @@
 .keyboard-row {
     display: flex;
     max-width: 75rem;
-    min-width: 50rem;
+    min-width: 62rem;
     gap: 0.5rem;
     padding-bottom: 0.5rem;
 }
 .key {
     font-family: var(--vscode-font-family);
-    min-width: 2rem;
     height: var(--key-height);
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -116,6 +118,8 @@
     font-size: 0.6rem;
     text-align: right;
     word-break: break-word;
+    overflow: hidden;
+    text-overflow: clip;
     hyphens: auto;
 }
 .name.top{
