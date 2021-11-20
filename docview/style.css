@@ -112,6 +112,12 @@
     border-left: var(--key-border-width) solid var(--vscode-foreground);
     border-bottom: var(--key-border-width) solid var(--vscode-foreground);
 }
+.label.bottom.no-top{
+    height: calc(var(--key-height) - 2*var(--key-padding));
+    padding-top: var(--key-padding);
+    border-top: var(--key-border-width) solid var(--vscode-foreground);
+    border-top-left-radius: var(--key-radius);
+}
 
 .name {
     height: calc(var(--key-height) / 2 - var(--key-padding));
@@ -135,5 +141,11 @@
     border-bottom-right-radius: var(--key-radius);
     border-right: var(--key-border-width) solid var(--vscode-foreground);
     border-bottom: var(--key-border-width) solid var(--vscode-foreground);
+}
+.name.bottom.no-top{
+    height: calc(var(--key-height) - 2*var(--key-padding));
+    padding-top: var(--key-padding);
+    border-top: var(--key-border-width) solid var(--vscode-foreground);
+    border-top-right-radius: var(--key-radius);
 }
 

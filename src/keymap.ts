@@ -181,14 +181,20 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
                         ${row.map((key: any) => {
                             let top_id = get(key, 'top_id', get(key, 'top', "blank"+num++))
                             let bottom_id = get(key, 'bottom_id', get(key, 'bottom', "blank"+num++))
+                            let top_label = get(key, 'top', '')
                             return `
                                 <div class="key key-length-${get(key, 'length', 1)}">
-                                    <div id="key-label-${top_id}" class="top label">${get(key, 'top', '')}</div>
-                                    <div id="key-name-${top_id}" class="top name"></div>
-                                    <div id="key-detail-${top_id}" class="detail"></div>
+                                    ${top_label && `
+                                        <div id="key-label-${top_id}" class="top label">${top_label}</div>
+                                        <div id="key-name-${top_id}" class="top name"></div>
+                                        <div id="key-detail-${top_id}" class="detail"></div>
+                                    `}
                                     
-                                    <div id="key-label-${bottom_id}" class="bottom label">${get(key, 'bottom', '')}</div>
-                                    <div id="key-name-${bottom_id}" class="bottom name"></div>
+                                    <div id="key-label-${bottom_id}" class="bottom label ${top_label ? '' : 'no-top'}">
+                                        ${get(key, 'bottom', '')}
+                                    </div>
+                                    <div id="key-name-${bottom_id}" class="bottom name ${top_label ? '' : 'no-top'}">
+                                    </div>
                                     <div id="key-detail-${bottom_id}" class="detail"></div>
                                 </div>`
                         }).join('\n')}
