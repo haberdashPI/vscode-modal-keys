@@ -1355,8 +1355,8 @@ async function importPresets(folder?: string) {
             else
                 config.update("keybindings", preset.keybindings, true)
             checkExtensions(preset.extensions)
-            if(preset.docColors){
-                config.update("docColors", preset.docColors, true)
+            if(preset.docKinds){
+                config.update("docKinds", preset.docKinds, true)
             }
             vscode.window.showInformationMessage(
                 "ModalKeys: Keybindings imported.")
@@ -1410,7 +1410,9 @@ async function exportPreset(){
 
 async function toggleKeymap(){
     if(!docKeymap?.visible()){
+        let editor = vscode.window.activeTextEditor
         await vscode.commands.executeCommand('workbench.view.extension.modalKeyBindingView')
+        editor && vscode.window.showTextDocument(editor.document)
     }else{
         await vscode.commands.executeCommand('workbench.action.togglePanel')
     }

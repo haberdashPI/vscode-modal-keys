@@ -5,6 +5,35 @@
     --key-height: 3.25rem;
 }
 
+
+
+
+
+
+
+
+
+.kind-color-0 { background-color: #1b9e7777; }
+.kind-color-1 { background-color: #d95f0277; }
+.kind-color-2 { background-color: #7570b377; }
+.kind-color-3 { background-color: #e7298a77; }
+.kind-color-4 { background-color: #66a61e77; }
+.kind-color-5 { background-color: #e6ab0277; }
+.kind-color-6 { background-color: #a6761d77; }
+.kind-color-7 { background-color: #66666677; }
+
+.detail-kind-color {
+    min-width: 1.5rem;
+    width: 1rem;
+    height: 0.5rem;
+    border: 1px solid;
+    display: inline-block;
+    margin-right: 0.2rem;
+    margin-left: 0.2rem;
+    bottom: -0.1rem;
+    position: relative;
+}
+
 .detail {
     display: none;
 }
@@ -14,36 +43,21 @@
 .name:hover + .detail {
     bottom: 1rem;
     left: 1rem;
-    position: absolute;
+    font-size: 0.75rem;
+    position: fixed;
     display: block;
     z-index: 10;
     min-width: 30rem;
+    max-width: 50rem;
     border-style: solid;
     border-width: 1px;
     border-radius: 0.5rem;
     padding: 0.25rem;
     padding-left: 0.5rem;
-    padding-bottom: 0.5rem;
+    padding-right: 0.5rem;
     border-color: var(--vscode-statusBar-foreground);
     background-color: var(--vscode-statusBar-background)
 }
-
-.batlow-1 { background-color: #185562aa }
-.batlow-2 { background-color: #1F5D61aa; }
-.batlow-3 { background-color: #2A655Eaa; }
-.batlow-4 { background-color: #386B58aa; }
-.batlow-5 { background-color: #477150aa }
-.batlow-6 { background-color: #577647aa }
-.batlow-7 { background-color: #677B3Eaa; }
-.batlow-8 { background-color: #788036aa }
-.batlow-9 { background-color: #8B852Eaa; }
-.batlow-10 { background-color: #9F892Baa; }
-.batlow-11 { background-color: #B38E2Faa; }
-.batlow-12 { background-color: #C6913Aaa; }
-.batlow-13 { background-color: #D89449aa; }
-.batlow-14 { background-color: #E8995Baa; }
-.batlow-15 { background-color: #F49E71aa; }
-.batlow-16 { background-color: #FBA689aa; }
 
 .keyboard {
     /* position: relative; */
@@ -64,10 +78,10 @@
     grid-template-columns: 1fr 2fr;
     grid-template-rows: 1fr 1fr;
     color: var(--vscode-foreground);
-    text-shadow: -0.5px 0.5px 0 var(--vscode-editor-background),
+    /* text-shadow: -0.5px 0.5px 0 var(--vscode-editor-background),
                  0.5px 0.5px 0 var(--vscode-editor-background),
                  0.5px -0.5px 0 var(--vscode-editor-background),
-                 -0.5px -0.5px 0 var(--vscode-editor-background);
+                 -0.5px -0.5px 0 var(--vscode-editor-background); */
 }
 
 .key-length-1 { flex: 1; }

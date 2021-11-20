@@ -78,21 +78,34 @@ const keyRows = [
 ];
 
 const count_help = {
-    '1': {label: "arg", kind: "count", detail: "Pass 1 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
-    '2': {label: "arg", kind: "count", detail: "Pass 2 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
-    '3': {label: "arg", kind: "count", detail: "Pass 3 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
-    '4': {label: "arg", kind: "count", detail: "Pass 4 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
-    '5': {label: "arg", kind: "count", detail: "Pass 5 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
-    '6': {label: "arg", kind: "count", detail: "Pass 6 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
-    '7': {label: "arg", kind: "count", detail: "Pass 7 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
-    '8': {label: "arg", kind: "count", detail: "Pass 8 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
-    '9': {label: "arg", kind: "count", detail: "Pass 9 as an argument to another action/motion (type multiple numbers to define a larger count). This usually repeats the action the given number of times."},
+    '1': {label: "arg", kind: "count", detail: "Pass 1 as an argument."},
+    '2': {label: "arg", kind: "count", detail: "Pass 2 as an argument."},
+    '3': {label: "arg", kind: "count", detail: "Pass 3 as an argument."},
+    '4': {label: "arg", kind: "count", detail: "Pass 4 as an argument."},
+    '5': {label: "arg", kind: "count", detail: "Pass 5 as an argument."},
+    '6': {label: "arg", kind: "count", detail: "Pass 6 as an argument."},
+    '7': {label: "arg", kind: "count", detail: "Pass 7 as an argument."},
+    '8': {label: "arg", kind: "count", detail: "Pass 8 as an argument."},
+    '9': {label: "arg", kind: "count", detail: "Pass 9 as an argument."},
+    '0': {label: "arg", kind: "count", detail: "Pass 0 as an argument."},
 }
 
-let docColors: IHash<number> | undefined
+interface KeyKind {
+    name: string,
+    description?: string
+}
+interface MappedKeyKind {
+    index: number,
+    description?: string
+}
+let docKinds: IHash<MappedKeyKind> | undefined
 export function updateFromConfig(): void {
     const config = vscode.workspace.getConfiguration("modalkeys")
-    docColors = config.get("docColors", {});
+    let kinds = config.get<KeyKind[]>("docKinds", []);
+    docKinds = {}
+    for(let i=0; i<kinds.length; i++){
+        docKinds[kinds[i].name] = {index: i, description: kinds[i].description}
+    }
 }
 
 function get(x: any, key: string, def: any){
@@ -123,7 +136,7 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
 
     public refresh(){
         if(this._view?.webview){
-            this._view?.webview.postMessage({keymap: this._help_map, colors: docColors})
+            this._view?.webview.postMessage({keymap: this._help_map, kinds: docKinds})
         }
     }
     public updateStatic(mode: string){

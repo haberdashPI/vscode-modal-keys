@@ -111,22 +111,26 @@ const allKeys = [
     "space"
 ]
 
-function setColor(element, color){
+function setColor(element, kind){
     let oldcolor = undefined
     for(let className of element.classList.values()){
-        if(className.match(/batlow/)){
+        if(className.match(/kind-color/)){
             oldcolor = className
             break
         }
     }
     if(oldcolor){ element.classList.remove(oldcolor) }
-    element.classList.add(`batlow-${color || 'none'}`)
+    element.classList.add(`kind-color-${kind ? kind.index : 'none'}`)
 }
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 window.addEventListener('message', event => {
     const message = event.data;
     console.dir(message) // TODO: remove me!!!
     let keymap = message.keymap;
-    let colormap = message.colors;
+    let kinds = message.kinds;
 
     // update keys
     for(i in allKeys){
@@ -136,11 +140,20 @@ window.addEventListener('message', event => {
         if(keymap && keymap[names[i]]){
             let binding = keymap[names[i]]
             name.innerHTML = binding.label
-            detail.innerHTML = binding.detail
+            let kind_d = (kinds && kinds[binding.kind]) || {index: 'none', description: ''}
+            detail.innerHTML = `
+                <div class="detail-text">
+                    ${binding.kind ?
+                        `${capitalizeFirstLetter(binding.kind)} command (<div class="detail-kind-color kind-color-${kind_d.index}"></div>): `
+                    : ''}
+                    ${binding.detail}
+                </div>
+                <div class="detail-kind">${kind_d.description}</div>
+            `
             detail.classList.remove('empty')
-            if(colormap){
-                setColor(name, colormap[binding.kind])
-                setColor(label, colormap[binding.kind])
+            if(kinds){
+                setColor(name, kinds[binding.kind])
+                setColor(label, kinds[binding.kind])
             }
         }else{
             if(detail){ 

@@ -67,9 +67,9 @@
             "type": "object",
             "title": "Modal Keys",
             "properties": {
-                "modalkeys.docColors": {
+                "modalkeys.docKinds": {
                     "type": "object",
-                    "description": "Color coding of keybinding documention (by kind)",
+                    "description": "A description of each kind of keybinding; determines keybinding color codes (order matters).",
                     "default": {}
                 },
                 "modalkeys.keybindings": {
