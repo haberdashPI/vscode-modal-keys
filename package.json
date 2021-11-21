@@ -257,7 +257,7 @@
         "commands": [
             {
                 "command": "modalkeys.toggleKeymap",
-                "title": "modalKeys: Toggle keymap documentation visibility"
+                "title": "ModalKeys: Toggle keymap documentation"
             },
             {
                 "command": "type",

@@ -11,10 +11,10 @@ The simplest way is to map a key to a single command. This has the format:
 "<binding>": "<command>"
 ```
 
-The `<binding>` specifies the sequence of keys to press, and `<command>` is any
-valid VS Code command. You can see the list of all available commands by opening
-global settings with command **Preferences: Open Default Keyboard Shortcuts
-(JSON)**.
+The `<binding>` specifies the sequence of keys to press (and possibly the mode),
+and `<command>` is any valid VS Code command. You can see the list of all
+available commands by opening global settings with command **Preferences: Open
+Default Keyboard Shortcuts (JSON)**.
 
 The example in the previous section maps the `i` key to the
 `modalkeys.enterInsert` command.
@@ -154,3 +154,29 @@ up here.
 
 You can find this output by opening **View - Output** and then choosing the
 **ModalKeys** from the drop-down menu.
+
+## Documenting a Keybinding
+
+If you wish your own keybindings to leverage the visual documentation feature of ModalKeys you will also need to add a `::doc::` entries for each command.
+These take the following form:
+
+```js
+"::doc::<binding>": { kind: <kind>, label: <label>, detail: <detail> }
+```
+
+The `kind` is string defining a broad category of keys and determines the color of the key. The label is a string that will show up on the key: it should be very short: &lt;2 words, &lt;6 chars per word. Unicode can be useful in shortening the key lable (e.g. → and ←). The detail entry is a string description that will show up when you hover the mouse of the keybinding. It should explain as much as possible about the specfic key.
+
+You also need to document the different command kinds used in your keymap. These are specified as an additional field of the main object of your keybindings file, called `docKinds` and takes the following format.
+
+```js
+docKinds: [
+    { name: <kind1>, description: <str> },
+    // etc...
+],
+
+keybindings: {
+    // all keybindings...
+}
+```
+
+The colors for doc kinds are determined by their order in `docKinds`, and are selected from a carefully [color brewwer](https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3) color set.

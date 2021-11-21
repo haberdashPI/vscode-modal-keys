@@ -1,6 +1,6 @@
 # VS Code Commands
 
-ModalKeys adds several useful commands to VS Code's repertoire. They help you
+ModalKeys adds several useful commands to VS Code's repertoire. Most of help you
 create more Vim-like workflows.
 
 ## Switching between Modes
