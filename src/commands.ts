@@ -377,7 +377,7 @@ async function onType(event: { text: string }) {
     }
 
     await runActionForKey(event.text, keyMode)
-    updateCursorAndStatusBar(vscode.window.activeTextEditor, keyState.getHelp())
+    updateCursorAndStatusBar(vscode.window.activeTextEditor)
     // clear any search decorators if this key did not alter search state
     // (meaning it was not a search command)
     if(!highlightsChanged){

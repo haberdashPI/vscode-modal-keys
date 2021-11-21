@@ -83,8 +83,8 @@ export interface Keyhelp{
 }
 
 export interface Keymodes {
-    help: IHash<IHash<Keyhelp>>,
-    command: IHash<Keymap>,
+    help?: IHash<IHash<Keyhelp>>,
+    command?: IHash<Keymap>,
 }
 
 export interface ActionVars {
@@ -232,7 +232,7 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     let [modes, errors] = expandBindings(config.get<any>("keybindings"))
     if(!isKeymap(modes?.command?.normal))
         log("ERROR: Missing valid normal mode keybindings. Keybindings not updated.")
-    else if(modes){
+    else if(modes?.command){
         for(const keymap of Object.values(modes.command)){
             if (isKeymap(keymap)) {
                 errors += validateAndResolveKeymaps(keymap)
@@ -399,6 +399,7 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
             for(let mode of modes){
                 if(docBinding){
                     for(const mode of modes){
+                        if(!keymodes.help) keymodes.help = {}
                         keymodes.help[mode] = keymodes.help[mode] === undefined ? obj :
                             merge(keymodes.help[mode], obj)
                     }
@@ -426,6 +427,9 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
                     // TODO: figure out how to insert the documentation entries
                     if(!newErrors){
                         for(const mode of modes){
+                            if(!keymodes?.command){
+                                keymodes.command = {}
+                            }
                             keymodes.command[mode] = keymodes.command[mode] === undefined ? obj :
                                 mergeWith(keymodes.command[mode], obj, overloadCommands)
                         }
@@ -445,11 +449,12 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
     let state = {sequencesFor: <IHash<string[]>>{}, errors: 0}
     let keymodes = Object.entries(bindings).reduce(
         expandEntryBindingsFn(state), {command: {}, help: {}})
-    let allModes = Object.keys(keymodes.command)
+    let allModes = Object.keys(keymodes?.command || {})
     allModes.push('normal', 'visual')
     allModes = uniq(allModes)
     let result: any = {}
-    function resolveAll<T>(x: IHash<T>){
+    function resolveAll<T>(x?: IHash<T>){
+        if(!x) return x
         let result = x
         if(x.__all__){
             for(let mode of allModes){
@@ -542,6 +547,7 @@ export class KeyState {
     argumentCount?: number
     countFinalized: boolean = false
     currentKeymap?: Keymap
+    currentHelpmap?: IHash<Keyhelp>
     keySequence: string[] = []
     capturedKeys: string[] = []
     modeCaptures: IHash<string>
@@ -558,6 +564,7 @@ export class KeyState {
     waitingForKey() { return this.currentKeymap !== undefined || this.argumentCount !== undefined }
     reset() {
         this.currentKeymap = undefined
+        this.currentHelpmap = undefined
         this.argumentCount = undefined
         this.countFinalized = false
         this.keySequence = []
@@ -823,24 +830,10 @@ export class KeyState {
         }
     }
     getCurrentHelp(mode: string): IHash<Keyhelp> | undefined {
-        if(rootKeymodes?.help){
-            let help = rootKeymodes.help[mode]
-            if(help){
-                if(this.keySequence){
-                    for(const key of this.keySequence){
-                        if(!help[key]){
-                            return undefined
-                        }
-                        let next = help[key].keys
-                        if(next){
-                            help = next
-                        }else{
-                            break
-                        }
-                    }
-                    return help
-                }
-            }
+        if(this.currentHelpmap){
+            return this.currentHelpmap
+        }else if(rootKeymodes?.help){
+            return rootKeymodes.help[mode]
         }
     }
 
@@ -864,7 +857,8 @@ export class KeyState {
     // as expected. This is probably best managed by using a class
     // KeyHandler
     async handleKey(key: string, keyMode: string) {
-        let newKeymap: undefined | Keymap = this.currentKeymap || (rootKeymodes && rootKeymodes.command && rootKeymodes.command[keyMode])
+        let newKeymap: undefined | Keymap = this.currentKeymap || (rootKeymodes?.command && rootKeymodes.command[keyMode]);
+        let newHelpmap: undefined | IHash<Keyhelp> = this.currentHelpmap || (rootKeymodes?.help && rootKeymodes.help[keyMode]);
 
         // record this key press if there is an actively recording macro
         if(this.macro){
@@ -907,6 +901,8 @@ export class KeyState {
         else if (newKeymap && newKeymap[key]) {
             if(await this.execute(newKeymap[key], keyMode)){
                 this.reset()
+            }else if(newHelpmap){
+                this.currentHelpmap = newHelpmap[key].keys
             }
         }
         else if (key.match('[0-9]+')) {
@@ -943,7 +939,5 @@ export class KeyState {
             }
         }
     }
-
-    getHelp() { return this.currentKeymap?.help }
 }
 
