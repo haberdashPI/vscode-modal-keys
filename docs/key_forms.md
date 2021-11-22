@@ -148,7 +148,7 @@ just jump to next word with `cursorWordStartRight`.
 ## Debugging Keybindings
 
 If you use a javascript file to define your bindings you can place `console.log`
-statements in the file and they will show up under the Modal Keys output log.
+statements in the file and they will show up under the ModalKeys output log.
 Any errors encountered when parsing or evaluating your bindings will also show
 up here.
 
@@ -169,6 +169,7 @@ The `kind` is string defining a broad category of keys and determines the color 
 You also need to document the different command kinds used in your keymap. These are specified as an additional field of the main object of your keybindings file, called `docKinds` and takes the following format.
 
 ```js
+module.exports = {
 docKinds: [
     { name: <kind1>, description: <str> },
     // etc...
@@ -177,6 +178,15 @@ docKinds: [
 keybindings: {
     // all keybindings...
 }
+}
 ```
 
 The colors for doc kinds are determined by their order in `docKinds`, and are selected from a carefully [color brewwer](https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3) color set.
+
+### Leaders
+
+If your keybindings include sequence of multiple keys (e.g. `gj`), you should also document the general role of a given sequence prefix. For example, the vim bidnings include the following `::doc::` entry:
+
+```js
+"::doc::g": { kind: "leader", label: "more actions", detail: "additional commands (mostly actions)" },
+```
