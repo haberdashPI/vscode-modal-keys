@@ -5,14 +5,6 @@
     --key-height: 3.25rem;
 }
 
-
-
-
-
-
-
-
-
 .kind-color-0 { background-color: #1b9e7777; }
 .kind-color-1 { background-color: #d95f0277; }
 .kind-color-2 { background-color: #7570b377; }
@@ -62,8 +54,12 @@
     margin-top: 0.25em;
 }
 
+.container {
+    text-align: center;
+}
+
 .keyboard {
-    /* position: relative; */
+    display: inline-block;
 }
 
 .keyboard-row {

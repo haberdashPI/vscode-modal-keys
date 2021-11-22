@@ -175,6 +175,7 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
         let script = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'docview', 'script.js'))
         let num = 0
         let keys = `
+        <div class="container">
             <div class="keyboard">
                 ${keyRows.map(row => `
                     <div class="keyboard-row">
@@ -201,7 +202,7 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
                     </div>
                 `).join('\n')}
             </div>
-        `
+        </div>`
 
         return `
             <!DOCTYPE html>
