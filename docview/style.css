@@ -28,6 +28,7 @@
 
 .detail {
     display: none;
+    text-align: left;
 }
 .name:hover + .detail.empty {
     display: none
