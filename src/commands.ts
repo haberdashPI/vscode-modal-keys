@@ -736,6 +736,7 @@ function* linesOf(doc: vscode.TextDocument, pos: vscode.Position,
         }
     }
 }
+
 function* searchMatches(doc: vscode.TextDocument, start: vscode.Position, end: vscode.Position | undefined,
     target: string, args: SearchArgs){
 
