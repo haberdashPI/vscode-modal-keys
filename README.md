@@ -10,7 +10,7 @@ and ModalKeys includes
 [presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html)
 that resemble Vim. 
 
-![visual display of vim keybindings](https://haberdashpi.github.io/vscode-modal-keys/doc_binding_example.png)
+![visual display of vim keybindings](https://github.com/haberdashPI/vscode-modal-keys/blob/feat-doc-display/doc_binding_example.png?raw=true)
 
 The above is a screen shot of the visual documentation feature of this plugin; you can access this feature using the command `ModalKeys: Toggle keymap documentation`.
 
