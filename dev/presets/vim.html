@@ -57,12 +57,25 @@
 <span class="hljs-keyword">function</span> <span class="function_ hljs-title">operators</span>(<span class="hljs-params">params</span>){
     <span class="hljs-keyword">let</span> result = {}
     <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [opkey, opcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">operators</span>)){
-        <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [objkey, objcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">objects</span>)){
-            result[<span class="hljs-string">&quot;normal::&quot;</span>+opkey + objkey] = 
-                [<span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, objcom, opcom]
+        <span class="hljs-keyword">let</span> docmatch = opkey.<span class="function_ hljs-title">match</span>(<span class="hljs-regexp">/^::doc::(.*)/</span>)
+        <span class="hljs-keyword">if</span>(docmatch){
+            result[<span class="hljs-string">&quot;::doc::normal::&quot;</span>+docmatch[<span class="hljs-number">1</span>]] = opcom;
+            result[<span class="hljs-string">&quot;::doc::visual::&quot;</span>+docmatch[<span class="hljs-number">1</span>]] = opcom;
+        }<span class="hljs-keyword">else</span>{
+            result[<span class="hljs-string">&quot;::doc::normal::&quot;</span>+opkey+opkey] = { <span class="hljs-attr">kind</span>: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-attr">label</span>: <span class="hljs-string">&#x27;line&#x27;</span>, <span class="hljs-attr">detail</span>: <span class="hljs-string">&quot;repeating an operator performs the action on an entire line&quot;</span>}
             result[<span class="hljs-string">&quot;normal::&quot;</span>+opkey+opkey] =
                 [<span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;expandLineSelection&quot;</span>, opcom]
-            result[<span class="hljs-string">&quot;visual::&quot;</span>+opkey] = opcom
+                result[<span class="hljs-string">&quot;visual::&quot;</span>+opkey] = opcom
+            
+            <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [objkey, objcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">objects</span>)){
+                <span class="hljs-keyword">let</span> docmatch = objkey.<span class="function_ hljs-title">match</span>(<span class="hljs-regexp">/^::doc::(.*)/</span>)
+                <span class="hljs-keyword">if</span>(docmatch){
+                    result[<span class="hljs-string">&quot;::doc::normal::&quot;</span>+opkey + docmatch[<span class="hljs-number">1</span>]] = objcom
+                }<span class="hljs-keyword">else</span>{
+                    result[<span class="hljs-string">&quot;normal::&quot;</span>+opkey + objkey] = 
+                        [<span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, objcom, opcom]
+                }
+            }
         }
     }
     <span class="hljs-keyword">return</span> result
@@ -80,10 +93,15 @@
     <span class="hljs-keyword">let</span> result = {}
     <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [opkey, opcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">operators</span>)){
         <span class="hljs-keyword">for</span>(<span class="hljs-keyword">const</span> [objkey, objcom] <span class="hljs-keyword">of</span> <span class="class_ hljs-title">Object</span>.<span class="function_ hljs-title">entries</span>(params.<span class="hljs-property">objects</span>)){
-            result[<span class="hljs-string">&quot;normal::&quot;</span>+opkey+objkey] = [
-                <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, 
-                <span class="function_ hljs-title">executeAfter</span>(objcom, opcom),
-            ]
+            <span class="hljs-keyword">let</span> docmatch = objkey.<span class="function_ hljs-title">match</span>(<span class="hljs-regexp">/^::doc::(.*)/</span>)
+            <span class="hljs-keyword">if</span>(docmatch){
+                result[<span class="hljs-string">&quot;::doc::normal::&quot;</span>+opkey + docmatch[<span class="hljs-number">1</span>]] = objcom
+            }<span class="hljs-keyword">else</span>{
+                result[<span class="hljs-string">&quot;normal::&quot;</span>+opkey+objkey] = [
+                    <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, 
+                    <span class="function_ hljs-title">executeAfter</span>(objcom, opcom),
+                ]
+            }
         }
     }
     <span class="hljs-keyword">return</span> result
@@ -102,23 +120,27 @@
 }
 
 </code></pre> <p>Now that we've defined the functions that generator the operator, object combinations, we need to define the individual operators and objects themselves. We define some of these as variables because they need to be re-used in several places</p> <h3 id="heading-#operators"><a class="header-anchor" id="operators" href="#operators"> </a>Operators</h3> <pre><code class="language-js">const operator_commands = {
-    <span class="hljs-attribute">d</span>: &quot;editor<span class="hljs-variable">.action</span><span class="hljs-variable">.clipboardCutAction</span>&quot;,
-    y: [ &quot;editor<span class="hljs-variable">.action</span><span class="hljs-variable">.clipboardCopyAction</span>&quot;, &quot;modalkeys<span class="hljs-variable">.cancelMultipleSelections</span>&quot; ],
+    &quot;::doc::d&quot;: { kind: &quot;operator&quot;, label: &quot;<span class="hljs-keyword">delete</span><span class="hljs-string">&quot;, detail: &quot;</span><span class="hljs-keyword">delete</span> text <span class="hljs-keyword">and</span> store it <span class="hljs-keyword">in</span> the clipboard (<span class="hljs-built_in">e</span>.g. copy)<span class="hljs-string">&quot; },
+    d: &quot;</span>editor.action.clipboardCutAction<span class="hljs-string">&quot;,
+    &quot;</span>::doc::y<span class="hljs-string">&quot;: { kind: &quot;</span>operator<span class="hljs-string">&quot;, label: &quot;</span>copy<span class="hljs-string">&quot;, detail: &quot;</span>copy the text <span class="hljs-keyword">to</span> clipboard<span class="hljs-string">&quot; },
+    y: [ &quot;</span>editor.action.clipboardCopyAction<span class="hljs-string">&quot;, &quot;</span>modalkeys.cancelMultipleSelections<span class="hljs-string">&quot; ],
+    &quot;</span>::doc::c<span class="hljs-string">&quot;: { kind: &quot;</span>operator<span class="hljs-string">&quot;, label: &quot;</span>change<span class="hljs-string">&quot;, detail: &quot;</span><span class="hljs-keyword">delete</span> text <span class="hljs-keyword">and</span> switch <span class="hljs-keyword">to</span> <span class="hljs-keyword">insert</span> mode<span class="hljs-string">&quot; },
     c: {
-        if: &quot;!__selection<span class="hljs-variable">.isSingleLine</span> &amp;&amp; __selection<span class="hljs-variable">.end</span><span class="hljs-variable">.character</span> == 0 &amp;&amp; __selection<span class="hljs-variable">.start</span><span class="hljs-variable">.character</span> == 0&quot;,
-</code></pre> <p>multi-line selection</p> <pre><code class="language-js"><span class="hljs-symbol">        then:</span> [
+        if: &quot;</span>!__selection.isSingleLine &amp;&amp; __selection.<span class="hljs-keyword">end</span>.character == <span class="hljs-number">0</span> &amp;&amp; __selection.<span class="hljs-keyword">start</span>.character == <span class="hljs-number">0</span><span class="hljs-string">&quot;,
+</span></code></pre> <p>multi-line selection</p> <pre><code class="language-js"><span class="hljs-symbol">        then:</span> [
             <span class="hljs-string">&quot;deleteRight&quot;</span>,
             <span class="hljs-string">&quot;editor.action.insertLineBefore&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
         ],
-</code></pre> <p>single line selection</p> <pre><code class="language-js"><span class="hljs-symbol">        else:</span> [ 
+</code></pre> <p>single line selection</p> <pre><code class="language-js">        <span class="hljs-keyword">else</span>: [ 
             <span class="hljs-string">&quot;deleteRight&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
         ]
-    <span class="hljs-punctuation">}</span>,
-    <span class="hljs-string">&quot;,.&quot;</span>: [
-        <span class="hljs-punctuation">{</span>
-<span class="hljs-symbol">            if:</span> <span class="hljs-string">&quot;__language == &#x27;julia&#x27;&quot;</span>,
+    },
+    <span class="hljs-string">&quot;::doc::z.&quot;</span>: { kind: <span class="hljs-string">&quot;operator&quot;</span>, <span class="hljs-built_in">label</span>: <span class="hljs-string">&quot;repl&quot;</span>, detail: <span class="hljs-string">&quot;send text to REPL; use language specific extension if available&quot;</span> },
+    <span class="hljs-string">&quot;z.&quot;</span>: [
+        {
+</code></pre> <p>TODO: add other languages here</p> <pre><code class="language-js"><span class="hljs-symbol">            if:</span> <span class="hljs-string">&quot;__language == &#x27;julia&#x27;&quot;</span>,
 <span class="hljs-symbol">            then:</span> <span class="hljs-string">&quot;language-julia.executeCodeBlockOrSelectionAndMove&quot;</span>,
 <span class="hljs-symbol">            else:</span> <span class="hljs-punctuation">{</span>
 <span class="hljs-symbol">                if:</span> <span class="hljs-string">&quot;!__selection.isSingleLine&quot;</span>,
@@ -129,7 +151,8 @@
         <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
         <span class="hljs-string">&quot;modalkeys.touchDocument&quot;</span>
     ],
-    <span class="hljs-string">&quot;,;&quot;</span>: [
+    <span class="hljs-string">&quot;::doc::z;&quot;</span>: <span class="hljs-punctuation">{</span> kind: <span class="hljs-string">&quot;operator&quot;</span>, label: <span class="hljs-string">&quot;repl&quot;</span>, detail: <span class="hljs-string">&quot;send text to REPL&quot;</span> <span class="hljs-punctuation">}</span>,
+    <span class="hljs-string">&quot;z;&quot;</span>: [
         <span class="hljs-punctuation">{</span>
 <span class="hljs-symbol">            if:</span> <span class="hljs-string">&quot;!__selection.isSingleLine&quot;</span>,
 <span class="hljs-symbol">            then:</span> <span class="hljs-string">&quot;terminal-polyglot.send-block-text&quot;</span>,
@@ -138,7 +161,9 @@
         <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
         <span class="hljs-string">&quot;modalkeys.touchDocument&quot;</span>
     ],
+    <span class="hljs-string">&quot;::doc::&lt;&quot;</span>: <span class="hljs-punctuation">{</span> kind: <span class="hljs-string">&quot;operator&quot;</span>, label: <span class="hljs-string">&quot;dedent&quot;</span>, detail: <span class="hljs-string">&quot;deindent text by current file&#x27;s indent size&quot;</span> <span class="hljs-punctuation">}</span>,
     <span class="hljs-string">&quot;&lt;&quot;</span>: [<span class="hljs-string">&quot;editor.action.outdentLines&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span> ],
+    <span class="hljs-string">&quot;::doc::&gt;&quot;</span>: <span class="hljs-punctuation">{</span> kind: <span class="hljs-string">&quot;operator&quot;</span>, label: <span class="hljs-string">&quot;indent&quot;</span>, detail: <span class="hljs-string">&quot;indent text by current file&#x27;s indent size&quot;</span> <span class="hljs-punctuation">}</span>,
     <span class="hljs-string">&quot;&gt;&quot;</span>: [<span class="hljs-string">&quot;editor.action.indentLines&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span> ]
 <span class="hljs-punctuation">}</span>
 
@@ -148,99 +173,165 @@
     ...(<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">Object</span>.</span></span>from<span class="hljs-constructor">Entries([<span class="hljs-string">&quot;&#x27;&quot;</span>, <span class="hljs-string">&quot;\&quot;&quot;</span>, <span class="hljs-string">&quot;`&quot;</span>].<span class="hljs-params">map</span>(<span class="hljs-params">c</span> =&gt; [<span class="hljs-params">c</span>, <span class="hljs-params">c</span>])</span>))
 }
 
-</code></pre> <h4>Jump to a Character</h4> <p>Advanced cursor motions in Vim include jump to character, which is especially powerful in connection with editing commands. With this motion, we can apply edits up to or including a specified character. The same motions work also as jump commands in normal mode.</p> <p>All of these keybindings are implemented using the <a href="https://haberdashpi.github.io/vscode-modal-keys/dev/doc_index.html#incremental-search">incremental search</a> command, just the parameters are different for each case. Basically we just perform either a forward or backward search and use the &quot;offset&quot; option to determine where the cursor should land.</p> <pre><code class="language-js">const search_<span class="hljs-attr">objects</span> <span class="hljs-operator">=</span> <span class="hljs-punctuation">{</span>
-<span class="hljs-symbol">    f:</span> <span class="hljs-punctuation">{</span>
-        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
+</code></pre> <h4>Jump to a Character</h4> <p>Advanced cursor motions in Vim include jump to character, which is especially powerful in connection with editing commands. With this motion, we can apply edits up to or including a specified character. The same motions work also as jump commands in normal mode.</p> <p>All of these keybindings are implemented using the <a href="https://haberdashpi.github.io/vscode-modal-keys/dev/doc_index.html#incremental-search">incremental search</a> command, just the parameters are different for each case. Basically we just perform either a forward or backward search and use the &quot;offset&quot; option to determine where the cursor should land.</p> <pre><code class="language-js"><span class="hljs-keyword">const</span> search_objects = {
+    <span class="hljs-string">&quot;::doc::f&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;find</span> <span class="hljs-type">char</span> →&#x27;, detail: <span class="hljs-string">&quot;move/operate up to and including given character&quot;</span> },
+    f: {
+        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
             <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
             <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;inclusive&quot;</span>,
             <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
-        <span class="hljs-punctuation">}</span>
-    <span class="hljs-punctuation">}</span>,
-<span class="hljs-symbol">    F:</span> <span class="hljs-punctuation">{</span>
-        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
+        }
+    },
+    <span class="hljs-string">&quot;::doc::F&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;find</span> <span class="hljs-type">char</span> ←&#x27;, detail: <span class="hljs-string">&quot;move/operate up to and including given character (moving backwards)&quot;</span> },
+    F: {
+        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
             <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
-            <span class="hljs-string">&quot;backwards&quot;</span>: true,
+            <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
             <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;inclusive&quot;</span>,
             <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
-        <span class="hljs-punctuation">}</span>
-    <span class="hljs-punctuation">}</span>,
-<span class="hljs-symbol">    t:</span> <span class="hljs-punctuation">{</span>
-        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
+        }
+    },
+    <span class="hljs-string">&quot;::doc::t&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;find</span> <span class="hljs-type">char</span> →&#x27;, detail: <span class="hljs-string">&quot;move/operate up to given character&quot;</span> },
+    t: {
+        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
             <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
             <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;exclusive&quot;</span>,
             <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
-        <span class="hljs-punctuation">}</span>
-    <span class="hljs-punctuation">}</span>,
-<span class="hljs-symbol">    T:</span> <span class="hljs-punctuation">{</span>
-        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: <span class="hljs-punctuation">{</span>
+        }
+    },
+    <span class="hljs-string">&quot;::doc::T&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;find</span> <span class="hljs-type">char</span> ←&#x27;, detail: <span class="hljs-string">&quot;move/operate up to given character (moving backwards)&quot;</span> },
+    T: {
+        <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
             <span class="hljs-string">&quot;acceptAfter&quot;</span>: <span class="hljs-number">1</span>,
-            <span class="hljs-string">&quot;backwards&quot;</span>: true,
+            <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
             <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&quot;exclusive&quot;</span>,
             <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
-        <span class="hljs-punctuation">}</span>
-    <span class="hljs-punctuation">}</span>,
-<span class="hljs-punctuation">}</span>
+        }
+    },
+    <span class="hljs-string">&quot;::doc::s&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-string">&quot;find char pair&quot;</span>, detail: <span class="hljs-string">&quot;move/operate to next character pair&quot;</span>},
+    s: { <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+        caseSensitive: <span class="hljs-literal">true</span>,
+        acceptAfter: <span class="hljs-number">2</span>,
+        backwards: <span class="hljs-literal">false</span>,
+        offset: <span class="hljs-symbol">&#x27;start</span>&#x27;,
+        wrapAround: <span class="hljs-literal">true</span>
+    }},
+    <span class="hljs-string">&quot;::doc::S&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-string">&quot;char pair back&quot;</span>, detail: <span class="hljs-string">&quot;move/operate to previous character pair&quot;</span>},
+    S: { <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+        casSensitive: <span class="hljs-literal">true</span>,
+        acceptAfter: <span class="hljs-number">2</span>,
+        backwards: <span class="hljs-literal">true</span>,
+        offset: <span class="hljs-symbol">&#x27;start</span>&#x27;,
+        wrapAround: <span class="hljs-literal">true</span>
+    }},
+}
 
 </code></pre> <h2 id="heading-#game-plan"><a class="header-anchor" id="game-plan" href="#game-plan"> </a>Game Plan</h2> <p>We've defined everything we need to define before-hand. Now we move to actually creating the keymap.</p> <p>We start with basic motion commands which are mostly straightforward to implement.</p> <p>A few notes:</p> <ul> <li>Where useful, <code>__count</code> is used to provide the number argument (e.g. the <code>3</code> in 3l) to a given command.</li> <li>When in visual model, most of the commands are built to extend the selection</li> </ul> <h3 id="heading-#required-extensions"><a class="header-anchor" id="required-extensions" href="#required-extensions"> </a>Required extensions</h3> <p>Unlike the tutorial, these settings are not self-contained and make use of a variety of extensions to allow for a better set of features. You wil need the following extensions for all bindings to work properly:</p> <ul> <li><a href="https://marketplace.visualstudio.com/items?itemName=dbankier.vscode-quick-select">Quick and Simple Text Selection</a></li> <li><a href="https://marketplace.visualstudio.com/items?itemName=haberdashPI.selection-utilities">Selection Utilities</a></li> <li><a href="https://marketplace.visualstudio.com/items?itemName=haberdashPI.vscode-select-by-indent">Select by Indent</a></li> </ul> <p>Because we've listed these extensions below, ModalKeys will check for these extensions when you import this preset, and give you the option to install the extensions.</p> <pre><code class="language-js"><span class="hljs-keyword">module</span>.<span class="hljs-keyword">exports</span> = {
     <span class="hljs-string">&quot;extensions&quot;</span>: [
         <span class="hljs-string">&quot;dbankier.vscode-quick-select&quot;</span>,
         <span class="hljs-string">&quot;haberdashpi.vscode-select-by-indent&quot;</span>,
-        <span class="hljs-string">&quot;haberdashpi.selection-utilities&quot;</span>
+        <span class="hljs-string">&quot;haberdashpi.selection-utilities&quot;</span>,
+        <span class="hljs-string">&quot;haberdashpi.terminal-polyglot&quot;</span>
+    ],
+
+</code></pre> <h2 id="heading-#command-kinds"><a class="header-anchor" id="command-kinds" href="#command-kinds"> </a>Command Kinds</h2> <p>These document the categories of commands our bindings will defined. They Determine the color coding of keys in the visual documentation.</p> <pre><code class="language-js">    <span class="hljs-comment">&quot;docKinds&quot;</span>: [
+        { name: <span class="hljs-string">&#x27;motion&#x27;</span>,   description: <span class="hljs-comment">&quot;Select commands move the cursor and/or selections.&quot;</span> },
+        { name: <span class="hljs-string">&#x27;operator&#x27;</span>, description: <span class="hljs-comment">&quot;Operators are actions that take motions as suffix arguments (e.g. to delete (`d`) a word (`w`) you would type `dw`). If you wish to perform the operator action over a single line, you hit the operator key twice. In visual mode, an operator performs it&#x27;s action over the selected text.&quot;</span> },
+        { name: <span class="hljs-string">&#x27;action&#x27;</span>,   description: <span class="hljs-comment">&quot;Actions do something (usually to the text of a document).&quot;</span>},
+        { name: <span class="hljs-string">&#x27;history&#x27;</span>,  description: <span class="hljs-comment">&quot;History commands modify or use the history of executed commands, in some way.&quot;</span> },
+        { name: <span class="hljs-string">&#x27;mode&#x27;</span>,     description: <span class="hljs-comment">&quot;Mode commands change the key mode, possibly completely changing what all of the keys do.&quot;</span> },
+        { name: <span class="hljs-string">&#x27;count&#x27;</span>,    description: <span class="hljs-comment">&quot;Counts serve as prefix arguments to other commands, and usually determine how many times to repeat the commnad, unless otherwise specified.&quot;</span> },
+        { name: <span class="hljs-string">&#x27;window&#x27;</span>,   description: <span class="hljs-comment">&quot;Window commands manipulate the window in some way.&quot;</span> },
+        { name: <span class="hljs-string">&#x27;leader&#x27;</span>,   description: <span class="hljs-comment">&quot;Leaders serve as prefixes to an entire list of key commands&quot;</span> }
     ],
 
 </code></pre> <h2 id="heading-#motions-in-normal-mode"><a class="header-anchor" id="motions-in-normal-mode" href="#motions-in-normal-mode"> </a>Motions in Normal Mode</h2> <pre><code class="language-js">    <span class="hljs-attr">&quot;keybindings&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
-</code></pre> <p>Cursor can be advanced in a file with enter and space. These are not technically motion commands but included for compatibility.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;\n&quot;</span>: [
+</code></pre> <p>Cursor can be advanced in a file with enter and space. These are not technically motion commands but included for compatibility.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::\n&quot;</span>: { kind: <span class="hljs-string">&#x27;motion&#x27;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&#x27;↓&#x27;</span>, detail: <span class="hljs-string">&#x27;move down&#x27;</span> },</span>
+        <span class="hljs-string">&quot;\n&quot;</span>: [
             <span class="hljs-string">&quot;cursorDown&quot;</span>,
             { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-string">&quot;to&quot;</span>: <span class="hljs-string">&quot;wrappedLineFirstNonWhitespaceCharacter&quot;</span> } }
         ],
+        <span class="hljs-string">&quot;::doc:: &quot;</span>: { kind: <span class="hljs-string">&#x27;motion&#x27;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&#x27;→&#x27;</span>, detail: <span class="hljs-string">&#x27;move right&#x27;</span> },</span>
         <span class="hljs-string">&quot; &quot;</span>: <span class="hljs-string">&quot;cursorRight&quot;</span>,
-</code></pre> <p>Move cursor up/down/left/right.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::using::cursorMove&quot;</span>: {
-            <span class="hljs-string">&quot;h&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;left&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
-            <span class="hljs-string">&quot;j&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;down&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
-            <span class="hljs-string">&quot;k&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;up&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
-            <span class="hljs-string">&quot;l&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;right&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
+</code></pre> <p>Move cursor up/down/left/right.</p> <pre><code class="language-js">    <span class="hljs-string">&quot;::doc::h&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&quot;←&quot;</span>, detail: <span class="hljs-string">&quot;move left&quot;</span> },
+    <span class="hljs-string">&quot;::doc::j&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&#x27;↓&#x27;</span>, detail: <span class="hljs-string">&quot;cove down&quot;</span> },
+    <span class="hljs-string">&quot;::doc::k&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&#x27;↑&#x27;</span>, detail: <span class="hljs-string">&quot;move up&quot;</span> },
+    <span class="hljs-string">&quot;::doc::l&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&#x27;→&#x27;</span>, detail: <span class="hljs-string">&quot;move right&quot;</span> },
+    <span class="hljs-string">&quot;::doc::0&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&#x27;sol&#x27;</span>, detail: <span class="hljs-string">&quot;move to start of line&quot;</span> },
+    <span class="hljs-string">&quot;::doc::$&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&#x27;eol&#x27;</span>, detail: <span class="hljs-string">&quot;move to end of line&quot;</span> },
+    <span class="hljs-string">&quot;::doc::^&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&#x27;first nonwht&#x27;</span>, detail: <span class="hljs-string">&quot;move to first non-whitespace character on line&quot;</span>},
+    <span class="hljs-string">&quot;::doc::g&quot;</span>: { kind: <span class="hljs-string">&quot;leader&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&#x27;extended&#x27;</span>, detail: <span class="hljs-string">&quot;various extended commands&quot;</span> },
+    <span class="hljs-string">&quot;::doc::g_&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&#x27;first nonwht&#x27;</span>, detail: <span class="hljs-string">&quot;move to first non-whitespace character on line&quot;</span>},
+    <span class="hljs-string">&quot;::using::cursorMove&quot;</span>: {
+            <span class="hljs-string">&quot;h&quot;</span>: { to: <span class="hljs-string">&#x27;left&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
+            <span class="hljs-string">&quot;j&quot;</span>: { to: <span class="hljs-string">&#x27;down&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
+            <span class="hljs-string">&quot;k&quot;</span>: { to: <span class="hljs-string">&#x27;up&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
+            <span class="hljs-string">&quot;l&quot;</span>: { to: <span class="hljs-string">&#x27;right&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span>, value: <span class="hljs-string">&#x27;__count&#x27;</span> },
 </code></pre> <p>Move to first/last character on line.</p> <pre><code class="language-js">            <span class="hljs-string">&quot;0&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineStart&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> },
             <span class="hljs-string">&quot;$&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineEnd&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> },
 </code></pre> <p>Move to first/last non-blank character on line. Also these ones use the <code>__selecting</code> flag to check whether we are in visual mode.</p> <pre><code class="language-js">            <span class="hljs-string">&quot;^&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineFirstNonWhitespaceCharacter&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> },
             <span class="hljs-string">&quot;g_&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;wrappedLineLastNonWhitespaceCharacter&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> },
         },
-        <span class="hljs-string">&quot;_&quot;</span>: <span class="hljs-string">&quot;cursorHomeSelect&quot;</span>,
+    <span class="hljs-string">&quot;::doc::&quot;</span>: { kind: <span class="hljs-string">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;sel first nonwht&#x27;</span>, detail: <span class="hljs-string">&#x27;select to first non-whitespace&#x27;</span> },
+    <span class="hljs-string">&quot;_&quot;</span>: <span class="hljs-string">&quot;cursorHomeSelect&quot;</span>,
 
-</code></pre> <p>Moving to beginning or end of the file.</p> <pre><code class="language-js"><span class="hljs-symbol">        gg:</span> <span class="hljs-string">&quot;cursorTop&quot;</span>,
+</code></pre> <p>Moving to beginning or end of the file.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::gg&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-symbol">&#x27;doc</span> start&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to top <span class="hljs-keyword">of</span> document&#x27;},
+        gg: <span class="hljs-string">&quot;cursorTop&quot;</span>,
         <span class="hljs-string">&quot;visual::gg&quot;</span>: <span class="hljs-string">&quot;cursorTopSelect&quot;</span>,
-<span class="hljs-symbol">        G:</span> <span class="hljs-string">&quot;cursorBottom&quot;</span>,
+        <span class="hljs-string">&quot;::doc::G&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-symbol">&#x27;doc</span> end&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to bottom <span class="hljs-keyword">of</span> document&#x27;},
+        <span class="hljs-type">G</span>: <span class="hljs-string">&quot;cursorBottom&quot;</span>,
         <span class="hljs-string">&quot;visual::G&quot;</span>: <span class="hljs-string">&quot;cursorBottomSelect&quot;</span>,
-</code></pre> <p>Switch to next and previous tab.</p> <pre><code class="language-js">        <span class="hljs-keyword">gt</span>: <span class="hljs-string">&quot;workbench.action.nextEditor&quot;</span>,
-        <span class="hljs-keyword">gT</span>: <span class="hljs-string">&quot;workbench.action.previousEditor&quot;</span>,
-</code></pre> <p>The logic of separating words is bit different in VS Code and Vim, so we will not aim to immitate Vim exaclty. If that's something you want, you might consider looking at <a href="https://github.com/haberdashPI/vscode-selection-utilities">Selection Utilities</a>. These keys are mapped to the most similar motion available. The <key>W</key> and <key>B</key> move past all non-space characters, and are implemented using the search command, with appropriate options. To handling of count arguments, we use the <code>repeat</code> option.</p> <pre><code class="language-js">        w: { <span class="hljs-string">&quot;cursorWordStartRight&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
+</code></pre> <p>Switch to next and previous tab.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::gt&quot;</span>: { kind: <span class="hljs-string">&quot;window&quot;</span>, <span class="hljs-built_in">label</span>: &#x27;<span class="hljs-built_in">tab</span> →&#x27;, detail: &#x27;<span class="hljs-built_in">show</span> next editor <span class="hljs-built_in">tab</span>&#x27;},
+        gt: <span class="hljs-string">&quot;workbench.action.nextEditor&quot;</span>,
+        <span class="hljs-string">&quot;::doc::gT&quot;</span>: { kind: <span class="hljs-string">&quot;window&quot;</span>, <span class="hljs-built_in">label</span>: &#x27;<span class="hljs-built_in">tab</span> ←&#x27;, detail: &#x27;<span class="hljs-built_in">show</span> previous editor <span class="hljs-built_in">tab</span>&#x27;},
+        gT: <span class="hljs-string">&quot;workbench.action.previousEditor&quot;</span>,
+</code></pre> <p>The logic of separating words is bit different in VS Code and Vim, so we will not aim to immitate Vim exaclty. If that's something you want, you might consider looking at <a href="https://github.com/haberdashPI/vscode-selection-utilities">Selection Utilities</a>. These keys are mapped to the most similar motion available. The <key>W</key> and <key>B</key> move past all non-space characters, and are implemented using the search command, with appropriate options. To handling of count arguments, we use the <code>repeat</code> option.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::w&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;word</span> →&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to next word start&#x27;},
+        w: { <span class="hljs-string">&quot;cursorWordStartRight&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
         <span class="hljs-string">&quot;visual::w&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartRightSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
+        <span class="hljs-string">&quot;::doc::e&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;word</span> →&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to next word <span class="hljs-keyword">end</span>&#x27;},
         e: { <span class="hljs-string">&quot;cursorWordEndRight&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
         <span class="hljs-string">&quot;visual::e&quot;</span>: { <span class="hljs-string">&quot;cursorWordEndRightSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
-        b: { <span class="hljs-string">&quot;cursorWordStartLeft&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
+        <span class="hljs-string">&quot;::doc::b&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;word</span> ←&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to previous word start&#x27;},
+        b: { <span class="hljs-string">&quot;cursorWordStartLeft&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span>    },
         <span class="hljs-string">&quot;visual::b&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartLeftSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
+        <span class="hljs-string">&quot;::doc::W&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;WORD</span> →&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to next WORD start; a WORD <span class="hljs-keyword">is</span> a continguous group <span class="hljs-keyword">of</span> non-whitespace characters&#x27;},
         W: {
+            <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
+                <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\s+&quot;</span>,
+                <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-symbol">&#x27;exclusive</span>&#x27;,
+                <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
+                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: &#x27;__mode == <span class="hljs-string">&quot;visual&quot;</span>&#x27;,
+                <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
+                <span class="hljs-string">&quot;executeAfter&quot;</span>: { cursorMove: { to: <span class="hljs-symbol">&#x27;right</span>&#x27;, <span class="hljs-keyword">select</span>: &#x27;__mode == <span class="hljs-string">&quot;visual&quot;</span>&#x27; } }
+            },
+            <span class="hljs-string">&quot;repeat&quot;</span>: &#x27;__count&#x27;,
+        },
+        <span class="hljs-string">&quot;::doc::E&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;WORD</span> <span class="hljs-keyword">end</span> →&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to next WORD <span class="hljs-keyword">end</span>; a WORD <span class="hljs-keyword">is</span> a continguous group <span class="hljs-keyword">of</span> non-whitespace characters&#x27;},
+        E: {
             <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
                 <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\S+&quot;</span>,
                 <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-symbol">&#x27;inclusive</span>&#x27;,
                 <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
-                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-symbol">&#x27;__mode</span> == <span class="hljs-string">&quot;visual&quot;</span>&#x27;,
+                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: &#x27;__mode == <span class="hljs-string">&quot;visual&quot;</span>&#x27;,
                 <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
             },
-            <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-symbol">&#x27;__count</span>&#x27;,
+            <span class="hljs-string">&quot;repeat&quot;</span>: &#x27;__count&#x27;,
         },
+        <span class="hljs-string">&quot;::doc::B&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;WORD</span> →&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to previous WORD start; a WORD <span class="hljs-keyword">is</span> a continguous group <span class="hljs-keyword">of</span> non-whitespace characters&#x27;},
         B: {
             <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
                 <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\S+&quot;</span>,
                 <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-symbol">&#x27;inclusive</span>&#x27;,
                 <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
                 <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
-                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-symbol">&#x27;__mode</span> == <span class="hljs-string">&quot;visual&quot;</span>&#x27;,
+                <span class="hljs-string">&quot;selectTillMatch&quot;</span>: &#x27;__mode == <span class="hljs-string">&quot;visual&quot;</span>&#x27;,
                 <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
             },
-            <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-symbol">&#x27;__count</span>&#x27;,
+            <span class="hljs-string">&quot;repeat&quot;</span>: &#x27;__count&#x27;,
         },
 
-</code></pre> <p>To jump paragraphs we just search for the first blank line. When moving forward, we need to use <code>executeAfter</code> (which runs a command after search is accepterd). We use this to move one extra character forward to get to the actual empty line because of the way search works with newlines.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;}&quot;</span>: {
+</code></pre> <p>To jump paragraphs we just search for the first blank line. When moving forward, we need to use <code>executeAfter</code> (which runs a command after search is accepterd). We use this to move one extra character forward to get to the actual empty line because of the way search works with newlines.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::}&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;paragraph</span> →&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to next paragraph&#x27;},
+        <span class="hljs-string">&quot;}&quot;</span>: {
             <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
                 <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;^\\s*$&quot;</span>,
                 <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-symbol">&#x27;inclusive</span>&#x27;,
@@ -253,6 +344,7 @@
             },
             <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-symbol">&#x27;__count</span>&#x27;,
         },
+        <span class="hljs-string">&quot;::doc::{&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion</span>&#x27;, label: <span class="hljs-symbol">&#x27;paragraph</span> ←&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> to previous paragraph&#x27;},
         <span class="hljs-string">&quot;{&quot;</span>: {
             <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
                 <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;^\\s*$&quot;</span>,
@@ -264,152 +356,213 @@
             },
             <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-symbol">&#x27;__count</span>&#x27;,
         },
-</code></pre> <p>Moving cursor to the top, middle, and bottom of the screen is mapped to <key>H</key> (high), <key>M</key> (middle), and <key>L</key> (low) keys.</p> <pre><code class="language-js">        H: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;viewPortTop&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> } },
+</code></pre> <p>Moving cursor to the top, middle, and bottom of the screen is mapped to <key>H</key> (high), <key>M</key> (middle), and <key>L</key> (low) keys.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::H&quot;</span>: { kind: <span class="hljs-string">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;view top&#x27;</span>, detail: <span class="hljs-string">&quot;move cursor so it is at the top of the viewport&quot;</span> },
+        H: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;viewPortTop&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> } },
+        <span class="hljs-string">&quot;::doc::M&quot;</span>: { kind: <span class="hljs-string">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;view center&#x27;</span>, detail: <span class="hljs-string">&quot;move cursor so it is at the center of the viewport&quot;</span> },
         M: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;viewPortCenter&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> } },
+        <span class="hljs-string">&quot;::doc::L&quot;</span>: { kind: <span class="hljs-string">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;view bottom&#x27;</span>, detail: <span class="hljs-string">&quot;move cursor so it is at the bottom of the viewport&quot;</span> },
         L: { <span class="hljs-string">&quot;cursorMove&quot;</span>: { <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;viewPortBottom&#x27;</span>, <span class="hljs-keyword">select</span>: <span class="hljs-string">&#x27;__mode == &quot;visual&quot;&#x27;</span> } },
-</code></pre> <p>Move to matching bracket command is somewhat challenging to implement consistently in VS Code. This is due to the problem that there are no commands that do exactly what Vim's motions do, and because VSCode extensions are not allowed to access VS Code's parsing of brackets 😞, and so have to re-implement parsing (see, for example, <a href="https://marketplace.visualstudio.com/items?itemName=pustelto.bracketeer">bracketeer</a>). In normal mode we call the <code>jumpToBracket</code> command which works if the cursor is on top of a bracket, but does not allow for the selection to be extended. In visual mode we use the <code>smartSelect.expand</code> command, which is <em>roughly</em> equivlaent. In many cases, it is more useful motion than jumping to a matching bracket, but using it means that we are diverging from Vim's functionality.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;%&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.jumpToBracket&quot;</span><span class="hljs-punctuation">,</span>
-        <span class="hljs-attr">&quot;visual::%&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;editor.action.smartSelect.expand&quot;</span><span class="hljs-punctuation">,</span>
+</code></pre> <p>Move to matching bracket command is somewhat challenging to implement consistently in VS Code. This is due to the problem that there are no commands that do exactly what Vim's motions do, and because VSCode extensions are not allowed to access VS Code's parsing of brackets 😞, and so have to re-implement parsing (see, for example, <a href="https://marketplace.visualstudio.com/items?itemName=pustelto.bracketeer">bracketeer</a>). In normal mode we call the <code>jumpToBracket</code> command which works if the cursor is on top of a bracket, but does not allow for the selection to be extended. In visual mode we use the <code>smartSelect.expand</code> command, which is <em>roughly</em> equivlaent. In many cases, it is more useful motion than jumping to a matching bracket, but using it means that we are diverging from Vim's functionality.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::%&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-symbol">&#x27;to</span> bracket&#x27;, detail: <span class="hljs-symbol">&#x27;move</span> cursor to the match bracket&#x27; },
+        <span class="hljs-string">&quot;%&quot;</span>: <span class="hljs-string">&quot;editor.action.jumpToBracket&quot;</span>,
+        <span class="hljs-string">&quot;::doc::visual::%&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-symbol">&#x27;expand&#x27;</span>, detail: <span class="hljs-symbol">&#x27;expand</span> selection intelligently, use <span class="hljs-type">VSCode</span> smart expand&#x27; },
+        <span class="hljs-string">&quot;visual::%&quot;</span>: <span class="hljs-string">&quot;editor.action.smartSelect.expand&quot;</span>,
 
 </code></pre> <h2 id="heading-#search-operators"><a class="header-anchor" id="search-operators" href="#search-operators"> </a>Search Operators</h2> <p>Having defined the search operators above, we now insert them into the keymap</p> <pre><code class="language-js">        .<span class="hljs-built_in">..search</span>_objects,
 
-</code></pre> <p>Repeating the motions can be done simply by calling <code>nextMatch</code> or <code>previousMatch</code>.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;;&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span><span class="hljs-punctuation">,</span>
-        <span class="hljs-attr">&quot;,,&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span><span class="hljs-punctuation">,</span>
-</code></pre> <h2 id="heading-#switching-between-modes"><a class="header-anchor" id="switching-between-modes" href="#switching-between-modes"> </a>Switching between Modes</h2> <p>Next, we define keybindings that switch between normal, insert, and visual mode:</p> <pre><code class="language-js">        <span class="hljs-string">&quot;normal::i&quot;</span>: <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>,
-<span class="hljs-symbol">        I:</span> [
-            <span class="hljs-string">&quot;cursorHome&quot;</span>,
-            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+</code></pre> <p>Repeating the motions can be done simply by calling <code>nextMatch</code> or <code>previousMatch</code>.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::;&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-string">&quot;repeat motion →&quot;</span>, detail: <span class="hljs-string">&quot;Repeating a searching motion (e.g. `f`)&quot;</span>},
+        <span class="hljs-string">&quot;;&quot;</span>: <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span>,
+        <span class="hljs-string">&quot;::doc::,&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-string">&quot;repeat motion ←&quot;</span>, detail: <span class="hljs-string">&quot;Repeating a searching motion (e.g. `f`) backwards&quot;</span>},
+        <span class="hljs-string">&quot;,&quot;</span>: <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span>,
+</code></pre> <h2 id="heading-#switching-between-modes"><a class="header-anchor" id="switching-between-modes" href="#switching-between-modes"> </a>Switching between Modes</h2> <p>Next, we define keybindings that switch between normal, insert, and visual mode:</p> <pre><code class="language-js">        &quot;::doc::normal::i&quot;: { kind: &quot;mode&quot;, label: &quot;<span class="hljs-keyword">insert</span><span class="hljs-string">&quot;, detail: &quot;</span>switch <span class="hljs-keyword">to</span> <span class="hljs-keyword">insert</span> mode<span class="hljs-string">&quot; },
+        &quot;</span>normal::i<span class="hljs-string">&quot;: &quot;</span>modalkeys.enterInsert<span class="hljs-string">&quot;,
+        &quot;</span>::doc::I<span class="hljs-string">&quot;: { kind: &quot;</span>mode<span class="hljs-string">&quot;, label: &quot;</span><span class="hljs-keyword">insert</span> sol<span class="hljs-string">&quot;, detail: &quot;</span>move <span class="hljs-keyword">to</span> non-whitespace <span class="hljs-keyword">start</span> of line <span class="hljs-keyword">and</span> switch <span class="hljs-keyword">to</span> <span class="hljs-keyword">insert</span> mode<span class="hljs-string">&quot; },
+        I: [
+            &quot;</span>cursorHome<span class="hljs-string">&quot;,
+            &quot;</span>modalkeys.enterInsert<span class="hljs-string">&quot;
         ],
-</code></pre> <p>The <code>a</code> has to check if the cursor is at the end of line. If so, we don't move right because that would move to next line.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;normal::a&quot;</span>: [
+</span></code></pre> <p>The <code>a</code> has to check if the cursor is at the end of line. If so, we don't move right because that would move to next line.</p> <pre><code class="language-js">        &quot;::doc::normal::a&quot;: { kind: &quot;mode&quot;, label: &quot;append&quot;, detail: &quot;start <span class="hljs-keyword">insert</span> mode after the current character<span class="hljs-string">&quot; },
+        &quot;</span>normal::a<span class="hljs-string">&quot;: [
             {
-                <span class="hljs-string">&quot;if&quot;</span>: <span class="hljs-string">&quot;__char == &#x27;&#x27;&quot;</span>,
-                <span class="hljs-string">&quot;else&quot;</span>: <span class="hljs-string">&quot;cursorRight&quot;</span>
+                &quot;</span><span class="hljs-keyword">if</span><span class="hljs-string">&quot;: &quot;</span>__char == <span class="hljs-string">&#x27;&#x27;</span><span class="hljs-string">&quot;,
+                &quot;</span><span class="hljs-keyword">else</span><span class="hljs-string">&quot;: &quot;</span>cursorRight<span class="hljs-string">&quot;
             },
-            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+            &quot;</span>modalkeys.enterInsert<span class="hljs-string">&quot;
         ],
-        <span class="hljs-symbol">A</span>: [
-            <span class="hljs-string">&quot;cursorEnd&quot;</span>,
-            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+        &quot;</span>::doc::normal::A<span class="hljs-string">&quot;: { kind: &quot;</span>mode<span class="hljs-string">&quot;, label: &quot;</span>append eol<span class="hljs-string">&quot;, detail: &quot;</span>move <span class="hljs-keyword">to</span> <span class="hljs-keyword">end</span> of line <span class="hljs-keyword">and</span> switch <span class="hljs-keyword">to</span> <span class="hljs-keyword">insert</span> mode<span class="hljs-string">&quot; },
+        A: [
+            &quot;</span>cursorEnd<span class="hljs-string">&quot;,
+            &quot;</span>modalkeys.enterInsert<span class="hljs-string">&quot;
         ],
+        &quot;</span>::doc::normal::o<span class="hljs-string">&quot;: { kind: &quot;</span>mode<span class="hljs-string">&quot;, label: &quot;</span>open below<span class="hljs-string">&quot;, detail: &quot;</span><span class="hljs-keyword">create</span> a line below this one <span class="hljs-keyword">and</span> <span class="hljs-keyword">start</span> <span class="hljs-keyword">insert</span> mode<span class="hljs-string">&quot; },
         o: [
-            <span class="hljs-string">&quot;editor.action.insertLineAfter&quot;</span>,
-            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+            &quot;</span>editor.action.insertLineAfter<span class="hljs-string">&quot;,
+            &quot;</span>modalkeys.enterInsert<span class="hljs-string">&quot;
         ],
-        <span class="hljs-symbol">O</span>: [
-            <span class="hljs-string">&quot;editor.action.insertLineBefore&quot;</span>,
-            <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>
+        &quot;</span>::doc::normal::O<span class="hljs-string">&quot;: { kind: &quot;</span>mode<span class="hljs-string">&quot;, label: &quot;</span>open above<span class="hljs-string">&quot;, detail: &quot;</span><span class="hljs-keyword">create</span> a line above this one <span class="hljs-keyword">and</span> <span class="hljs-keyword">start</span> <span class="hljs-keyword">insert</span> mode<span class="hljs-string">&quot; },
+        O: [
+            &quot;</span>editor.action.insertLineBefore<span class="hljs-string">&quot;,
+            &quot;</span>modalkeys.enterInsert<span class="hljs-string">&quot;
         ],
-</code></pre> <p>Note that visual mode works a little differently than in vim. We don't seek to mimc visual mode particularly. Basically, we just toggle a switch that allows the motion commands to extend and create selections.</p> <pre><code class="language-js"><span class="hljs-symbol">        v:</span> <span class="hljs-string">&quot;modalkeys.toggleSelection&quot;</span>,
-</code></pre> <h2 id="heading-#editing-in-normal-mode"><a class="header-anchor" id="editing-in-normal-mode" href="#editing-in-normal-mode"> </a>Editing in Normal Mode</h2> <p>Editing commands in normal mode typically either affect current character or line, or expect a motion key sequence at the end which specifies the scope of the edit. Let's first define simple commands that do not require a motion suffix:</p> <p><key>x</key> and <key>X</key> commands do exactly what <key>Delete</key> and <key>Backspace</key> keys do.</p> <pre><code class="language-js"><span class="hljs-symbol">        x:</span> <span class="hljs-string">&quot;deleteRight&quot;</span>,
-<span class="hljs-symbol">        X:</span> <span class="hljs-string">&quot;deleteLeft&quot;</span>,
-<span class="hljs-symbol">        r:</span> <span class="hljs-string">&quot;modalkeys.replaceChar&quot;</span>,
-</code></pre> <p>Deleting in Vim always copies the deleted text into clipboard, so we do that as well. If you are wondering why we don't use VS Code's cut command, it has a synchronization issue that sometimes causes the execution to advance to the next command in the sequence before cutting is done. This leads to strange random behavior that usually causes the whole line to disappear instead of the rest of line.</p> <pre><code class="language-js"><span class="hljs-symbol">        D:</span> [
+</span></code></pre> <p>Note that visual mode works a little differently than in vim. We don't seek to mimc visual mode particularly. Basically, we just toggle a switch that allows the motion commands to extend and create selections.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::normal::v&quot;</span>: { kind: <span class="hljs-string">&quot;mode&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;visual&quot;</span>, detail: <span class="hljs-string">&quot;start visual-selection mode&quot;</span> },</span>
+        <span class="hljs-string">&quot;::doc::visual::v&quot;</span>: { kind: <span class="hljs-string">&#x27;mode&#x27;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&#x27;clear selection&#x27;</span>, detail: <span class="hljs-string">&quot;clear selection and return to normal mode&quot;</span> }, </span>
+        v: <span class="hljs-string">&quot;modalkeys.toggleSelection&quot;</span>,
+</code></pre> <h2 id="heading-#editing-in-normal-mode"><a class="header-anchor" id="editing-in-normal-mode" href="#editing-in-normal-mode"> </a>Editing in Normal Mode</h2> <p>Editing commands in normal mode typically either affect current character or line, or expect a motion key sequence at the end which specifies the scope of the edit. Let's first define simple commands that do not require a motion suffix:</p> <p><key>x</key> and <key>X</key> commands do exactly what <key>Delete</key> and <key>Backspace</key> keys do.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::x&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;del char →&quot;</span>, detail: <span class="hljs-string">&quot;delete character to right&quot;</span> },</span>
+        x: { <span class="hljs-string">&quot;deleteRight&quot;</span>: {}, repeat: <span class="hljs-string">&#x27;__count&#x27;</span> },
+        <span class="hljs-string">&quot;::doc::X&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;del char ←&quot;</span>, detail: <span class="hljs-string">&quot;delete character to left&quot;</span> },</span>
+        X: { <span class="hljs-string">&quot;deleteLeft&quot;</span>: {}, repeat: <span class="hljs-string">&#x27;__count&#x27;</span> },
+        <span class="hljs-string">&quot;::doc::r&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;replace&quot;</span>, detail: <span class="hljs-string">&quot;replace a single character&quot;</span> },</span>
+        r: <span class="hljs-string">&quot;modalkeys.replaceChar&quot;</span>,
+</code></pre> <p>Deleting in Vim always copies the deleted text into clipboard, so we do that as well. If you are wondering why we don't use VS Code's cut command, it has a synchronization issue that sometimes causes the execution to advance to the next command in the sequence before cutting is done. This leads to strange random behavior that usually causes the whole line to disappear instead of the rest of line.</p> <pre><code class="language-js">        &quot;::doc::D&quot;: { kind: &quot;action&quot;, label: &quot;<span class="hljs-keyword">delete</span> eol<span class="hljs-string">&quot;, detail: &quot;</span><span class="hljs-keyword">Delete</span> <span class="hljs-keyword">from</span> cursor <span class="hljs-keyword">to</span> <span class="hljs-keyword">end</span> of line<span class="hljs-string">&quot; },
+        D: [
+            &quot;</span>modalkeys.cancelSelection<span class="hljs-string">&quot;,
+            &quot;</span>cursorEndSelect<span class="hljs-string">&quot;,
+            &quot;</span>editor.action.clipboardCopyAction<span class="hljs-string">&quot;,
+            &quot;</span>deleteRight<span class="hljs-string">&quot;,
+            &quot;</span>modalkeys.cancelSelection<span class="hljs-string">&quot;
+        ],
+</span></code></pre> <p>We utilize existing mappings to implement the <key>C</key> command. It does same thing as keys <key>D</key><key>i</key> together.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::C&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;change eol&quot;</span>, detail: <span class="hljs-string">&quot;Change from cursor to end of line&quot;</span> },</span>
+        C: { <span class="hljs-string">&quot;modalkeys.typeKeys&quot;</span>: { <span class="hljs-string">&quot;keys&quot;</span>: <span class="hljs-string">&quot;Di&quot;</span> } },
+</code></pre> <p>Yanking or copying is always done on a selected range. So, below, we make sure that only the rest of line is selected before copying the range to clipboard. Afterwards we clear the selection again.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::Y&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;copy eol&quot;</span>, detail: <span class="hljs-string">&quot;Copy from cursor to end of line&quot;</span> },</span>
+        Y: [
             <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>,
             <span class="hljs-string">&quot;cursorEndSelect&quot;</span>,
             <span class="hljs-string">&quot;editor.action.clipboardCopyAction&quot;</span>,
-            <span class="hljs-string">&quot;deleteRight&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>
         ],
-</code></pre> <p>We utilize existing mappings to implement the <key>C</key> command. It does same thing as keys <key>D</key><key>i</key> together.</p> <pre><code class="language-js">        C: { <span class="hljs-string">&quot;modalkeys.typeKeys&quot;</span>: { <span class="hljs-string">&quot;keys&quot;</span>: <span class="hljs-string">&quot;Di&quot;</span> } },
-</code></pre> <p>Yanking or copying is always done on a selected range. So, below, we make sure that only the rest of line is selected before copying the range to clipboard. Afterwards we clear the selection again.</p> <pre><code class="language-js"><span class="hljs-symbol">        Y:</span> [
-            <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>,
-            <span class="hljs-string">&quot;cursorEndSelect&quot;</span>,
-            <span class="hljs-string">&quot;editor.action.clipboardCopyAction&quot;</span>,
-            <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>
-        ],
-</code></pre> <p>Pasting text at cursor is done with <key>P</key> key. Following Vim convention <key>p</key> pastes text after cursor position. In both cases we clear the selection after paste, so that we don't accidently end up in visual mode. Note that these do not work exactly the same as the VIM commands. In vim paste behaviors differently depending on whether you have a single line or multiple lines in the clipboard. You would need to write a VSCode extension that inspects the contents of the clipboard before pasting to get this same behavior.</p> <pre><code class="language-js"><span class="hljs-symbol">        p:</span> [
+</code></pre> <p>Pasting text at cursor is done with <key>P</key> key. Following Vim convention <key>p</key> pastes text after cursor position. In both cases we clear the selection after paste, so that we don't accidently end up in visual mode. Note that these do not work exactly the same as the VIM commands. In vim paste behaviors differently depending on whether you have a single line or multiple lines in the clipboard. You would need to write a VSCode extension that inspects the contents of the clipboard before pasting to get this same behavior.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::p&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;paste →&quot;</span>, detail: <span class="hljs-string">&quot;paste after cursor&quot;</span> },</span>
+        p: [
             <span class="hljs-string">&quot;cursorRight&quot;</span>,
             <span class="hljs-string">&quot;editor.action.clipboardPasteAction&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>
         ],
-<span class="hljs-symbol">        P:</span> [
+        <span class="hljs-string">&quot;::doc::P&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;paste ←&quot;</span>, detail: <span class="hljs-string">&quot;paste before cursor&quot;</span> },</span>
+        P: [
             <span class="hljs-string">&quot;editor.action.clipboardPasteAction&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>
         ],
-</code></pre> <p><key>J</key> joins current and next lines together adding a space in between.</p> <pre><code class="language-js"><span class="hljs-symbol">        J:</span> <span class="hljs-string">&quot;editor.action.joinLines&quot;</span>,
-</code></pre> <p>Undoing last change is also a matter of calling built-in commands. We clear the selection afterwards.</p> <pre><code class="language-js"><span class="hljs-symbol">        u:</span> [
+</code></pre> <p><key>J</key> joins current and next lines together adding a space in between.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::J&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;join lines&quot;</span>, detail: <span class="hljs-string">&quot;remove newline char between this and next line&quot;</span> },</span>
+        J: <span class="hljs-string">&quot;editor.action.joinLines&quot;</span>,
+</code></pre> <p>Undoing last change is also a matter of calling built-in commands. We clear the selection afterwards.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::u&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;undo&quot;</span>, detail: <span class="hljs-string">&quot;Undo last action&quot;</span> },</span>
+        u: [
             <span class="hljs-string">&quot;undo&quot;</span>,
             <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>
         ],
-</code></pre> <p>The last &quot;simple&quot; keybinding we define is <key>`</key> that repeats the last command that changed the text somehow. This command is provided by ModalKeys. It checks after each key sequence is typed whether it caused a change in file. If so, it stores the seqeuence as a change. The command just runs the stored keysequence again.</p> <pre><code class="language-js">        <span class="hljs-attr">&quot;.&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;modalkeys.repeatLastChange&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-string">&quot;::doc::U&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;redo&quot;</span>, detail: <span class="hljs-string">&quot;Redo last action&quot;</span> },</span>
+        U: [
+            <span class="hljs-string">&quot;redo&quot;</span>,
+            <span class="hljs-string">&quot;modalkeys.cancelSelection&quot;</span>
+        ],
+</code></pre> <p>The last &quot;simple&quot; keybinding we define is <key>`</key> that repeats the last command that changed the text somehow. This command is provided by ModalKeys. It checks after each key sequence is typed whether it caused a change in file. If so, it stores the seqeuence as a change. The command just runs the stored keysequence again.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc::.&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;repeat&quot;</span>, detail: <span class="hljs-string">&quot;repeat the last action or operator&quot;</span> },</span>
+        <span class="hljs-string">&quot;.&quot;</span>: <span class="hljs-string">&quot;modalkeys.repeatLastChange&quot;</span>,
 </code></pre> <h2 id="heading-#editing-with-motions"><a class="header-anchor" id="editing-with-motions" href="#editing-with-motions"> </a>Editing with Motions</h2> <p>So, far we have kept the structure of keybindings quite simple. Now we tackle the types of keybinding that work in tandem with motion commands. Examples of such commands include:</p> <p><key>c</key><key>i</key><key>b</key> - Change text inside curly braces <code>{}</code></p> <p><key>&gt;</key><key>G</key> - Indent rest of the file</p> <p><key>y</key><key>`</key><key>a</key> - Yank text from cursor position to mark <code>a</code></p> <p>We can combine any editing command with any motion, which gives us thousands of possible combinations. First type the command key and then motion which specifies the position or range you want to apply the command to.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>d</code>&lt;<em>motion</em>&gt;</td><td>Delete range specified by &lt;<em>motion</em>&gt;</td></tr> <tr><td><code>c</code>&lt;<em>motion</em>&gt;</td><td>Delete range specified by &lt;<em>motion</em>&gt; and switch to insert mode</td></tr> <tr><td><code>y</code>&lt;<em>motion</em>&gt;</td><td>Yank range specified by &lt;<em>motion</em>&gt; to clipboard</td></tr> <tr><td><code>&gt;</code>&lt;<em>motion</em>&gt;</td><td>Indent range specified by &lt;<em>motion</em>&gt;</td></tr> <tr><td><code>&lt;</code>&lt;<em>motion</em>&gt;</td><td>Outdent range specified by &lt;<em>motion</em>&gt;</td></tr> <tr><td><code>=</code>&lt;<em>motion</em>&gt;</td><td>Reindent (reformat) range specified by &lt;<em>motion</em>&gt;</td></tr> </tbody> </table> <p>We can define all commands listed above in a single keybinding block. Remember that our strategy is just to map the key sequences of the edit commands that use motions to equivalent commands that work in visual mode. We do the specified motion in visual mode selecting a range of text, and then running the command on the selection. It does not matter which editing command we run, all of them can be mapped the same way.</p> <pre><code class="language-js">       ...operators({
         operators: operator_commands,
         objects: {
+            <span class="hljs-string">&quot;::doc::j&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;↓&#x27;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> over this line <span class="hljs-keyword">and</span> `count` number <span class="hljs-keyword">of</span> lines down&#x27; },
             j: [
                 {
                     <span class="hljs-string">&quot;cursorMove&quot;</span>: {
-                        <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;down&#x27;</span>,
-                        by: <span class="hljs-string">&#x27;wrappedLine&#x27;</span>,
-                        <span class="hljs-built_in">select</span>: <span class="hljs-literal">true</span>,
-                        value: <span class="hljs-string">&#x27;__count&#x27;</span>
+                        to: <span class="hljs-symbol">&#x27;down&#x27;</span>,
+                        by: <span class="hljs-symbol">&#x27;wrappedLine&#x27;</span>,
+                        select: <span class="hljs-literal">true</span>,
+                        value: <span class="hljs-symbol">&#x27;__count&#x27;</span>
                     }
                 },
                 <span class="hljs-string">&quot;expandLineSelection&quot;</span>,
             ],
+            <span class="hljs-string">&quot;::doc::k&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;↑&#x27;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> over this line <span class="hljs-keyword">and</span> `count` number <span class="hljs-keyword">of</span> lines up&#x27; },
             k: [
                 {
                     <span class="hljs-string">&quot;cursorMove&quot;</span>: {
-                        <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;up&#x27;</span>,
-                        by: <span class="hljs-string">&#x27;wrappedLine&#x27;</span>,
-                        <span class="hljs-built_in">select</span>: <span class="hljs-literal">true</span>,
-                        value: <span class="hljs-string">&#x27;__count&#x27;</span>
+                        to: <span class="hljs-symbol">&#x27;up&#x27;</span>,
+                        by: <span class="hljs-symbol">&#x27;wrappedLine&#x27;</span>,
+                        select: <span class="hljs-literal">true</span>,
+                        value: <span class="hljs-symbol">&#x27;__count&#x27;</span>
                     }
                 },
                 <span class="hljs-string">&quot;expandLineSelection&quot;</span>,
             ],
+            <span class="hljs-string">&quot;::doc::h&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;←&#x27;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> over this line <span class="hljs-keyword">and</span> `count` number <span class="hljs-keyword">of</span> characters to the left&#x27; },
             h: [
                 {
                     <span class="hljs-string">&quot;cursorMove&quot;</span>: {
-                        <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;left&#x27;</span>,
-                        <span class="hljs-built_in">select</span>: <span class="hljs-literal">true</span>,
-                        value: <span class="hljs-string">&#x27;__count&#x27;</span>
+                        to: <span class="hljs-symbol">&#x27;left&#x27;</span>,
+                        select: <span class="hljs-literal">true</span>,
+                        value: <span class="hljs-symbol">&#x27;__count&#x27;</span>
                     }
                 },
             ],
+            <span class="hljs-string">&quot;::doc::l&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;→&#x27;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> over this line <span class="hljs-keyword">and</span> `count` number <span class="hljs-keyword">of</span> characters to the right&#x27; },
             l: {
                 <span class="hljs-string">&quot;cursorMove&quot;</span>: {
-                    <span class="hljs-keyword">to</span>: <span class="hljs-string">&#x27;right&#x27;</span>,
-                    <span class="hljs-built_in">select</span>: <span class="hljs-literal">true</span>,
-                    value: <span class="hljs-string">&#x27;__count&#x27;</span>
+                    to: <span class="hljs-symbol">&#x27;right&#x27;</span>,
+                    select: <span class="hljs-literal">true</span>,
+                    value: <span class="hljs-symbol">&#x27;__count&#x27;</span>
                 }
             },
+            <span class="hljs-string">&quot;::doc::i&quot;</span>: { kind: <span class="hljs-symbol">&#x27;leader&#x27;</span>, label: <span class="hljs-symbol">&#x27;inside</span> pair&#x27;, detail: <span class="hljs-symbol">&#x27;motions</span> within an area, exclusive <span class="hljs-keyword">of</span> the area\<span class="hljs-symbol">&#x27;s</span> boundaries&#x27;},
+            <span class="hljs-string">&quot;::doc::i(&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&quot;parens&quot;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> inside parentheses&#x27; },
             <span class="hljs-string">&quot;i(&quot;</span>: <span class="hljs-string">&quot;extension.selectParenthesis&quot;</span>,
+            <span class="hljs-string">&quot;::doc::a&quot;</span>: { kind: <span class="hljs-symbol">&#x27;leader&#x27;</span>, label: <span class="hljs-symbol">&#x27;around</span> pair&#x27;, detail: <span class="hljs-symbol">&#x27;motions</span> within an area, inclusive <span class="hljs-keyword">of</span> the area\<span class="hljs-symbol">&#x27;s</span> boundaries&#x27;},
+            <span class="hljs-string">&quot;::doc::a(&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&quot;parens&quot;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> around parentheses&#x27; },
             <span class="hljs-string">&quot;a(&quot;</span>: <span class="hljs-string">&quot;extension.selectParenthesisOuter&quot;</span>,
+            <span class="hljs-string">&quot;::doc::i[&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&quot;braces&quot;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> inside braces&#x27; },
             <span class="hljs-string">&quot;i[&quot;</span>: <span class="hljs-string">&quot;extension.selectSquareBrackets&quot;</span>,
+            <span class="hljs-string">&quot;::doc::a[&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&quot;braces&quot;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> around braces&#x27; },
             <span class="hljs-string">&quot;a[&quot;</span>: <span class="hljs-string">&quot;extension.selectSquareBracketsOuter&quot;</span>, 
+            <span class="hljs-string">&quot;::doc::i{&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&quot;brackets&quot;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> inside brackets&#x27; },
             <span class="hljs-string">&quot;i{&quot;</span>: <span class="hljs-string">&quot;extension.selectCurlyBrackets&quot;</span>,
-            <span class="hljs-string">&quot;a{&quot;</span>: <span class="hljs-string">&quot;extensiondselectCurlyBracketsOuter&quot;</span>,
+            <span class="hljs-string">&quot;::doc::a{&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&quot;brackets&quot;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> around brackets&#x27; },
+            <span class="hljs-string">&quot;a{&quot;</span>: <span class="hljs-string">&quot;extension.selectCurlyBracketsOuter&quot;</span>,
+            <span class="hljs-string">&quot;::doc::i&lt;&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&quot;caret&quot;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> inside caret&#x27; },
             <span class="hljs-string">&quot;i&lt;&quot;</span>: <span class="hljs-string">&quot;extension.selectAngleBrackets&quot;</span>,
+            <span class="hljs-string">&quot;::doc::a&lt;&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&quot;caret&quot;</span>, detail: <span class="hljs-symbol">&#x27;operate</span> around caret&#x27; },
             <span class="hljs-string">&quot;a&lt;&quot;</span>: <span class="hljs-string">&quot;extension.selectAngleBracketsOuter&quot;</span>,
-            ...(<span class="hljs-built_in">Object</span>.fromEntries([<span class="hljs-string">&quot;^&quot;</span>,
-                    <span class="hljs-string">&quot;$&quot;</span>, <span class="hljs-string">&quot;0&quot;</span>, <span class="hljs-string">&quot;G&quot;</span>, <span class="hljs-string">&quot;H&quot;</span>, <span class="hljs-string">&quot;M&quot;</span>, <span class="hljs-string">&quot;L&quot;</span>, <span class="hljs-string">&quot;%&quot;</span>, <span class="hljs-string">&quot;g_&quot;</span>, <span class="hljs-string">&quot;gg&quot;</span>].
-                map(k =&gt; [k, { <span class="hljs-string">&quot;modalkeys.typeKeys&quot;</span>: { <span class="hljs-built_in">keys</span>: <span class="hljs-string">&quot;v&quot;</span>+k } } ]))),
-            ...aroundObjects(around_objects),
-</code></pre> <p>Word motions need to be repeated here: otherwise <code>__count</code> will be dropped and the motions won't accept numeric arguments</p> <pre><code class="language-js">            <span class="hljs-string">&quot;w&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartRightSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
-            <span class="hljs-string">&quot;e&quot;</span>: { <span class="hljs-string">&quot;cursorWordEndRightSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
-            <span class="hljs-string">&quot;b&quot;</span>: { <span class="hljs-string">&quot;cursorWordStartLeftSelect&quot;</span>: {}, <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&quot;__count&quot;</span> },
-            W: {
-                <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                    <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\S+&quot;</span>,
-                    <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&#x27;inclusive&#x27;</span>,
-                    <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
-                    <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-literal">true</span>,
-                    <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
+            <span class="hljs-string">&quot;::doc::0&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-symbol">&#x27;sol&#x27;</span>, detail: <span class="hljs-string">&quot;operate up to start of line&quot;</span> },
+            <span class="hljs-string">&quot;::doc::$&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-symbol">&#x27;eol&#x27;</span>, detail: <span class="hljs-string">&quot;operate up to end of line&quot;</span> },
+            <span class="hljs-string">&quot;::doc::^&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-symbol">&#x27;first</span> nonwht&#x27;, detail: <span class="hljs-string">&quot;operate up to first non-whitespace character on line&quot;</span>},
+            <span class="hljs-string">&quot;::doc::g_&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-symbol">&#x27;first</span> nonwht&#x27;, detail: <span class="hljs-string">&quot;operate up to first non-whitespace character on line&quot;</span>},
+            <span class="hljs-string">&quot;::doc::gg&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-symbol">&#x27;eof&#x27;</span>, detail: <span class="hljs-string">&quot;operate back to start of document&quot;</span>},
+            <span class="hljs-string">&quot;::doc::G&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-symbol">&#x27;eof&#x27;</span>, detail: <span class="hljs-string">&quot;operate up to end of document&quot;</span>},
+            <span class="hljs-string">&quot;::doc::H&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-symbol">&#x27;view</span> top&#x27;, detail: <span class="hljs-string">&quot;operate to the top of the viewport&quot;</span> },
+            <span class="hljs-string">&quot;::doc::M&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-symbol">&#x27;view</span> center&#x27;, detail: <span class="hljs-string">&quot;operate to the center of the viewport&quot;</span> },
+            <span class="hljs-string">&quot;::doc::L&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-symbol">&#x27;view</span> bottom&#x27;, detail: <span class="hljs-string">&quot;operate to the bottom of the viewport&quot;</span> },
+            <span class="hljs-string">&quot;::doc::%&quot;</span>: { kind: <span class="hljs-symbol">&#x27;motion&#x27;</span>, label: <span class="hljs-symbol">&#x27;smart</span> region&#x27;, detail: <span class="hljs-string">&quot;operate over the smallest &#x27;smart&#x27; region, e.g. when using smart selection expansion.&quot;</span>},
+            ...(<span class="hljs-type">Object</span>.fromEntries([<span class="hljs-string">&quot;^&quot;</span>, <span class="hljs-string">&quot;$&quot;</span>, <span class="hljs-string">&quot;0&quot;</span>, <span class="hljs-string">&quot;G&quot;</span>, <span class="hljs-string">&quot;H&quot;</span>, <span class="hljs-string">&quot;M&quot;</span>, <span class="hljs-string">&quot;L&quot;</span>, <span class="hljs-string">&quot;%&quot;</span>, <span class="hljs-string">&quot;g_&quot;</span>, <span class="hljs-string">&quot;gg&quot;</span>].
+                map(k =&gt; [k, { <span class="hljs-string">&quot;modalkeys.typeKeys&quot;</span>: { keys: <span class="hljs-string">&quot;v&quot;</span>+k } } ]))),
+</code></pre> <p>TODO: add docs</p> <pre><code class="language-js">            ...around<span class="hljs-constructor">Objects(<span class="hljs-params">around_objects</span>)</span>,
+</code></pre> <p>Word motions need to be repeated here: otherwise <code>__count</code> will be dropped and the motions won't accept numeric arguments</p> <pre><code class="language-js">            <span class="hljs-comment">&quot;::doc::w&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;word →&quot;</span>, detail: <span class="hljs-comment">&quot;operate to next word start&quot;</span>},
+            <span class="hljs-comment">&quot;w&quot;</span>: { <span class="hljs-comment">&quot;cursorWordStartRightSelect&quot;</span>: {}, <span class="hljs-comment">&quot;repeat&quot;</span>: <span class="hljs-comment">&quot;__count&quot;</span> },
+            <span class="hljs-comment">&quot;::doc::e&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;word end →&quot;</span>, detail: <span class="hljs-comment">&quot;operate to next word end&quot;</span>},
+            <span class="hljs-comment">&quot;e&quot;</span>: { <span class="hljs-comment">&quot;cursorWordEndRightSelect&quot;</span>: {}, <span class="hljs-comment">&quot;repeat&quot;</span>: <span class="hljs-comment">&quot;__count&quot;</span> },
+            <span class="hljs-comment">&quot;::doc::b&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;word ←&quot;</span>, detail: <span class="hljs-comment">&quot;operate to previous word start&quot;</span>},
+            <span class="hljs-comment">&quot;b&quot;</span>: { <span class="hljs-comment">&quot;cursorWordStartLeftSelect&quot;</span>: {}, <span class="hljs-comment">&quot;repeat&quot;</span>: <span class="hljs-comment">&quot;__count&quot;</span> },
+            <span class="hljs-comment">&quot;::doc::W&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;WORD →&quot;</span>, detail: <span class="hljs-comment">&quot;operate to next WORD start; WORD&#x27;s are contiguous non-whitespace characters&quot;</span>},
+            <span class="hljs-type">W</span>: {
+                <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
+                    <span class="hljs-comment">&quot;text&quot;</span>: <span class="hljs-comment">&quot;\\S+&quot;</span>,
+                    <span class="hljs-comment">&quot;offset&quot;</span>: <span class="hljs-string">&#x27;inclusive&#x27;</span>,
+                    <span class="hljs-comment">&quot;regex&quot;</span>: <span class="hljs-keyword">true</span>,
+                    <span class="hljs-comment">&quot;selectTillMatch&quot;</span>: <span class="hljs-keyword">true</span>,
+                    <span class="hljs-comment">&quot;highlightMatches&quot;</span>: <span class="hljs-keyword">false</span>,
                 },
-                <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&#x27;__count&#x27;</span>,
+                <span class="hljs-comment">&quot;repeat&quot;</span>: <span class="hljs-string">&#x27;__count&#x27;</span>,
             },
-            B: {
-                <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                    <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;\\S+&quot;</span>,
-                    <span class="hljs-string">&quot;offset&quot;</span>: <span class="hljs-string">&#x27;inclusive&#x27;</span>,
-                    <span class="hljs-string">&quot;regex&quot;</span>: <span class="hljs-literal">true</span>,
-                    <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
-                    <span class="hljs-string">&quot;selectTillMatch&quot;</span>: <span class="hljs-literal">true</span>,
-                    <span class="hljs-string">&quot;highlightMatches&quot;</span>: <span class="hljs-literal">false</span>,
+            <span class="hljs-comment">&quot;::doc::B&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;WORD →&quot;</span>, detail: <span class="hljs-comment">&quot;operate to previous WORD start; WORD&#x27;s are contiguous non-whitespace characters&quot;</span> },
+            <span class="hljs-type">B</span>: {
+                <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
+                    <span class="hljs-comment">&quot;text&quot;</span>: <span class="hljs-comment">&quot;\\S+&quot;</span>,
+                    <span class="hljs-comment">&quot;offset&quot;</span>: <span class="hljs-string">&#x27;inclusive&#x27;</span>,
+                    <span class="hljs-comment">&quot;regex&quot;</span>: <span class="hljs-keyword">true</span>,
+                    <span class="hljs-comment">&quot;backwards&quot;</span>: <span class="hljs-keyword">true</span>,
+                    <span class="hljs-comment">&quot;selectTillMatch&quot;</span>: <span class="hljs-keyword">true</span>,
+                    <span class="hljs-comment">&quot;highlightMatches&quot;</span>: <span class="hljs-keyword">false</span>,
                 },
-                <span class="hljs-string">&quot;repeat&quot;</span>: <span class="hljs-string">&#x27;__count&#x27;</span>,
+                <span class="hljs-comment">&quot;repeat&quot;</span>: <span class="hljs-string">&#x27;__count&#x27;</span>,
             },
-            <span class="hljs-string">&quot;[&quot;</span>: <span class="hljs-string">&quot;vscode-select-by-indent.select-inner&quot;</span>,
-            <span class="hljs-string">&quot;{&quot;</span>: <span class="hljs-string">&quot;vscode-select-by-indent.select-outer&quot;</span>,
+            <span class="hljs-comment">&quot;::doc::[&quot;</span>: { kind: <span class="hljs-string">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;indent (exclusive)&#x27;</span>, detail: <span class="hljs-comment">&quot;operate within indented region (all the same indent or more indendented than current line)&quot;</span> },
+            <span class="hljs-comment">&quot;::doc::{&quot;</span>: { kind: <span class="hljs-string">&#x27;motion&#x27;</span>, label: <span class="hljs-string">&#x27;indent (inclusive)&#x27;</span>, detail: <span class="hljs-comment">&quot;operate around indented region (all the same indent or more indendented than current line, plus the line just above and below this)&quot;</span> },
+            <span class="hljs-comment">&quot;[&quot;</span>: <span class="hljs-comment">&quot;vscode-select-by-indent.select-inner&quot;</span>,
+            <span class="hljs-comment">&quot;{&quot;</span>: <span class="hljs-comment">&quot;vscode-select-by-indent.select-outer&quot;</span>,
         }
        }),
 
@@ -418,64 +571,106 @@
             objects: search_objects,
        }),
 
-       ...(<span class="hljs-built_in">Object</span>.fromEntries(<span class="hljs-built_in">Object</span>.entries(aroundObjects(around_objects)).
-            map(<span class="hljs-function"><span class="hljs-params">([bind, command])</span> =&gt;</span> {
-           <span class="hljs-keyword">return</span> [<span class="hljs-string">&quot;visual::&quot;</span>+bind, command]
+</code></pre> <p>TODO: add docs</p> <pre><code class="language-js">       ...(Object<span class="hljs-selector-class">.fromEntries</span>(Object<span class="hljs-selector-class">.entries</span>(aroundObjects(around_objects)).
+            map((<span class="hljs-selector-attr">[bind, command]</span>) =&gt; {
+           return <span class="hljs-selector-attr">[<span class="hljs-string">&quot;visual::&quot;</span>+bind, command]</span>
        }))),
 
+       <span class="hljs-string">&quot;::doc::i(&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;parens (exclusive)&quot;</span>, detail: <span class="hljs-string">&quot;select text surrounded by parentheses (don&#x27;t include parens)&quot;</span>},
        <span class="hljs-string">&quot;visual::i(&quot;</span>: <span class="hljs-string">&quot;extension.selectParenthesis&quot;</span>,
+       <span class="hljs-string">&quot;::doc::a(&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;parens (inclusive)&quot;</span>, detail: <span class="hljs-string">&quot;select text surrounded by parentheses (include parens)&quot;</span>},
        <span class="hljs-string">&quot;visual::a(&quot;</span>: <span class="hljs-string">&quot;extension.selectParenthesisOuter&quot;</span>,
+        <span class="hljs-string">&quot;::doc::i[&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;braces (exclusive)&quot;</span>, detail: <span class="hljs-string">&quot;select text surrounded by braces (don&#x27;t include braces)&quot;</span>},
        <span class="hljs-string">&quot;visual::i[&quot;</span>: <span class="hljs-string">&quot;extension.selectSquareBrackets&quot;</span>,
+        <span class="hljs-string">&quot;::doc::a[&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;braces (inclusive)&quot;</span>, detail: <span class="hljs-string">&quot;select text surrounded by braces (include braces)&quot;</span>},
        <span class="hljs-string">&quot;visual::a[&quot;</span>: <span class="hljs-string">&quot;extension.selectSquareBracketsOuter&quot;</span>,
+        <span class="hljs-string">&quot;::doc::i{&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;brackets (exclusive)&quot;</span>, detail: <span class="hljs-string">&quot;select text surrounded by brackets (don&#x27;t include brackets)&quot;</span>},
        <span class="hljs-string">&quot;visual::i{&quot;</span>: <span class="hljs-string">&quot;extension.selectCurlyBrackets&quot;</span>,
+        <span class="hljs-string">&quot;::doc::a{&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;brackets (inclusive)&quot;</span>, detail: <span class="hljs-string">&quot;select text surrounded by brackets (include brackets)&quot;</span>},
        <span class="hljs-string">&quot;visual::a{&quot;</span>: <span class="hljs-string">&quot;extension.selectCurlyBracketsOuter&quot;</span>,
+        <span class="hljs-string">&quot;::doc::i&lt;&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;carets (exclusive)&quot;</span>, detail: <span class="hljs-string">&quot;select text surrounded by carets (don&#x27;t include brackets)&quot;</span>},
        <span class="hljs-string">&quot;visual::i&lt;&quot;</span>: <span class="hljs-string">&quot;extension.selectAngleBrackets&quot;</span>,
+        <span class="hljs-string">&quot;::doc::a&lt;&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;carets (inclusive)&quot;</span>, detail: <span class="hljs-string">&quot;select text surrounded by carets (include brackets)&quot;</span>},
        <span class="hljs-string">&quot;visual::a&lt;&quot;</span>: <span class="hljs-string">&quot;extension.selectAngleBracketsOuter&quot;</span>,
 
+       <span class="hljs-string">&quot;::doc::gd&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;go to definition&quot;</span>, detail: <span class="hljs-string">&quot;jump to the definition under the symbol under the cursor&quot;</span>},
        gd: <span class="hljs-string">&quot;editor.action.revealDefinition&quot;</span>,
+       <span class="hljs-string">&quot;::doc::gq&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;wrap text&quot;</span>, detail: <span class="hljs-string">&quot;wrap text, keeping comment characters preserved (at startof line)&quot;</span>},
        gq: <span class="hljs-string">&quot;rewrap.rewrapComment&quot;</span>,
 
-</code></pre> <h2 id="heading-#searching"><a class="header-anchor" id="searching" href="#searching"> </a>Searching</h2> <p>Searching introduces a pseudo-mode that captures the keyboard and suspends other commands as long as search is on. Searching commands are shown below.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>/</code></td><td>Start case-sensitive search forwards</td></tr> <tr><td><code>?</code></td><td>Start case-sensitive search backwards</td></tr> <tr><td><code>n</code></td><td>Select the next match</td></tr> <tr><td><code>p</code></td><td>Select the previous match</td></tr> </tbody> </table> <p><strong>Note</strong>: Searching commands work also with multiple cursors. As in Vim, search wraps around if top or bottom of file is encountered. Note that we use a separate register (&quot;search&quot;) so that the state of the last search (for next and previous matches) are different from the <code>modalkeys.search</code> commands that are called to implement <key>f</key> and friends.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;/&quot;</span>: [
+</code></pre> <h2 id="heading-#searching"><a class="header-anchor" id="searching" href="#searching"> </a>Searching</h2> <p>Searching introduces a pseudo-mode that captures the keyboard and suspends other commands as long as search is on. Searching commands are shown below.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>/</code></td><td>Start case-sensitive search forwards</td></tr> <tr><td><code>?</code></td><td>Start case-sensitive search backwards</td></tr> <tr><td><code>n</code></td><td>Select the next match</td></tr> <tr><td><code>p</code></td><td>Select the previous match</td></tr> </tbody> </table> <p><strong>Note</strong>: Searching commands work also with multiple cursors. As in Vim, search wraps around if top or bottom of file is encountered. Note that we use a separate register (&quot;search&quot;) so that the state of the last search (for next and previous matches) are different from the <code>modalkeys.search</code> commands that are called to implement <key>f</key> and friends.</p> <pre><code class="language-js">       <span class="hljs-comment">&quot;::doc::/&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;search →&quot;</span>, detail: <span class="hljs-comment">&quot;search forwards for text; all following characters that you type are included in the search. You must hit enter to complete entry.&quot;</span> },
+        <span class="hljs-comment">&quot;/&quot;</span>: [
             {
-                <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                    <span class="hljs-string">&quot;caseSensitive&quot;</span>: <span class="hljs-literal">true</span>,
-                    <span class="hljs-string">&quot;wrapAround&quot;</span>: <span class="hljs-literal">true</span>,
-                    <span class="hljs-string">&quot;register&quot;</span>: <span class="hljs-string">&quot;search&quot;</span>
+                <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
+                    <span class="hljs-comment">&quot;caseSensitive&quot;</span>: <span class="hljs-keyword">true</span>,
+                    <span class="hljs-comment">&quot;wrapAround&quot;</span>: <span class="hljs-keyword">true</span>,
+                    <span class="hljs-comment">&quot;register&quot;</span>: <span class="hljs-comment">&quot;search&quot;</span>,
+                    <span class="hljs-comment">&quot;selectTillMatch&quot;</span>: <span class="hljs-comment">&quot;mode == &#x27;visual&#x27;&quot;</span>
                 }
             }
         ],
-        <span class="hljs-string">&quot;?&quot;</span>: {
-            <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                <span class="hljs-string">&quot;backwards&quot;</span>: <span class="hljs-literal">true</span>,
-                <span class="hljs-string">&quot;caseSensitive&quot;</span>: <span class="hljs-literal">true</span>,
-                <span class="hljs-string">&quot;wrapAround&quot;</span>: <span class="hljs-literal">true</span>,
-                <span class="hljs-string">&quot;register&quot;</span>: <span class="hljs-string">&quot;search&quot;</span>
+        <span class="hljs-comment">&quot;::doc::?&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;search ←&quot;</span>, detail: <span class="hljs-comment">&quot;search backwards for text; all following characters that you type are included in the search. You must hit enter to complete entry.&quot;</span> },
+        <span class="hljs-comment">&quot;?&quot;</span>: {
+            <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
+                <span class="hljs-comment">&quot;backwards&quot;</span>: <span class="hljs-keyword">true</span>,
+                <span class="hljs-comment">&quot;caseSensitive&quot;</span>: <span class="hljs-keyword">true</span>,
+                <span class="hljs-comment">&quot;wrapAround&quot;</span>: <span class="hljs-keyword">true</span>,
+                <span class="hljs-comment">&quot;register&quot;</span>: <span class="hljs-comment">&quot;search&quot;</span>,
+                <span class="hljs-comment">&quot;selectTillMatch&quot;</span>: <span class="hljs-comment">&quot;mode == &#x27;visual&#x27;&quot;</span>
             }
         },
-        n: { <span class="hljs-string">&quot;modalkeys.nextMatch&quot;</span>: {<span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>}},
-        N: { <span class="hljs-string">&quot;modalkeys.previousMatch&quot;</span>: {<span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>}},
-        <span class="hljs-string">&quot;*&quot;</span>: [
-            { <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                text: <span class="hljs-string">&quot;__wordstr&quot;</span>,
-                wrapAround: <span class="hljs-literal">true</span>,
-                <span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>
+        <span class="hljs-comment">&quot;::doc::n&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;search →&quot;</span>, detail: <span class="hljs-comment">&quot;go to the next search match&quot;</span> },
+        n: { <span class="hljs-comment">&quot;modalkeys.nextMatch&quot;</span>: {register: <span class="hljs-comment">&quot;search&quot;</span>, selectTillMatch: <span class="hljs-comment">&quot;mode == &#x27;visual&#x27;&quot;</span>}},
+        <span class="hljs-comment">&quot;::doc::N&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;search ←&quot;</span>, detail: <span class="hljs-comment">&quot;go to the previous search match&quot;</span> },
+        <span class="hljs-type">N</span>: { <span class="hljs-comment">&quot;modalkeys.previousMatch&quot;</span>: {register: <span class="hljs-comment">&quot;search&quot;</span>, selectTillMatch: <span class="hljs-comment">&quot;mode == &#x27;visual&#x27;&quot;</span> } },
+        <span class="hljs-comment">&quot;::doc::*&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;match →&quot;</span>, detail: <span class="hljs-comment">&quot;go to next match of object under cursor (or current selection)&quot;</span>},
+        <span class="hljs-comment">&quot;normal::*&quot;</span>: [
+            { <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
+                text: <span class="hljs-comment">&quot;__wordstr&quot;</span>,
+                wrapAround: <span class="hljs-keyword">true</span>,
+                register: <span class="hljs-comment">&quot;search&quot;</span>
             }}
         ],
-        <span class="hljs-string">&quot;#&quot;</span>: [
-            { <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
-                text: <span class="hljs-string">&quot;__wordstr&quot;</span>,
-                wrapAround: <span class="hljs-literal">true</span>,
-                backwards: <span class="hljs-literal">true</span>,
-                <span class="hljs-keyword">register</span>: <span class="hljs-string">&quot;search&quot;</span>
+        <span class="hljs-comment">&quot;visual::*&quot;</span>: [
+            { <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
+                text: <span class="hljs-comment">&quot;__selectstr&quot;</span>,
+                wrapAround: <span class="hljs-keyword">true</span>,
+                register: <span class="hljs-comment">&quot;search&quot;</span>
             }}
         ],
-</code></pre> <h2 id="heading-#miscellaneous-commands"><a class="header-anchor" id="miscellaneous-commands" href="#miscellaneous-commands"> </a>Miscellaneous Commands</h2> <p>Rest of the normal mode commands are not motion or editing commands, but do miscellaenous things.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>:</code></td><td>Show command menu (same as <key>Ctrl/Cmd</key><key>Shift</key><key>P</key>)</td></tr> <tr><td><code>zz</code></td><td>Center cursor on screen</td></tr> <tr><td><code>ZZ</code></td><td>Save file and close the current editor (tab)</td></tr> <tr><td><code>ZQ</code></td><td>Close the current editor without saving</td></tr> </tbody> </table> <p>Note that <key>Z</key><key>Q</key> command still asks to save the file, if it has been changed. There is no way to get around this in VS Code.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;:&quot;</span>: <span class="hljs-string">&quot;workbench.action.showCommands&quot;</span>,
+        <span class="hljs-comment">&quot;::doc::#&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;match ←&quot;</span>, detail: <span class="hljs-comment">&quot;go to previous match of object under cursor (or current selection)&quot;</span>},
+        <span class="hljs-comment">&quot;normal::#&quot;</span>: [
+            { <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
+                text: <span class="hljs-comment">&quot;__wordstr&quot;</span>,
+                wrapAround: <span class="hljs-keyword">true</span>,
+                backwards: <span class="hljs-keyword">true</span>,
+                register: <span class="hljs-comment">&quot;search&quot;</span>
+            }}
+        ],
+        <span class="hljs-comment">&quot;visual::#&quot;</span>: [
+            { <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
+                text: <span class="hljs-comment">&quot;__selectstr&quot;</span>,
+                wrapAround: <span class="hljs-keyword">true</span>,
+                register: <span class="hljs-comment">&quot;search&quot;</span>
+            }}
+        ],
+</code></pre> <h2 id="heading-#miscellaneous-commands"><a class="header-anchor" id="miscellaneous-commands" href="#miscellaneous-commands"> </a>Miscellaneous Commands</h2> <p>Rest of the normal mode commands are not motion or editing commands, but do miscellaenous things.</p> <table> <thead> <tr><th>Keys</th><th>Command</th></tr> </thead> <tbody> <tr><td><code>:</code></td><td>Show command menu (same as <key>Ctrl/Cmd</key><key>Shift</key><key>P</key>)</td></tr> <tr><td><code>zz</code></td><td>Center cursor on screen</td></tr> <tr><td><code>ZZ</code></td><td>Save file and close the current editor (tab)</td></tr> <tr><td><code>ZQ</code></td><td>Close the current editor without saving</td></tr> </tbody> </table> <p>Note that <key>Z</key><key>Q</key> command still asks to save the file, if it has been changed. There is no way to get around this in VS Code.</p> <pre><code class="language-js">        <span class="hljs-string">&quot;::doc:::&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;command&quot;</span>, detail: <span class="hljs-string">&quot;open VSCode command palette&quot;</span> },</span>
+        <span class="hljs-string">&quot;:&quot;</span>: <span class="hljs-string">&quot;workbench.action.showCommands&quot;</span>,
+        <span class="hljs-string">&quot;::doc::z&quot;</span>: { kind: <span class="hljs-string">&quot;mode&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;window&quot;</span>, detail: <span class="hljs-string">&quot;some window related commands&quot;</span> },</span>
+        <span class="hljs-string">&quot;::doc::Z&quot;</span>: { kind: <span class="hljs-string">&quot;mode&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;window&quot;</span>, detail: <span class="hljs-string">&quot;some window related commands&quot;</span> },</span>
+        <span class="hljs-string">&quot;::doc::zz&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;center window&quot;</span>, detail: <span class="hljs-string">&quot;center view on cursor&quot;</span> },</span>
         zz: { <span class="hljs-string">&quot;revealLine&quot;</span>: { lineNumber: <span class="hljs-string">&#x27;__line&#x27;</span>, at: <span class="hljs-string">&#x27;center&#x27;</span> } },
-        <span class="hljs-symbol">ZZ</span>: [
+        <span class="hljs-string">&quot;::doc::zz&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;center window&quot;</span>, detail: <span class="hljs-string">&quot;center view on cursor&quot;</span> },</span>
+        zt: { <span class="hljs-string">&quot;revealLine&quot;</span>: { lineNumber: <span class="hljs-string">&#x27;__line&#x27;</span>, at: <span class="hljs-string">&#x27;top&#x27;</span> } },
+        <span class="hljs-string">&quot;::doc::zz&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;center window&quot;</span>, detail: <span class="hljs-string">&quot;center view on cursor&quot;</span> },</span>
+        zb: { <span class="hljs-string">&quot;revealLine&quot;</span>: { lineNumber: <span class="hljs-string">&#x27;__line&#x27;</span>, at: <span class="hljs-string">&#x27;bottom&#x27;</span> } },
+        <span class="hljs-string">&quot;::doc::zz&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;save and close&quot;</span>, detail: <span class="hljs-string">&quot;save and close active editor&quot;</span> },</span>
+        ZZ: [
             <span class="hljs-string">&quot;workbench.action.files.save&quot;</span>,
             <span class="hljs-string">&quot;workbench.action.closeActiveEditor&quot;</span>
         ],
-        <span class="hljs-symbol">ZQ</span>: <span class="hljs-string">&quot;workbench.action.closeActiveEditor&quot;</span>
+        <span class="hljs-string">&quot;::doc::ZQ&quot;</span>: { kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;close&quot;</span>, detail: <span class="hljs-string">&quot;close active editor&quot;</span> },</span>
+        ZQ: <span class="hljs-string">&quot;workbench.action.closeActiveEditor&quot;</span>
     },
 }
 </code></pre> <h2 id="heading-#conclusion"><a class="header-anchor" id="conclusion" href="#conclusion"> </a>Conclusion</h2> <p>The list of commands we provided is by no means exhaustive but still contains about a thousand key combinations that cover many commonly used Vim operations. This is quite a nice achievement considering that we only wrote about 400 lines of configuration, and most of it is pretty trivial. This demonstrates that ModalKeys's functionality is powerful enough to build all kinds of operations that make modal editors like Vim popular.</p> <p>For a full least of features available in ModalKeys, please refer to the <a href="https://haberdashpi.github.io/vscode-modal-keys/dev/doc_index.html">documentation</a></p> <hr> <a href="https://github.com/haberdashPI/vscode-modal-keys">View on GitHub</a> </div> </body></html>
