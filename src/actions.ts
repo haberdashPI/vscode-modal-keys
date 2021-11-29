@@ -589,11 +589,14 @@ export class KeyState {
     error(){
         
         const define = "Fix: Define keymap"
-        const docs = "Keymap Documentation"
-        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""), define, docs).
+        const show = "Help: visual keymap"
+        const docs = "Help: keymap configuration"
+        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""), define, show, docs).
         then(selection => {
             if(selection === define){
                 vscode.commands.executeCommand("modalkeys.importPresets")
+            }else if(selection === show){
+                vscode.commands.executeCommand('modalkeys.showKeymap')
             }else if(selection === docs){
                 let url = 'https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html'
                 vscode.env.openExternal(vscode.Uri.parse(url));
@@ -911,8 +914,8 @@ export class KeyState {
         else {
             const type = "Fix: Let me type!"
             const define = "Fix: Define a keymap"
+            const docs = "Help: keymap configuration"
             const ignore = "Ignore"
-            const docs = "Read Keymap Documentation"
             if(!(rootKeymodes && rootKeymodes.command && rootKeymodes.command[keyMode])){
                 vscode.window.showInformationMessage
                 vscode.window.showErrorMessage(`

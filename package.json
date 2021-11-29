@@ -260,6 +260,10 @@
                 "title": "ModalKeys: Toggle keymap documentation"
             },
             {
+                "command": "modalkeys.showKeymap",
+                "title": "ModalKeys: Show keymap documentation"
+            },
+            {
                 "command": "type",
                 "title": "Type keys"
             },

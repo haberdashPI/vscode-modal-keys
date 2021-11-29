@@ -248,6 +248,7 @@ const cancelRecordingMacroId = "modalkeys.cancelRecordingMacro"
 const replayMacroId = "modalkeys.replayMacro"
 const exportPresetId = "modalkeys.exportPreset"
 const toggleKeymapId = "modalkeys.toggleKeymap"
+const showKeymapId = "modalkeys.showKeymap"
 
 export function revealActive(editor: vscode.TextEditor){
     let act = new vscode.Range(editor.selection.active, editor.selection.active);
@@ -292,7 +293,8 @@ export function register(context: vscode.ExtensionContext, _docKeymap: DocViewPr
         vscode.commands.registerCommand(cancelRecordingMacroId, cancelRecordingMacro),
         vscode.commands.registerCommand(replayMacroId, replayMacro),
         vscode.commands.registerCommand(exportPresetId, exportPreset),
-        vscode.commands.registerCommand(toggleKeymapId, toggleKeymap)
+        vscode.commands.registerCommand(toggleKeymapId, toggleKeymap),
+        vscode.commands.registerCommand(showKeymapId, showKeymap)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
@@ -1358,6 +1360,7 @@ async function importPresets(folder?: string) {
             checkExtensions(preset.extensions)
             if(preset.docKinds){
                 config.update("docKinds", preset.docKinds, true)
+                vscode.commands.executeCommand('modalkeys.showKeymap')
             }
             vscode.window.showInformationMessage(
                 "ModalKeys: Keybindings imported.")
@@ -1417,4 +1420,10 @@ async function toggleKeymap(){
     }else{
         await vscode.commands.executeCommand('workbench.action.togglePanel')
     }
+}
+
+async function showKeymap(){
+    let editor = vscode.window.activeTextEditor
+    await vscode.commands.executeCommand('workbench.view.extension.modalKeyBindingView')
+    editor && vscode.window.showTextDocument(editor.document)
 }
