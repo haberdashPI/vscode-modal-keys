@@ -16,10 +16,10 @@ The above is a screen shot of the visual documentation feature of this plugin; y
 
 The advantages of modal bindings are the rapid, speed-of-thought manipulations you can perform on text with a well-designed keymap and sufficient practice. The advantages of using ModalKeys specifically include:
 
-1.) Visual documentation of all keybindings
-2.) Seamless integration with the existing features and
+1. Visual documentation of all keybindings
+2. Seamless integration with the existing features and
 extensions of VSCode
-3.) Complete customization. While you can
+3. Complete customization. While you can
 emulate many of the features of other modal editors like Vim or
 [Kakoune](https://kakoune.org/why-kakoune/why-kakoune.html), you will get the
 most out of ModalKeys by creating your own keymap or modifying an existing one (e.g. starting with one of the
@@ -28,7 +28,7 @@ most out of ModalKeys by creating your own keymap or modifying an existing one (
 To start creating a custom set of keybindings for ModalKeys, you have a few options:
 
 1. Read the [Tutorial](https://haberdashpi.github.io/vscode-modal-keys/stable/tutorial.html)
-2. Start with an example from [presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html), exporting one of presets.
+2. Start with an example from [presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html), using the export and import commands to create and then use your own version of the presets.
 3. Read through the [Documentation](https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html)
 
 The general phillosphy of ModalKeys is to leverage existing functionality and behavior already available from VSCode and its extensions, and make it easy to define modal key bindings for these behaviors. If you don't care to integrate behavior from other extensions into your modal keybindings, you probably just want to replicate an existing modal editor in VSCode; in this case you may want to consider using [VSCodeVim](https://github.com/VSCodeVim/Vim),
