@@ -1,11 +1,11 @@
 // # Larkin Keybindings
 //
-// This set of keybindings provides a comprhensive and well tested set of
+// This set of keybindings provides a comprehensive and well tested set of
 // bindings that I use in my daily work. It serves as an example of a fully
-// customized set of keybindings, and demonstrates the full capabilities and
-// customization possible with ModalKeys.
+// customized set of keybindings, and demonstrates the full capabilities of
+// ModalKeys.
 
-// The basic logic of these commands follow that of kakoune: motions generally
+// The basic logic of these commands follow that of Kakoune: motions generally
 // cause some region of text to be selected, and then actions modify these
 // selections. This is the inverse of vim's motions (`wd` instead of `dw`). This
 // integrates well with many of the existing VSCode extesions which operate on

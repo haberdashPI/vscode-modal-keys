@@ -1,10 +1,12 @@
 // # Advanced vim presets
 
-// This document provides a more advanced set of vim keybindings than provided in
-// the [tutorial](../tutorial.html). The goal of these bindings is to lower the barrier to
-// entry for Vim users who don't want to spend the time defining bindings from
-// ground up. A secondary goal is to show off some of the more advanced features of
-// ModalKeys that were not discussed in the tutorial.
+// This document provides a more advanced set of vim keybindings than provided
+// in the [tutorial](../tutorial.html). The goal of these bindings is to lower
+// the barrier to entry for Vim users who don't want to spend the time defining
+// bindings from ground up. A secondary goal is to show off some of the more
+// advanced features of ModalKeys that were not discussed in the tutorial. For
+// instance, these keybindings use [`::doc::` entries](../key_forms.html#documenting-a-keybinding) to provide visual
+// documentation for all commands.
 
 // If you want to modify these presets you can export and modify them using the
 // "ModalKeys: Export a preset for keybindings" command. After making any
