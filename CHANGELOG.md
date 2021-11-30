@@ -2,6 +2,9 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.8.1
+- **Fix**: Some issues with readme/changelog, 0.8.0 was published early.
+
 # Version 0.8.0
 - **Feature**: New commands `toggleKeymap` and `showKeymap` which can be used to display a  visual documentation of the current modal keybindings in the panel. 
 - **Feature**: Your own keybindings can support the visual docummentation using `::doc::` entries (see extension documentation).
