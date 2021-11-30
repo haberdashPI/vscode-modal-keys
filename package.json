@@ -7,7 +7,7 @@
         "url": "https://github.com/haberdashPI/vscode-modal-keys"
     },
     "icon": "logo.png",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "engines": {
         "vscode": "^1.55.0"
     },
@@ -42,10 +42,36 @@
         }
     },
     "contributes": {
+        "views": {
+            "modalKeyBindingView": [
+                {
+                    "type": "webview",
+                    "id": "modalkeys.bindingView",
+                    "name": "Modal Key Bindings",
+                    "contextualTitle": "Modal Keys",
+                    "icon": "icon.svg",
+                    "visibility": "visible"
+                }
+            ]
+        },
+        "viewsContainers": {
+            "panel": [
+                {
+                    "id": "modalKeyBindingView",
+                    "title": "Modal Key Bindings",
+                    "icon": "icon.svg"
+                }
+            ]
+        },
         "configuration": {
             "type": "object",
             "title": "Modal Keys",
             "properties": {
+                "modalkeys.docKinds": {
+                    "type": "object",
+                    "description": "A description of each kind of keybinding; determines keybinding color codes (order matters).",
+                    "default": {}
+                },
                 "modalkeys.keybindings": {
                     "type": "object",
                     "description": "Keybindings map key → VS Code commands",
@@ -230,6 +256,14 @@
         },
         "commands": [
             {
+                "command": "modalkeys.toggleKeymap",
+                "title": "ModalKeys: Toggle keymap documentation"
+            },
+            {
+                "command": "modalkeys.showKeymap",
+                "title": "ModalKeys: Show keymap documentation"
+            },
+            {
                 "command": "type",
                 "title": "Type keys"
             },
@@ -315,6 +349,11 @@
             }
         ],
         "keybindings": [
+            {
+                "key": "ctrl+shift+/",
+                "mac": "ctrl+cmd+/",
+                "command": "modalkeys.toggleKeymap"
+            },
             {
                 "key": "Escape",
                 "command": "modalkeys.enterNormal",

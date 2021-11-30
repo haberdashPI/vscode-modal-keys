@@ -8,12 +8,10 @@
  * @module
  */
 
-import { sortBy, mergeWith, mapValues, flatten, uniq } from 'lodash'
+import { mergeWith, merge, uniq, cloneDeep } from 'lodash'
 import { IHash } from './util'
-import { isEmpty } from 'lodash'
 
 import * as vscode from 'vscode'
-
 /**
  * ## Action Definitions
  *
@@ -51,6 +49,7 @@ export interface Conditional {
  */
 export interface Parameterized {
     command: string
+    label?: string
     args?: {}
     repeat?: number | string
 }
@@ -70,15 +69,22 @@ export interface Parameterized {
  * The `help` field contains help text that is shown in the status bar when the
  * keymap is active.
  */
-interface Keymap {
+export interface Keymap {
     id: number
     help: string
     [key: string]: Action
 }
 
+export interface Keyhelp{
+    label: string,
+    kind: string
+    detail?: string,
+    keys?: IHash<Keyhelp>
+}
+
 export interface Keymodes {
-    normal: Keymap,
-    [mode: string]: Keymap | undefined
+    help?: IHash<IHash<Keyhelp>>,
+    command?: IHash<Keymap>,
 }
 
 export interface ActionVars {
@@ -224,15 +230,15 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     keymapsById = {}
 
     let [modes, errors] = expandBindings(config.get<any>("keybindings"))
-    if(!isKeymap(modes?.normal))
+    if(!isKeymap(modes?.command?.normal))
         log("ERROR: Missing valid normal mode keybindings. Keybindings not updated.")
-    else if(modes){
-        rootKeymodes = <Keymodes>(mapValues(modes, mode => {
-            if (isKeymap(mode)) {
-                errors += validateAndResolveKeymaps(mode)
+    else if(modes?.command){
+        for(const keymap of Object.values(modes.command)){
+            if (isKeymap(keymap)) {
+                errors += validateAndResolveKeymaps(keymap)
             }
-            return mode
-        }))
+        }
+        rootKeymodes = modes
     }
     if (errors > 0)
         log(`Found ${errors} error${errors > 1 ? "s" : ""}. ` +
@@ -347,21 +353,28 @@ function expandCommands__(x: any): Command {
     }
 }
 
-function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<string[]>, withCommand?: string }){
-    return ([key, val]: [string, any]): [string, Action][] => {
-        if(key === '__keymap'){ return [] }
+function isLabelStub(obj: any){
+    return obj.label !== undefined && Object.keys(obj).length === 1
+}
+function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<string[]>, withCommand?: string }): ((keymodes: Keymodes, keyval: [string, any]) => Keymodes) {
+    return (keymodes: Keymodes, [key, val]: [string, any]): Keymodes => {
+        if(key === '__keymap'){ return keymodes }
         if(key.startsWith('::using::')){
             if(state.withCommand){
                 log(`ERROR: cannot nest '::using::' directives, ignoring child directive.`)
             }else {
-                return flatten(sortBy(Object.entries(val),normalFirst).map(expandEntryBindingsFn({
+                return Object.entries(val).reduce(expandEntryBindingsFn({
                     errors: state.errors,
                     sequencesFor: state.sequencesFor,
                     withCommand: key.split('::')[2]
-                })))
+                }), keymodes)
             }
         }
-        if(state.withCommand){
+        let docBinding = false
+        if(key.startsWith('::doc::')){
+            docBinding = true
+            key = key.slice('::doc::'.length)
+        }else if(state.withCommand){
             val = { [state.withCommand]: val }
         }
         let res = key.match(/^(([a-z|]{2,})::)?((.|\s)*)$/)
@@ -370,66 +383,90 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
         }
         if(res){
             let [ match, g1, givenMode, seq ] = res
-            let obj: any = expandCommands(val)
+            let obj: any = docBinding ? val : expandCommands(val)
             for(let i = seq.length-1; i>=0; i--){
-                obj = {[seq[i]]: obj}
+                if(docBinding){
+                    obj = {keys: {[seq[i]]: obj}}
+                }else{
+                    obj = {[seq[i]]: obj}
+                }
+            }
+            if(docBinding && obj.keys){
+                obj = obj.keys
             }
             let modes = (givenMode ? givenMode.split('|') : ['__all__'])
             let newErrors = false
             for(let mode of modes){
-                if(state.sequencesFor[mode]?.some((oldseq: string) => {
-                    if(oldseq == seq){
-                        log(`WARN the sequence '${seq}' overwrites an existing binding.`)
-                        return false
-                    }else if(oldseq.startsWith(seq)){
-                        log(`ERROR the keysequence '${seq}' is a subsequence of the already defined sequence '${oldseq}'`)
-                        return true
-                    }else if(seq.startsWith(oldseq)){
-                        log(`ERROR the existing keysequence '${oldseq}' is a subseqeunce of the the new sequence '${seq}'.`)
-                        return true
+                if(docBinding){
+                    for(const mode of modes){
+                        if(!keymodes.help) keymodes.help = {}
+                        keymodes.help[mode] = keymodes.help[mode] === undefined ? obj :
+                            merge(keymodes.help[mode], obj)
                     }
-                    return false
-                })){
-                    newErrors = true
-                    state.errors++
-                    break
                 }else{
-                    if(state.sequencesFor[mode]) state.sequencesFor[mode]?.push(seq)
-                    else state.sequencesFor[mode] = [seq]
+                    if(state.sequencesFor[mode]?.some((oldseq: string) => {
+                        if(oldseq == seq){
+                            log(`WARN the sequence '${seq}' overwrites an existing binding.`)
+                            return false
+                        }else if(oldseq.startsWith(seq)){
+                            log(`ERROR the keysequence '${seq}' is a subsequence of the already defined sequence '${oldseq}'`)
+                            return true
+                        }else if(seq.startsWith(oldseq)){
+                            log(`ERROR the existing keysequence '${oldseq}' is a subseqeunce of the the new sequence '${seq}'.`)
+                            return true
+                        }
+                        return false
+                    })){
+                        newErrors = true
+                        state.errors++
+                        break
+                    }else{
+                        if(state.sequencesFor[mode]) state.sequencesFor[mode]?.push(seq)
+                        else state.sequencesFor[mode] = [seq]
+                    }
+                    if(!newErrors){
+                        for(const mode of modes){
+                            if(!keymodes?.command){
+                                keymodes.command = {}
+                            }
+                            keymodes.command[mode] = keymodes.command[mode] === undefined ? obj :
+                                mergeWith(keymodes.command[mode], obj, overloadCommands)
+                        }
+                    }
                 }
+                return keymodes
             }
-            return !newErrors ? modes.map(mode => [mode, obj]) : []
-        }else {
-            log(`ERROR invalid binding entry '${key}'`)
-            return []
         }
+        log(`ERROR invalid binding entry '${key}'`)
+        return keymodes
     }
 }
 
+const overloadCommands = (oldval: Action, newval: Action) => { if(isCommand(oldval)){ return newval } }
+
 function expandBindings(bindings: any): [Keymodes | undefined, number] {
     let state = {sequencesFor: <IHash<string[]>>{}, errors: 0}
-    let allEntries = flatten(sortBy(Object.entries(bindings),normalFirst).
-        map(expandEntryBindingsFn(state)))
-    let allModes = uniq(allEntries.map(x => x[0]))
+    let keymodes = Object.entries(bindings).reduce(
+        expandEntryBindingsFn(state), {command: {}, help: {}})
+    let allModes = Object.keys(keymodes?.command || {})
     allModes.push('normal', 'visual')
     allModes = uniq(allModes)
     let result: any = {}
-    for(let [key, value] of allEntries){
-        if(key !== '__all__'){
-            result = mergeWith(result, {[key]: value}, (oldval: Action, newval: Action) => {
-                if(isCommand(oldval)){
-                    return newval
-                }
-            })
-        }else{
+    function resolveAll<T>(x?: IHash<T>){
+        if(!x) return x
+        let result = x
+        if(x.__all__){
             for(let mode of allModes){
-                result = mergeWith(result, {[mode]: value}, (oldval: Action, newval: Action) => {
-                    if(isCommand(oldval)){ return newval }
-                })
+                if(mode !== '__all__')
+                    result[mode] = mergeWith(cloneDeep(x.__all__), result[mode], overloadCommands)
             }
+            delete result.__all__
         }
+        return result
     }
-    return [result, state.errors]
+    keymodes.command = resolveAll(keymodes.command)
+    keymodes.help = resolveAll(keymodes.help)
+    return [keymodes, state.errors]
 }
 
 /**
@@ -509,6 +546,7 @@ export class KeyState {
     argumentCount?: number
     countFinalized: boolean = false
     currentKeymap?: Keymap
+    currentHelpmap?: IHash<Keyhelp>
     keySequence: string[] = []
     capturedKeys: string[] = []
     modeCaptures: IHash<string>
@@ -525,6 +563,7 @@ export class KeyState {
     waitingForKey() { return this.currentKeymap !== undefined || this.argumentCount !== undefined }
     reset() {
         this.currentKeymap = undefined
+        this.currentHelpmap = undefined
         this.argumentCount = undefined
         this.countFinalized = false
         this.keySequence = []
@@ -549,11 +588,14 @@ export class KeyState {
     error(){
         
         const define = "Fix: Define keymap"
-        const docs = "Keymap Documentation"
-        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""), define, docs).
+        const show = "Help: visual keymap"
+        const docs = "Help: keymap configuration"
+        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""), define, show, docs).
         then(selection => {
             if(selection === define){
                 vscode.commands.executeCommand("modalkeys.importPresets")
+            }else if(selection === show){
+                vscode.commands.executeCommand('modalkeys.showKeymap')
             }else if(selection === docs){
                 let url = 'https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html'
                 vscode.env.openExternal(vscode.Uri.parse(url));
@@ -784,6 +826,19 @@ export class KeyState {
         this.curWord?.seq.pop()
     }
 
+    static getHelp(mode: string): IHash<Keyhelp> | undefined {
+        if(rootKeymodes?.help){
+            return rootKeymodes.help[mode]
+        }
+    }
+    getCurrentHelp(mode: string): IHash<Keyhelp> | undefined {
+        if(this.currentHelpmap){
+            return this.currentHelpmap
+        }else if(rootKeymodes?.help){
+            return rootKeymodes.help[mode]
+        }
+    }
+
     /**
      * ## Key Press Handler
      *
@@ -804,7 +859,8 @@ export class KeyState {
     // as expected. This is probably best managed by using a class
     // KeyHandler
     async handleKey(key: string, keyMode: string) {
-        let newKeymap: undefined | Keymap = this.currentKeymap || (rootKeymodes && rootKeymodes[keyMode])
+        let newKeymap: undefined | Keymap = this.currentKeymap || (rootKeymodes?.command && rootKeymodes.command[keyMode]);
+        let newHelpmap: undefined | IHash<Keyhelp> = this.currentHelpmap || (rootKeymodes?.help && rootKeymodes.help[keyMode]);
 
         // record this key press if there is an actively recording macro
         if(this.macro){
@@ -847,6 +903,8 @@ export class KeyState {
         else if (newKeymap && newKeymap[key]) {
             if(await this.execute(newKeymap[key], keyMode)){
                 this.reset()
+            }else if(newHelpmap){
+                this.currentHelpmap = newHelpmap[key].keys
             }
         }
         else if (key.match('[0-9]+')) {
@@ -855,9 +913,9 @@ export class KeyState {
         else {
             const type = "Fix: Let me type!"
             const define = "Fix: Define a keymap"
+            const docs = "Help: keymap configuration"
             const ignore = "Ignore"
-            const docs = "Read Keymap Documentation"
-            if(!(rootKeymodes && rootKeymodes[keyMode])){
+            if(!(rootKeymodes && rootKeymodes.command && rootKeymodes.command[keyMode])){
                 vscode.window.showInformationMessage
                 vscode.window.showErrorMessage(`
                     ModalKeys - no keymap defined for ${keyMode} mode.
@@ -883,7 +941,5 @@ export class KeyState {
             }
         }
     }
-
-    getHelp() { return this.currentKeymap?.help }
 }
 

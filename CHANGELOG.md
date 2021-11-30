@@ -2,6 +2,11 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.8.0
+- **Feature**: New commands `toggleKeymap` and `showKeymap` which can be used to display a  visual documentation of the current modal keybindings in the panel. 
+- **Feature**: Your own keybindings can support the visual docummentation using `::doc::` entries (see extension documentation).
+- **Feature**: A new keybinding preset called [Larkin](https://haberdashpi.github.io/vscode-modal-keys/stable/presets/larkin.html), that uses a Kakoune-style format.
+
 # Version 0.7.0
 - **Feature**: Preset files can identify a list of required extensions. If the extension is not present, an error message with an option to install the required extension is displayed.
 - **Feature**: The vim presets now list required extensions.

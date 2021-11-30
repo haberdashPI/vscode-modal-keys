@@ -1,0 +1,148 @@
+:root {
+    --key-padding: 0.2rem;
+    --key-radius: 0.5rem;
+    --key-border-width: 1.5pt;
+    --key-height: 3.25rem;
+}
+
+.kind-color-0 { background-color: #1b9e7777; }
+.kind-color-1 { background-color: #d95f0277; }
+.kind-color-2 { background-color: #7570b377; }
+.kind-color-3 { background-color: #e7298a77; }
+.kind-color-4 { background-color: #66a61e77; }
+.kind-color-5 { background-color: #e6ab0277; }
+.kind-color-6 { background-color: #a6761d77; }
+.kind-color-7 { background-color: #66666677; }
+
+.detail-kind-color {
+    min-width: 1.5rem;
+    width: 1rem;
+    height: 0.5rem;
+    border: 1px solid;
+    display: inline-block;
+    margin-right: 0.2rem;
+    margin-left: 0.2rem;
+    bottom: -0.1rem;
+    position: relative;
+}
+
+.detail {
+    display: none;
+    text-align: left;
+}
+.name:hover + .detail.empty {
+    display: none
+}
+.name:hover + .detail {
+    bottom: 1rem;
+    left: 1rem;
+    font-size: 0.75rem;
+    position: fixed;
+    display: block;
+    z-index: 10;
+    min-width: 30rem;
+    max-width: 50rem;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    border-color: var(--vscode-statusBar-foreground);
+    background-color: var(--vscode-statusBar-background)
+}
+.detail-text {
+    margin-top: 0.25em;
+}
+
+.container {
+    text-align: center;
+}
+
+.keyboard {
+    display: inline-block;
+}
+
+.keyboard-row {
+    display: flex;
+    max-width: 75rem;
+    width: 75rem;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+.key {
+    font-family: var(--vscode-font-family);
+    height: var(--key-height);
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: 1fr 1fr;
+    color: var(--vscode-foreground);
+    /* text-shadow: -0.5px 0.5px 0 var(--vscode-editor-background),
+                 0.5px 0.5px 0 var(--vscode-editor-background),
+                 0.5px -0.5px 0 var(--vscode-editor-background),
+                 -0.5px -0.5px 0 var(--vscode-editor-background); */
+}
+
+.key-length-1 { flex: 1; }
+.key-length-1-25 { flex: 1.25; }
+.key-length-1-5 { flex: 1.5; }
+.key-length-1-75 { flex: 1.75; }
+.key-length-2-25 { flex: 2.25; }
+.key-length-5 { flex: 7; }
+
+.label {
+    height: calc(var(--key-height) / 2 - var(--key-padding));
+    font-size: 1rem;
+    text-align: left;
+}
+.label.top{
+    padding-top: var(--key-padding);
+    padding-left: var(--key-padding);
+    border-top-left-radius: var(--key-radius);
+    border-left: var(--key-border-width) solid var(--vscode-foreground);
+    border-top: var(--key-border-width) solid var(--vscode-foreground);
+}
+.label.bottom{
+    padding-bottom: var(--key-padding);
+    padding-left: var(--key-padding);
+    border-bottom-left-radius: var(--key-radius);
+    border-left: var(--key-border-width) solid var(--vscode-foreground);
+    border-bottom: var(--key-border-width) solid var(--vscode-foreground);
+}
+.label.bottom.no-top{
+    height: calc(var(--key-height) - 2*var(--key-padding));
+    padding-top: var(--key-padding);
+    border-top: var(--key-border-width) solid var(--vscode-foreground);
+    border-top-left-radius: var(--key-radius);
+}
+
+.name {
+    height: calc(var(--key-height) / 2 - var(--key-padding));
+    font-size: 0.6rem;
+    text-align: right;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: clip;
+    hyphens: auto;
+}
+.name.top{
+    padding-top: var(--key-padding);
+    padding-right: var(--key-padding);
+    border-top-right-radius: var(--key-radius);
+    border-right: var(--key-border-width) solid var(--vscode-foreground);
+    border-top: var(--key-border-width) solid var(--vscode-foreground);
+}
+.name.bottom{
+    padding-bottom: var(--key-padding);
+    padding-right: var(--key-padding);
+    border-bottom-right-radius: var(--key-radius);
+    border-right: var(--key-border-width) solid var(--vscode-foreground);
+    border-bottom: var(--key-border-width) solid var(--vscode-foreground);
+}
+.name.bottom.no-top{
+    height: calc(var(--key-height) - 2*var(--key-padding));
+    padding-top: var(--key-padding);
+    border-top: var(--key-border-width) solid var(--vscode-foreground);
+    border-top-right-radius: var(--key-radius);
+}
+

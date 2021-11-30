@@ -12,6 +12,7 @@ import * as vscode from 'vscode'
 import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand, IKeyRecording, log as actionLog } from './actions'
 import { IHash } from './util'
 import { TextDecoder } from 'text-encoding'
+import { DocViewProvider } from './keymap'
 
 //#endregion
 /**
@@ -246,11 +247,15 @@ const toggleRecordingMacroId = "modalkeys.toggleRecordingMacro"
 const cancelRecordingMacroId = "modalkeys.cancelRecordingMacro"
 const replayMacroId = "modalkeys.replayMacro"
 const exportPresetId = "modalkeys.exportPreset"
+const toggleKeymapId = "modalkeys.toggleKeymap"
+const showKeymapId = "modalkeys.showKeymap"
 
 export function revealActive(editor: vscode.TextEditor){
     let act = new vscode.Range(editor.selection.active, editor.selection.active);
     editor.revealRange(act)
 }
+
+let docKeymap: DocViewProvider | undefined
 
 /**
  * ## Registering Commands
@@ -259,7 +264,7 @@ export function revealActive(editor: vscode.TextEditor){
  * calls this function). We also create the status bar item and text
  * decorations.
  */
-export function register(context: vscode.ExtensionContext) {
+export function register(context: vscode.ExtensionContext, _docKeymap: DocViewProvider) {
     context.subscriptions.push(
         vscode.commands.registerCommand(enterModeId, enterMode),
         vscode.commands.registerCommand(enterInsertId, enterInsert),
@@ -288,6 +293,8 @@ export function register(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(cancelRecordingMacroId, cancelRecordingMacro),
         vscode.commands.registerCommand(replayMacroId, replayMacro),
         vscode.commands.registerCommand(exportPresetId, exportPreset),
+        vscode.commands.registerCommand(toggleKeymapId, toggleKeymap),
+        vscode.commands.registerCommand(showKeymapId, showKeymap)
     )
     mainStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left)
@@ -299,6 +306,8 @@ export function register(context: vscode.ExtensionContext) {
     macroStatusBar.backgroundColor = 
         new vscode.ThemeColor('statusBarItem.errorBackground')
 
+    docKeymap = _docKeymap;
+    docKeymap?.update(keyState, realMode(keyMode))
 
     updateSearchHighlights();
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
@@ -370,7 +379,7 @@ async function onType(event: { text: string }) {
     }
 
     await runActionForKey(event.text, keyMode)
-    updateCursorAndStatusBar(vscode.window.activeTextEditor, keyState.getHelp())
+    updateCursorAndStatusBar(vscode.window.activeTextEditor)
     // clear any search decorators if this key did not alter search state
     // (meaning it was not a search command)
     if(!highlightsChanged){
@@ -473,8 +482,13 @@ export function onSelectionChanged(e: vscode.TextEditorSelectionChangeEvent){
  * is needed to decide whether the `lastKeySequence` variable is updated.
  */
 async function runActionForKey(key: string, mode: string = keyMode, state: KeyState = keyState) {
-    await state.handleKey(key, isSelecting() && mode === Normal ? Visual : mode)
+    await state.handleKey(key, realMode(mode))
+    docKeymap!.update(state, realMode(keyMode))
     return !state.waitingForKey()
+}
+
+function realMode(mode: string){
+    return isSelecting() && mode === Normal ? Visual : mode
 }
 
 
@@ -545,7 +559,7 @@ let modeHooks: any = {
     },
 }
 
-export async function enterNormal(){ enterMode('normal') }
+export async function enterNormal(){ enterMode('normal'); keyState.reset() }
 export async function enterInsert(){ enterMode('insert') }
 
 export async function enterMode(args: string | EnterModeArgs) {
@@ -568,6 +582,7 @@ export async function enterMode(args: string | EnterModeArgs) {
         updateCursorAndStatusBar(editor)
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
     }
+    docKeymap?.update(keyState, realMode(keyMode))
 }
 
 export async function restoreEditorMode(editor: vscode.TextEditor | undefined){
@@ -723,6 +738,7 @@ function* linesOf(doc: vscode.TextDocument, pos: vscode.Position,
         }
     }
 }
+
 function* searchMatches(doc: vscode.TextDocument, start: vscode.Position, end: vscode.Position | undefined,
     target: string, args: SearchArgs){
 
@@ -1177,7 +1193,6 @@ async function repeatLastUsedSelection(): Promise<void> {
     }
 }
 
-// TODO: use the new searchMatch command to perform the select between
 /**
  * ## Advanced Selection Command
  *
@@ -1337,12 +1352,15 @@ async function importPresets(folder?: string) {
                 return preset
             })()
             let config = vscode.workspace.getConfiguration("modalkeys")
-            if (!preset.keybindings)
-                throw new Error(
-                    `Could not find "keybindings" or "selectbindings" in ${uri}`)
-            if(preset.keybindings)
+            if(!preset.keybindings)
+                throw new Error(`Could not find "keybindings" in ${uri}`)
+            else
                 config.update("keybindings", preset.keybindings, true)
             checkExtensions(preset.extensions)
+            if(preset.docKinds){
+                config.update("docKinds", preset.docKinds, true)
+                vscode.commands.executeCommand('modalkeys.showKeymap')
+            }
             vscode.window.showInformationMessage(
                 "ModalKeys: Keybindings imported.")
         }
@@ -1391,4 +1409,20 @@ async function exportPreset(){
             })
         }
     })
+}
+
+async function toggleKeymap(){
+    if(!docKeymap?.visible()){
+        let editor = vscode.window.activeTextEditor
+        await vscode.commands.executeCommand('workbench.view.extension.modalKeyBindingView')
+        editor && vscode.window.showTextDocument(editor.document)
+    }else{
+        await vscode.commands.executeCommand('workbench.action.togglePanel')
+    }
+}
+
+async function showKeymap(){
+    let editor = vscode.window.activeTextEditor
+    await vscode.commands.executeCommand('workbench.view.extension.modalKeyBindingView')
+    editor && vscode.window.showTextDocument(editor.document)
 }

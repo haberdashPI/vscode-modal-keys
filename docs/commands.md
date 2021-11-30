@@ -1,7 +1,11 @@
 # VS Code Commands
 
-ModalKeys adds several useful commands to VS Code's repertoire. They help you
+ModalKeys adds several useful commands to VS Code's repertoire. Most of them help you
 create more Vim-like workflows.
+
+## Displaying documentation
+
+`modalkeys.toggleKeymap` and `modalkeys.showKeymap` will toggle or show the visual keymap documentation (respectively).
 
 ## Switching between Modes
 

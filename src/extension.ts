@@ -7,6 +7,8 @@
 import * as vscode from 'vscode'
 import * as actions from './actions'
 import * as commands from './commands'
+import * as keymap from './keymap'
+
 /**
  * This method is called when the extension is activated. The activation events
  * are set in the `package.json` like this:
@@ -16,23 +18,30 @@ import * as commands from './commands'
  * which means that the extension is activated as soon as VS Code is running.
  */
 export function activate(context: vscode.ExtensionContext) {
+	let keymapState = keymap.register(context)
+
 	/**
 	 * The commands are defined in the `package.json` file. We register them
 	 * with function defined in the `commands` module.
 	 */
-	commands.register(context)
+	commands.register(context, keymapState)
 	/**
 	 * We create an output channel for diagnostic messages and pass it to the
 	 * `actions` module.
 	 */
 	let channel = vscode.window.createOutputChannel("ModalKeys")
 	actions.setOutputChannel(channel)
+
 	/**
 	 * Then we subscribe to events we want to react to.
 	 */
 	context.subscriptions.push(
 		channel,
-		vscode.workspace.onDidChangeConfiguration(actions.updateFromConfig),
+		vscode.workspace.onDidChangeConfiguration(e => {
+			actions.updateFromConfig()
+			keymap.updateFromConfig()
+			commands.enterMode('normal')
+		}),
 		vscode.window.onDidChangeActiveTextEditor(commands.restoreEditorMode),
 		vscode.window.onDidChangeTextEditorSelection(e => {
 			commands.onSelectionChanged(e)
@@ -44,6 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 * we enter into normal or edit mode depending on the settings.
 	 */
 	actions.updateFromConfig()
+	keymap.updateFromConfig()
 	if (actions.getStartInNormalMode())
         commands.enterMode('normal')
 	else
