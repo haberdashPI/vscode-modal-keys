@@ -12,7 +12,7 @@ that resemble Vim.
 
 ![visual display of vim keybindings](https://github.com/haberdashPI/vscode-modal-keys/blob/feat-doc-display/doc_binding_example.png?raw=true)
 
-The above is a screenshot of the visual documentation feature of this extension; you can access this feature using the command `ModalKeys: Toggle keymap documentation`.
+The above is a screenshot of the visual documentation feature of this extension; you can access this feature using the command `ModalKeys: Toggle keymap documentation`, or `ModalKeys: Show keymap documentation`.
 
 The advantages of modal bindings are the rapid, speed-of-thought manipulations you can perform on text with a well-designed keymap and sufficient practice. The advantages of using ModalKeys specifically include:
 

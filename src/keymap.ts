@@ -5,7 +5,6 @@ import { merge, cloneDeep } from 'lodash'
 
 // TODO: use KeyboardLayoutMap to improve behavior
 // acorss non-english / non-standard layouts
-// TODO: ensure all special character have alphanumeric alias for id's
 const keyRows = [
     [
         {top_id: "tilde", top: "~", bottom_id: "tick", bottom: "`"},

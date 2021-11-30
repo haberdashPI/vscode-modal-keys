@@ -128,7 +128,6 @@ function capitalizeFirstLetter(string) {
 
 window.addEventListener('message', event => {
     const message = event.data;
-    console.dir(message) // TODO: remove me!!!
     let keymap = message.keymap;
     let kinds = message.kinds;
 

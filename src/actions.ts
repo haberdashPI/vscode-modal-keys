@@ -424,7 +424,6 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
                         if(state.sequencesFor[mode]) state.sequencesFor[mode]?.push(seq)
                         else state.sequencesFor[mode] = [seq]
                     }
-                    // TODO: figure out how to insert the documentation entries
                     if(!newErrors){
                         for(const mode of modes){
                             if(!keymodes?.command){

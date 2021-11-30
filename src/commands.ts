@@ -1193,7 +1193,6 @@ async function repeatLastUsedSelection(): Promise<void> {
     }
 }
 
-// TODO: use the new searchMatch command to perform the select between
 /**
  * ## Advanced Selection Command
  *
