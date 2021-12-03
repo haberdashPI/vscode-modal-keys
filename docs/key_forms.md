@@ -164,7 +164,7 @@ These take the following form:
 "::doc::<binding>": { kind: <kind>, label: <label>, detail: <detail> }
 ```
 
-The `kind` is string defining a broad category of keys and determines the color of the key. The label is a string that will show up on the key: it should be very short: &lt;2 words, &lt;6 chars per word. Unicode can be useful in shortening the key lable (e.g. → and ←). The detail entry is a string description that will show up when you hover the mouse of the keybinding. It should explain as much as possible about the specfic key.
+The `kind` is a string defining a broad category of keys and determines the color of the key. The label is a string that will show up on the key: it should be very short: a good guideline is ≤2 words, ≤6 chars per word. Unicode can be useful in shortening the key lable (e.g. → and ←). The detail entry is a string description that will show up when you hover the mouse over the keybinding. It should explain in much more detail what the key does. The description for the `kind` will also be included, so the detail string should not be redundant with this more general information.
 
 You also need to document the different command kinds used in your keymap. These are specified as an additional field of the main object of your keybindings file, called `docKinds` and takes the following format.
 
@@ -181,11 +181,11 @@ keybindings: {
 }
 ```
 
-The colors for doc kinds are determined by their order in `docKinds`, and are selected from a carefully [color brewwer](https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3) color set.
+The colors for doc kinds are determined by their order in `docKinds`, and are selected from a carefully defined [color brewer](https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3) color set, to ensure colors are easily differentiable.
 
 ### Leaders
 
-If your keybindings include sequence of multiple keys (e.g. `gj`), you should also document the general role of a given sequence prefix. For example, the vim bidnings include the following `::doc::` entry:
+If your keybindings include a sequence of multiple keys (e.g. `gj`), you should also document the general role of a given sequence prefix. For example, the vim bindings include the following `::doc::` entry:
 
 ```js
 "::doc::g": { kind: "leader", label: "more actions", detail: "additional commands (mostly actions)" },

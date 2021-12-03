@@ -1,6 +1,6 @@
 # Presets
 
-ModalKeys comes with two presents
+ModalKeys comes with two presets.
 
 - [Vim presets](./presets/vim.html)
 - [Larkin presets](./presets/larkin.html)
