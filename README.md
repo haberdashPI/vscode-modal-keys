@@ -12,9 +12,11 @@ that resemble Vim.
 
 ![visual display of vim keybindings](https://github.com/haberdashPI/vscode-modal-keys/blob/feat-doc-display/doc_binding_example.png?raw=true)
 
-The above is a screenshot of the visual documentation feature of this extension; you can access this feature using the command `ModalKeys: Toggle keymap documentation`, or `ModalKeys: Show keymap documentation`.
+The above is a screenshot of the visual documentation feature of this extension; you can access this feature using the command `ModalKeys: Toggle keymap documentation`, or `ModalKeys: Show keymap documentation`. It documents the current effect of pressing any given key in the current keymode; the display will update as needed for multi-key commands.
 
-The advantages of modal bindings are the rapid, speed-of-thought manipulations you can perform on text with a well-designed keymap and sufficient practice. The advantages of using ModalKeys specifically include:
+The advantages of modal bindings are the rapid, speed-of-thought manipulations you can perform on text with a well-designed keymap and sufficient practice.
+
+The advantages of using ModalKeys specifically include:
 
 1. Visual documentation of all keybindings
 2. Seamless integration with the existing features and
@@ -31,7 +33,7 @@ To start creating a custom set of keybindings for ModalKeys, you have a few opti
 2. Start with an example from [presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html), using the export and import commands to create and then use your own version of the presets.
 3. Read through the [Documentation](https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html)
 
-The general phillosphy of ModalKeys is to leverage existing functionality and behavior already available from VSCode and its extensions, and make it easy to define modal key bindings for these behaviors. If you don't care to integrate behavior from other extensions into your modal keybindings, you probably just want to replicate an existing modal editor in VSCode; in this case you may want to consider using [VSCodeVim](https://github.com/VSCodeVim/Vim),
+The general phillosphy of ModalKeys is to leverage existing functionality and behavior already available from VSCode and its extensions, and make it easy to define modal key bindings for these behaviors. If you don't care to integrate behavior from across VSCode and its extensions, you probably just want to replicate an existing modal editor in VSCode; in this case you may want to consider using [VSCodeVim](https://github.com/VSCodeVim/Vim),
 [vscode-neovim](https://github.com/asvetliakov/vscode-neovim), or [Dance](https://github.com/71/dance).
 
 ## Acknowledgements
