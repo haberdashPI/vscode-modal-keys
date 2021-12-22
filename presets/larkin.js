@@ -63,7 +63,7 @@ extensions: [
     "pranshuagrawal.toggle-case",
     "albymor.increment-selection",
     "pkief.markdown-checkbox",
-    "edgardmessias.clipboard-manager",
+    "anjali.clipboard-history",
     "stkb.rewrap",
     "haberdashpi.terminal-polyglot",
     "jack89ita.open-file-from-path",
@@ -456,13 +456,14 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::uC": {kind: 'select', label: 'between pair (special)', detail: 'around a pair of characters (non syntactical, useful inside comments)' },  
+    "::doc::uC(": {kind: 'select', label: 'inside ()', detail: 'inside first pair of `()` (non syntactical, useful inside comments)' },  
     "uC(": { "modalkeys.selectBetween": {
         from: "(", to: ")",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
+    "::doc::uC)": {kind: 'select', label: 'around ()', detail: 'around first pair of `()` (non syntactical, useful inside comments)' },  
     "uC)": { "modalkeys.selectBetween": {
         from: "(", to: ")",
         inclusive: false,
@@ -881,7 +882,11 @@ keybindings: {
     m: countSelectsLines('down', [
         {
             if: "__language == 'julia'",
-            then: "language-julia.executeCodeBlockOrSelectionAndMove",
+            then: {
+                if: "__selection.isEmpty",
+                then: ["expandLineSelection", "language-julia.executeCodeBlockOrSelectionAndMove"],
+                else: "language-julia.executeCodeBlockOrSelectionAndMove"
+            },
             else: {
                 if: "!__selection.isSingleLine",
                 then: "terminal-polyglot.send-block-text",
@@ -1037,7 +1042,7 @@ keybindings: {
     "::doc::selectedit:: ": { kind: "modifier", label: 'mode', detail: "return to a signle selection and return to normal mode"},
     "selectedit:: ": [ "selection-utilities.cancelSelection", { "modalkeys.enterMode": { mode: "normal" }} ],
     "::doc::selectedit::i": { kind: "modifier", label: 'mode', detail: "insert mode at cursor"},
-    "selectedit::i": [ "modalKeys.enterNormal", "selection-utilities.cancelMultipleSelections", "modalKeys.enterInsert" ],
+    "selectedit::i": [ "modalkeys.enterNormal", "modalkeys.cancelMultipleSelections", "modalkeys.enterInsert" ],
     "::doc::selectedit::\n": { kind: "modifier", label: 'mode', detail: "return to normal mode"},
     "selectedit::\n": [ { "modalkeys.enterMode": { mode: "normal" }} ],
 
