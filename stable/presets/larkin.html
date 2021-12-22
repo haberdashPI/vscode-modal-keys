@@ -40,7 +40,7 @@ extensions: [
     &quot;</span>pranshuagrawal.toggle-<span class="hljs-keyword">case</span><span class="hljs-string">&quot;,
     &quot;</span>albymor.<span class="hljs-keyword">increment</span>-selection<span class="hljs-string">&quot;,
     &quot;</span>pkief.markdown-checkbox<span class="hljs-string">&quot;,
-    &quot;</span>edgardmessias.clipboard-manager<span class="hljs-string">&quot;,
+    &quot;</span>anjali.clipboard-history<span class="hljs-string">&quot;,
     &quot;</span>stkb.rewrap<span class="hljs-string">&quot;,
     &quot;</span>haberdashpi.terminal-polyglot<span class="hljs-string">&quot;,
     &quot;</span>jack89ita.open-file-<span class="hljs-keyword">from</span>-<span class="hljs-keyword">path</span><span class="hljs-string">&quot;,
@@ -414,13 +414,14 @@ keybindings: {
         docScope:<span class="hljs-built_in"> true</span>
     }},
 
-    <span class="hljs-string">&quot;::doc::uC&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;between pair (special)&#x27;</span>, detail: <span class="hljs-string">&#x27;around a pair of characters (non syntactical, useful inside comments)&#x27;</span> },  
+    <span class="hljs-string">&quot;::doc::uC(&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;inside ()&#x27;</span>, detail: <span class="hljs-string">&#x27;inside first pair of `()` (non syntactical, useful inside comments)&#x27;</span> },  
     <span class="hljs-string">&quot;uC(&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
         from: <span class="hljs-string">&quot;(&quot;</span>, to: <span class="hljs-string">&quot;)&quot;</span>,
         inclusive:<span class="hljs-built_in"> false</span>,
         caseSensitive:<span class="hljs-built_in"> true</span>,
         docScope:<span class="hljs-built_in"> true</span>
     }},
+    <span class="hljs-string">&quot;::doc::uC)&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;around ()&#x27;</span>, detail: <span class="hljs-string">&#x27;around first pair of `()` (non syntactical, useful inside comments)&#x27;</span> },  
     <span class="hljs-string">&quot;uC)&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
         from: <span class="hljs-string">&quot;(&quot;</span>, to: <span class="hljs-string">&quot;)&quot;</span>,
         inclusive:<span class="hljs-built_in"> false</span>,
@@ -813,35 +814,39 @@ keybindings: {
     <span class="hljs-string">&quot;::doc::gq&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;wrap&quot;</span>, detail: <span class="hljs-string">&quot;wrap text, preserving commenting&quot;</span>},</span>
     <span class="hljs-string">&quot;gq&quot;</span>: <span class="hljs-string">&quot;rewrap.rewrapComment&quot;</span>,
 
-</code></pre> <h3 id="heading-#terminal-actions"><a class="header-anchor" id="terminal-actions" href="#terminal-actions"> </a>terminal actions</h3> <pre><code class="language-js">    <span class="hljs-comment">&quot;::doc::m&quot;</span>: {kind: <span class="hljs-comment">&quot;action&quot;</span>, label: <span class="hljs-comment">&quot;to repl&quot;</span>, detail: <span class="hljs-comment">&quot;send text to a terminal (usually containing a REPL); use langauge specific extensions when available and put the pasted code into a block (when defined).&quot;</span>},
+</code></pre> <h3 id="heading-#terminal-actions"><a class="header-anchor" id="terminal-actions" href="#terminal-actions"> </a>terminal actions</h3> <pre><code class="language-js">    <span class="hljs-string">&quot;::doc::m&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&quot;to repl&quot;</span>, detail: <span class="hljs-string">&quot;send text to a terminal (usually containing a REPL); use langauge specific extensions when available and put the pasted code into a block (when defined).&quot;</span>},
     m: countSelectsLines(<span class="hljs-string">&#x27;down&#x27;</span>, [
         {
-            if: <span class="hljs-comment">&quot;__language == &#x27;julia&#x27;&quot;</span>,
-            then: <span class="hljs-comment">&quot;language-julia.executeCodeBlockOrSelectionAndMove&quot;</span>,
-            else: {
-                if: <span class="hljs-comment">&quot;!__selection.isSingleLine&quot;</span>,
-                then: <span class="hljs-comment">&quot;terminal-polyglot.send-block-text&quot;</span>,
-                else: <span class="hljs-comment">&quot;terminal-polyglot.send-text&quot;</span>
+            <span class="hljs-keyword">if</span>: <span class="hljs-string">&quot;__language == &#x27;julia&#x27;&quot;</span>,
+            <span class="hljs-keyword">then</span>: {
+                <span class="hljs-keyword">if</span>: <span class="hljs-string">&quot;__selection.isEmpty&quot;</span>,
+                <span class="hljs-keyword">then</span>: [<span class="hljs-string">&quot;expandLineSelection&quot;</span>, <span class="hljs-string">&quot;language-julia.executeCodeBlockOrSelectionAndMove&quot;</span>],
+                <span class="hljs-keyword">else</span>: <span class="hljs-string">&quot;language-julia.executeCodeBlockOrSelectionAndMove&quot;</span>
+            },
+            <span class="hljs-keyword">else</span>: {
+                <span class="hljs-keyword">if</span>: <span class="hljs-string">&quot;!__selection.isSingleLine&quot;</span>,
+                <span class="hljs-keyword">then</span>: <span class="hljs-string">&quot;terminal-polyglot.send-block-text&quot;</span>,
+                <span class="hljs-keyword">else</span>: <span class="hljs-string">&quot;terminal-polyglot.send-text&quot;</span>
             },
         },
-        <span class="hljs-comment">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
-        <span class="hljs-comment">&quot;modalkeys.touchDocument&quot;</span>
+        <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.touchDocument&quot;</span>
     ]),
-    <span class="hljs-comment">&quot;::doc::M&quot;</span>: {kind: <span class="hljs-comment">&quot;action&quot;</span>, label: <span class="hljs-comment">&quot;to repl (v2)&quot;</span>, detail: <span class="hljs-comment">&quot;send text to a terminal (usually containing a REPL), placing in a block when defined.&quot;</span>},
-    <span class="hljs-type">M</span>: countSelectsLines(<span class="hljs-string">&#x27;down&#x27;</span>, [
+    <span class="hljs-string">&quot;::doc::M&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&quot;to repl (v2)&quot;</span>, detail: <span class="hljs-string">&quot;send text to a terminal (usually containing a REPL), placing in a block when defined.&quot;</span>},
+    M: countSelectsLines(<span class="hljs-string">&#x27;down&#x27;</span>, [
         {
-            if: <span class="hljs-comment">&quot;!__selection.isSingleLine&quot;</span>,
-            then: <span class="hljs-comment">&quot;terminal-polyglot.send-block-text&quot;</span>,
-            else: <span class="hljs-comment">&quot;terminal-polyglot.send-text&quot;</span>
+            <span class="hljs-keyword">if</span>: <span class="hljs-string">&quot;!__selection.isSingleLine&quot;</span>,
+            <span class="hljs-keyword">then</span>: <span class="hljs-string">&quot;terminal-polyglot.send-block-text&quot;</span>,
+            <span class="hljs-keyword">else</span>: <span class="hljs-string">&quot;terminal-polyglot.send-text&quot;</span>
         },
-        <span class="hljs-comment">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
-        <span class="hljs-comment">&quot;modalkeys.touchDocument&quot;</span>
+        <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.touchDocument&quot;</span>
     ]),
-    <span class="hljs-comment">&quot;::doc::gm&quot;</span>: {kind: <span class="hljs-comment">&quot;action&quot;</span>, label: <span class="hljs-comment">&quot;to repl (v3)&quot;</span>, detail: <span class="hljs-comment">&quot;send text to a terminal (usually containing a REPL).&quot;</span>},
+    <span class="hljs-string">&quot;::doc::gm&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span>: <span class="hljs-string">&quot;to repl (v3)&quot;</span>, detail: <span class="hljs-string">&quot;send text to a terminal (usually containing a REPL).&quot;</span>},
     gm: countSelectsLines(<span class="hljs-string">&#x27;down&#x27;</span>, [
-        <span class="hljs-comment">&quot;terminal-polyglot.send-text&quot;</span>,
-        <span class="hljs-comment">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
-        <span class="hljs-comment">&quot;modalkeys.touchDocument&quot;</span>
+        <span class="hljs-string">&quot;terminal-polyglot.send-text&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>,
+        <span class="hljs-string">&quot;modalkeys.touchDocument&quot;</span>
     ]),
 
 </code></pre> <h3 id="heading-#gitversion-control"><a class="header-anchor" id="gitversion-control" href="#gitversion-control"> </a>git/version control</h3> <pre><code class="language-js">    <span class="hljs-string">&quot;::doc::gr&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;git stage&quot;</span>, detail: <span class="hljs-string">&quot;stage changes for commit&quot;</span>},
@@ -960,7 +965,7 @@ keybindings: {
     <span class="hljs-string">&quot;::doc::selectedit:: &quot;</span>: { kind: <span class="hljs-string">&quot;modifier&quot;</span>, label: <span class="hljs-string">&#x27;mode&#x27;</span>, detail: <span class="hljs-string">&quot;return to a signle selection and return to normal mode&quot;</span>},
     <span class="hljs-string">&quot;selectedit:: &quot;</span>: [ <span class="hljs-string">&quot;selection-utilities.cancelSelection&quot;</span>, { <span class="hljs-string">&quot;modalkeys.enterMode&quot;</span>: { mode: <span class="hljs-string">&quot;normal&quot;</span> }} ],
     <span class="hljs-string">&quot;::doc::selectedit::i&quot;</span>: { kind: <span class="hljs-string">&quot;modifier&quot;</span>, label: <span class="hljs-string">&#x27;mode&#x27;</span>, detail: <span class="hljs-string">&quot;insert mode at cursor&quot;</span>},
-    <span class="hljs-string">&quot;selectedit::i&quot;</span>: [ <span class="hljs-string">&quot;modalKeys.enterNormal&quot;</span>, <span class="hljs-string">&quot;selection-utilities.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;modalKeys.enterInsert&quot;</span> ],
+    <span class="hljs-string">&quot;selectedit::i&quot;</span>: [ <span class="hljs-string">&quot;modalkeys.enterNormal&quot;</span>, <span class="hljs-string">&quot;modalkeys.cancelMultipleSelections&quot;</span>, <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span> ],
     <span class="hljs-string">&quot;::doc::selectedit::\n&quot;</span>: { kind: <span class="hljs-string">&quot;modifier&quot;</span>, label: <span class="hljs-string">&#x27;mode&#x27;</span>, detail: <span class="hljs-string">&quot;return to normal mode&quot;</span>},
     <span class="hljs-string">&quot;selectedit::\n&quot;</span>: [ { <span class="hljs-string">&quot;modalkeys.enterMode&quot;</span>: { mode: <span class="hljs-string">&quot;normal&quot;</span> }} ],
 
