@@ -50,7 +50,7 @@ What follows are are just *some* of the features ModalKeys has which ModalEdit l
 3. Customized modes: You can define your own key modes, to expand the keymap more easily
 4. Search term highlighting: ModalKeys highlights search terms by default (there is an open [PR](https://github.com/johtela/vscode-modaledit/pull/19) in ModalEdit)
 5. Search with regex: The [`search` command](https://haberdashpi.github.io/vscode-modal-keys/stable/commands.html#incremental-search) can optionally use regex expressions
-6. Kakoune-like 'repeat-selection': ModalKeys provides a [`repateLastUsedSelection`](https://haberdashpi.github.io/vscode-modal-keys/stable/commands.html#repeat-last-used-selection) command to make kakoune noun-verb workflows repeatable (in contrast with vim's verb-noun workflows)
+6. Kakoune-like 'repeat-selection': ModalKeys provides a [`repeatLastUsedSelection`](https://haberdashpi.github.io/vscode-modal-keys/stable/commands.html#repeat-last-used-selection) command to make kakoune noun-verb workflows repeatable (in contrast with vim's verb-noun workflows)
 7. [Keyboard macros](https://haberdashpi.github.io/vscode-modal-keys/stable/commands.html#macros)
 
 ModalKeys is missing a few features I did not want to maintain from ModalEdit: bookmarks and quick snippets. I find these features to be well covered by several existing extensions in VSCode.
