@@ -63,7 +63,7 @@ extensions: [
     "pranshuagrawal.toggle-case",
     "albymor.increment-selection",
     "pkief.markdown-checkbox",
-    "anjali.clipboard-history",
+    "edgardmessias.clipboard-manager",
     "stkb.rewrap",
     "haberdashpi.terminal-polyglot",
     "jack89ita.open-file-from-path",
