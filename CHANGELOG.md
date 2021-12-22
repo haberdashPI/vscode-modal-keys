@@ -2,6 +2,9 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.8.2
+- **Fix**: A few small improvements to the Larkin keybindings (missing extension, bug in one of the command sequences)
+
 # Version 0.8.1
 - **Fix**: Some issues with readme/changelog, 0.8.0 was published early.
 
