@@ -5,21 +5,15 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"script": "debug",
-			"problemMatcher": "$tsc",
-			"isBackground": false,
-			"presentation": {
-				"reveal": "silent"
-			},
+			"script": "watch",
+			"isBackground": true,
+			"problemMatcher": [
+				"$ts-webpack-watch"
+			],
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			},
-			"options": {
-				"env": {
-					"PATH": "${env:HOME}/.asdf/bin:${env:HOME}/.asdf/shims:${env:PATH}"
-				}
 			}
 		}
-	]
+	],
 }
