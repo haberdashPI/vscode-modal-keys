@@ -19,7 +19,7 @@
     "activationEvents": [
         "*"
     ],
-    "browser": "./dist/web/main.js",
+    "browser": "./dist/main.js",
     "docs": "./doc_dist/README.html",
     "targets": {
         "main": {

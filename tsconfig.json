@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"module": "commonjs",
 		"target": "es6",
-		"outDir": "out",
+		"outDir": "dist",
 		"lib": [
 			"es6"
 		],
@@ -19,6 +19,8 @@
 		"out": "docs"
 	},
 	"exclude": [
+		"doc",
+		"docview",
 		"node_modules",
 		".vscode-test"
 	]

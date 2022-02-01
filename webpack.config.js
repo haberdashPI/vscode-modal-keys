@@ -5,18 +5,17 @@
 const path = require('path');
 const webpack = require('webpack');
 
-/**@type {import('webpack').Configuration}*/
-const config = {
+const config = (env, argv) => { return {
   target: 'webworker', // vscode extensions run in webworker context for VS Code web 📖 -> https://webpack.js.org/configuration/target/#target
   entry: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
   output: {
     // the bundle is stored in the 'dist' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
-    path: path.resolve(__dirname, 'dist', 'web'),
+  path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
     libraryTarget: 'commonjs2',
-    devtoolModuleFilenameTemplate: '../../[resource-path]'
+    devtoolModuleFilenameTemplate: '../[resource-path]'
   },
-  devtool: 'nosources-source-map',
+  devtool: argv.mode === 'development' ? 'eval-source-map' : 'source-map',
   externals: {
     vscode: 'commonjs vscode' // the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed, 📖 -> https://webpack.js.org/configuration/externals/
   },
@@ -31,6 +30,7 @@ const config = {
       // Webpack 5 no longer polyfills Node.js core modules automatically.
       // see https://webpack.js.org/configuration/resolve/#resolvefallback
       // for the list of Node.js core module polyfills.
+      assert: require.resolve('assert')
     }
   },
   plugins: [
@@ -51,5 +51,5 @@ const config = {
       }
     ]
   }
-};
+}};
 module.exports = config;
