@@ -111,7 +111,20 @@ const allKeys = [
     "space"
 ]
 
-function setColor(element, kind){
+function findColor(kind, config){
+    if(!kind){
+        return 'kind-color-none'
+    }
+    if(config.colorCblind){
+        let i = (kind.index) % 5
+        return `kind-color-blind-${i}`
+    }else{
+        let i = (kind.index) % 8
+        return `kind-color-${i}`
+    }
+}
+
+function setColor(element, kind, config){
     let oldcolor = undefined
     for(let className of element.classList.values()){
         if(className.match(/kind-color/)){
@@ -120,7 +133,7 @@ function setColor(element, kind){
         }
     }
     if(oldcolor){ element.classList.remove(oldcolor) }
-    element.classList.add(`kind-color-${kind ? kind.index : 'none'}`)
+    element.classList.add(findColor(kind, config))
 }
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -130,6 +143,7 @@ window.addEventListener('message', event => {
     const message = event.data;
     let keymap = message.keymap;
     let kinds = message.kinds;
+    let config = message.config;
 
     // update keys
     for(i in allKeys){
@@ -139,11 +153,11 @@ window.addEventListener('message', event => {
         if(keymap && keymap[names[i]]){
             let binding = keymap[names[i]]
             name.innerHTML = binding.label
-            let kind_d = (kinds && kinds[binding.kind]) || {index: 'none', description: ''}
+            let kind_d = (kinds && kinds[binding.kind]) || {index: 'none', description: '', colorBlind: false}
             detail.innerHTML = `
                 <div class="detail-text">
                     ${binding.kind ?
-                        `${capitalizeFirstLetter(binding.kind)} command (<div class="detail-kind-color kind-color-${kind_d.index}"></div>): `
+                        `${capitalizeFirstLetter(binding.kind)} command (<div class="detail-kind-color kind-color-${findColor(kind_d, config)}"></div>): `
                     : ''}
                     ${binding.detail}
                 </div>
@@ -151,8 +165,8 @@ window.addEventListener('message', event => {
             `
             detail.classList.remove('empty')
             if(kinds){
-                setColor(name, kinds[binding.kind])
-                setColor(label, kinds[binding.kind])
+                setColor(name, kinds[binding.kind], config)
+                setColor(label, kinds[binding.kind], config)
             }
         }else{
             if(detail){ 

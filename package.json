@@ -138,6 +138,11 @@
                         }
                     }
                 },
+                "modalkeys.colorBlindDocs": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Use shades that vary in luminance as well as color to make visual documentation of keybindings accessible to those with limited color vision. This reduces the number of disintct colors that are used."
+                },
                 "modalkeys.userPresetsFolder": {
                     "type": "string",
                     "description": "A folder where modal-key presets can be found.",

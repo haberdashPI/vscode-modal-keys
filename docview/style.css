@@ -14,6 +14,12 @@
 .kind-color-6 { background-color: #a6761d77; }
 .kind-color-7 { background-color: #66666677; }
 
+.kind-color-blind-0 { background-color: #31685B; }
+.kind-color-blind-1 { background-color: #577647; }
+.kind-color-blind-2 { background-color: #818232; }
+.kind-color-blind-3 { background-color: #B38E2F; }
+.kind-color-blind-4 { background-color: #E19652; }
+
 .detail-kind-color {
     min-width: 1.5rem;
     width: 1rem;
