@@ -98,10 +98,12 @@ interface MappedKeyKind {
     description?: string
 }
 let docKinds: IHash<MappedKeyKind> | undefined
+let useColorBlind = false
 export function updateFromConfig(): void {
     const config = vscode.workspace.getConfiguration("modalkeys")
     let kinds = config.get<KeyKind[]>("docKinds", []);
     docKinds = {}
+    useColorBlind = config.get<boolean>("colorBlindDocs", false);
     for(let i=0; i<kinds.length; i++){
         docKinds[kinds[i].name] = {index: i, description: kinds[i].description}
     }
@@ -135,7 +137,11 @@ export class DocViewProvider implements vscode.WebviewViewProvider {
 
     public refresh(){
         if(this._view?.webview){
-            this._view?.webview.postMessage({keymap: this._help_map, kinds: docKinds})
+            this._view?.webview.postMessage({
+                keymap: this._help_map, 
+                kinds: docKinds,
+                config: {colorBlind: useColorBlind}
+            })
         }
     }
     public updateStatic(mode: string){

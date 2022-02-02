@@ -35,6 +35,10 @@ settings. Leave these blanks to use the theme colors for built-in search command
 | `searchOtherMatchesBackground` | ``      | Background color for other visible search matches.
 | `searchOtherMatchesBorder`     | ``      | Border color for other visible search matches .
 
+## Color Blind Friendliness
+
+By defaul the colors used for visual documentation are selected to be color-blind friendly (by consistently varying the luminance of the colors). You can set `colorBlindDocs` to false if you'd like to use a palette that is not color-blind friendly. There are slightly more distinct shades that can be used in this case (8 instead of 5).
+
 ## Changing Status Bar
 
 You can change the text shown in status bar in each mode along with the text
