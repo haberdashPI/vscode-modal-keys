@@ -115,7 +115,7 @@ function findColor(kind, config){
     if(!kind){
         return 'kind-color-none'
     }
-    if(config.colorCblind){
+    if(config.colorBlind){
         let i = (kind.index) % 5
         return `kind-color-blind-${i}`
     }else{
@@ -157,7 +157,7 @@ window.addEventListener('message', event => {
             detail.innerHTML = `
                 <div class="detail-text">
                     ${binding.kind ?
-                        `${capitalizeFirstLetter(binding.kind)} command (<div class="detail-kind-color kind-color-${findColor(kind_d, config)}"></div>): `
+                        `${capitalizeFirstLetter(binding.kind)} command (<div class="detail-kind-color ${findColor(kind_d, config)}"></div>): `
                     : ''}
                     ${binding.detail}
                 </div>
