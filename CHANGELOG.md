@@ -2,6 +2,10 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.9.0
+
+- **Feature**: Support for color-blind friendly visual documentation; on by default. You can switch back to the old color scheme by changing `colorBlindDocs` to false.
+
 # Version 0.8.3
 - **Fix**: corrected clipboard extension for Larkin keybindings
 
