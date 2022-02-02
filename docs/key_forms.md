@@ -181,7 +181,9 @@ keybindings: {
 }
 ```
 
-The colors for doc kinds are determined by their order in `docKinds`, and are selected from a carefully defined [color brewer](https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3) color set, to ensure colors are easily differentiable.
+The colors for doc kinds are determined by their order in `docKinds`, and are selected from a carefully defined [Batlow](https://www.fabiocrameri.ch/batlow/) color scheme. There are 5 such colors, and they are chosen to be friendly to color-blind viewers by consistently varying the luminance. You can also [switch](./config.html#color-blind-friendliness) to a more vibrant [color brewer](https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3) set, which has 8 distinct colors. This set is not as accessable to color-blind viewers. 
+
+If you have more kinds than avaialble colors in your documentation, the colors will be cycled (i.e. the 6th kind will be colored the same as the 1st if you use the color-blind friendly option).
 
 ### Leaders
 
