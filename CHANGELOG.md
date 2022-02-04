@@ -2,6 +2,10 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.10.0
+- **Feature**: support vscode.dev
+- **Bugfix**: detail coloring for visual docs was bad for some color themes
+
 # Version 0.9.0
 
 - **Feature**: Support for color-blind friendly visual documentation; on by default. You can switch back to the old color scheme by changing `colorBlindDocs` to false.
