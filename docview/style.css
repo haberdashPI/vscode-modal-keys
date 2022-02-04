@@ -20,6 +20,21 @@
 .kind-color-blind-3 { background-color: #B38E2Faa; }
 .kind-color-blind-4 { background-color: #E19652aa; }
 
+.kind-color-0-opaque { background-color: #1b9e77; }
+.kind-color-1-opaque { background-color: #d95f02; }
+.kind-color-2-opaque { background-color: #7570b3; }
+.kind-color-3-opaque { background-color: #e7298a; }
+.kind-color-4-opaque { background-color: #66a61e; }
+.kind-color-5-opaque { background-color: #e6ab02; }
+.kind-color-6-opaque { background-color: #a6761d; }
+.kind-color-7-opaque { background-color: #666666; }
+
+.kind-color-blind-0-opaque { background-color: #31685B; }
+.kind-color-blind-1-opaque { background-color: #577647; }
+.kind-color-blind-2-opaque { background-color: #818232; }
+.kind-color-blind-3-opaque { background-color: #B38E2F; }
+.kind-color-blind-4-opaque { background-color: #E19652; }
+
 .detail-kind-color {
     min-width: 1.5rem;
     width: 1rem;
@@ -55,7 +70,8 @@
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     border-color: var(--vscode-statusBar-foreground);
-    background-color: var(--vscode-statusBar-background)
+    background-color: var(--vscode-statusBar-background);
+    color: var(--vscode-statusBar-foreground);
 }
 .detail-text {
     margin-top: 0.25em;

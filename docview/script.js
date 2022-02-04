@@ -157,7 +157,7 @@ window.addEventListener('message', event => {
             detail.innerHTML = `
                 <div class="detail-text">
                     ${binding.kind ?
-                        `${capitalizeFirstLetter(binding.kind)} command (<div class="detail-kind-color ${findColor(kind_d, config)}"></div>): `
+                        `${capitalizeFirstLetter(binding.kind)} command (<div class="detail-kind-color ${findColor(kind_d, config)}-opaque"></div>): `
                     : ''}
                     ${binding.detail}
                 </div>
