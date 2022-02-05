@@ -13,6 +13,7 @@ import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectS
 import { IHash } from './util'
 import { TextDecoder } from 'text-encoding'
 import { DocViewProvider } from './keymap'
+import { Utils } from 'vscode-uri'
 
 //#endregion
 /**
@@ -190,7 +191,7 @@ interface SearchState{
     args: SearchArgs
     string?: string
     oldMode?: string
-    startSelections?: vscode.Selection[]
+    startSelections?: readonly vscode.Selection[]
     length?: number
 }
 let searchStates: IHash<SearchState> = {default: {args: {}}}
@@ -264,6 +265,7 @@ let docKeymap: DocViewProvider | undefined
  * calls this function). We also create the status bar item and text
  * decorations.
  */
+let _extensionUri: vscode.Uri
 export function register(context: vscode.ExtensionContext, _docKeymap: DocViewProvider) {
     context.subscriptions.push(
         vscode.commands.registerCommand(enterModeId, enterMode),
@@ -311,6 +313,9 @@ export function register(context: vscode.ExtensionContext, _docKeymap: DocViewPr
 
     updateSearchHighlights();
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
+
+    _extensionUri = context.extensionUri;
+    
 }
 
 let keyState = new KeyState({
@@ -874,7 +879,7 @@ async function search(args: SearchArgs | string): Promise<void> {
  * will decrease.
  */
 function highlightMatches(text: string, editor: vscode.TextEditor,
-    selections: vscode.Selection[], state: SearchState) {
+    selections: readonly vscode.Selection[], state: SearchState) {
     matchStatusText = ""
     if (state.string == ""){
         /**
@@ -1268,6 +1273,92 @@ async function replayMacro(args?: {register?: string}): Promise<void> {
     }
 }
 
+interface Browse{ 
+    label: string,
+    id: string
+}
+
+interface Preset{
+    uri: vscode.Uri;
+    label: string;
+    source: string;
+}
+function presetLabel(source: string, uri: vscode.Uri){
+    return `${source}: ${Utils.basename(uri)}`
+}
+
+async function findExtensionPresets(){
+    const fs = vscode.workspace.fs
+
+    let presetsFiles = Utils.joinPath(_extensionUri, "presets", "entries.json")
+    let entries = (<any>JSON.parse(new TextDecoder("utf-8").decode(await fs.readFile(presetsFiles)).toString()))
+    return (<string[]>(entries?.files)).map(file => {
+        let uri = Utils.joinPath(_extensionUri, "presets", file)
+        return { 
+            uri,
+            label: presetLabel("Built-in", uri),
+            source: 'builtin'
+        }
+    })
+}
+
+async function findUserPresets(folder?: string){
+    if(vscode.env.appHost === 'desktop'){
+        const fs = vscode.workspace.fs
+        let config = vscode.workspace.getConfiguration("modalkeys")
+        let userPresetsPath = folder || config.get<string>("userPresetsFolder")
+
+        if(userPresetsPath){
+            let dir = vscode.Uri.file(userPresetsPath)
+            let allFiles = (await fs.readDirectory(dir))
+            let files = allFiles.filter(x => x[0].match(/\.(js$)|(jsonc?$)/))
+            return files.map(file => {
+                let uri = Utils.joinPath(dir, file[0])
+                return { 
+                    uri,
+                    label: presetLabel("User", uri),
+                    source: 'user'
+                }
+            })
+        }
+    }
+    return []
+}
+
+async function importFile(uri: vscode.Uri){
+    const fs = vscode.workspace.fs;
+    try {
+        let js = new TextDecoder("utf-8").decode(await fs.readFile(uri))
+        if (uri.fsPath.match(/jsonc?$/))
+            js = `(${js})`
+        let preset = (function(): any {
+            let old_log = console.log;
+            console.log = function(message){
+                actionLog(`Console output: ` + message)
+            }
+            let preset = eval(js)
+            console.log = old_log;
+            return preset
+        })()
+        let config = vscode.workspace.getConfiguration("modalkeys")
+        if(!preset.keybindings)
+            throw new Error(`Could not find "keybindings" in ${uri}`)
+        else
+            config.update("keybindings", preset.keybindings, true)
+        checkExtensions(preset.extensions)
+        if(preset.docKinds){
+            config.update("docKinds", preset.docKinds, true)
+            vscode.commands.executeCommand('modalkeys.showKeymap')
+        }
+        vscode.window.showInformationMessage(
+            "ModalKeys: Keybindings imported.")
+    }
+    catch (e) {
+        vscode.window.showWarningMessage("ModalKeys: Bindings not imported."+
+            `\n ${e}`)
+    }
+}
+
 /**
  * ## Use Preset Keybindings
  *
@@ -1286,87 +1377,57 @@ async function replayMacro(args?: {register?: string}): Promise<void> {
  * object that has `keybindings` and/or `selectbindings` properties.
  */
 async function importPresets(folder?: string) {
-    const browseFolder = "Select preset folder..."
-    const builtIn = "Built-in: "
-    const user = "User: "
-    const browse = "Browse for file..."
-    let presetsPath = vscode.extensions.getExtension("haberdashpi.vscode-modal-keys")!
-        .extensionPath + "/presets"
-    let fs = vscode.workspace.fs
-    let presets = (await fs.readDirectory(vscode.Uri.file(presetsPath)))
-        .map(t => builtIn+t[0])
     let config = vscode.workspace.getConfiguration("modalkeys")
 
-    let userPresetsPath = folder || 
-        config.get<string>("userPresetsFolder")
-    if(userPresetsPath){
-        let userPresets = (await fs.readDirectory(vscode.Uri.file(userPresetsPath))).
-            map(t => user+t[0]).
-            filter(x => x.match(/\.(js$)|(jsonc?$)/))
-        presets = presets.concat(userPresets)
+    let presets: (Preset|Browse)[] = []
+    presets = presets.concat(await findExtensionPresets())
+    presets = presets.concat(await findUserPresets(folder))
+    if(vscode.env.appHost === "desktop"){
+        presets.push({ 
+            label: 'Select folder...',
+            id: 'folder'
+        })
+    }else{
+        presets.push({ 
+            label: 'Select URL...',
+            id: 'url'
+        })
     }
-    presets.push(browseFolder)
-    presets.push(browse)
+    presets.push({ 
+        label: 'Select file...',
+        id: 'file'
+    })
+
     let choice = await vscode.window.showQuickPick(presets, {
         placeHolder: "Warning: Selecting a preset will override current " +
             "keybindings in global 'settings.json'"
     })
     if (choice) {
-        let uri = choice.startsWith(builtIn) ?
-            vscode.Uri.file(presetsPath + "/" + choice.slice(builtIn.length)) :
-            vscode.Uri.file(userPresetsPath + "/" + choice.slice(user.length))
-        if (choice == browseFolder) {
-            let userPreset = await vscode.window.showOpenDialog({
+        if ((<Browse>choice)?.id === 'folder') {
+            let folder = await vscode.window.showOpenDialog({
                 openLabel: "Select Folder",
                 canSelectFiles: false,
                 canSelectFolders: true,
             })
-            if (!userPreset) return
-            let dirUri = userPreset[0]
-            config.update("userPresetsFolder", dirUri.path, true)
-            await importPresets(dirUri.path)
-            return 
-        }else if(choice == browse){
-            let userPreset = await vscode.window.showOpenDialog({
+            if(folder){
+                config.update("userPresetsFolder", folder[0].path, true)
+                await importPresets(folder[0].path)
+            }
+        }else if((<Browse>choice)?.id === 'file'){
+            let file = await vscode.window.showOpenDialog({
                 openLabel: "Import presets",
                 filters: { Preset: ["json", "jsonc", "js"], },
                 canSelectFiles: true,
                 canSelectFolders: false,
                 canSelectMany: false
             })
-            if (!userPreset)
-                return
-            uri = userPreset[0]
-        }
-        try {
-            let js = new TextDecoder("utf-8").decode(await fs.readFile(uri))
-            if (uri.fsPath.match(/jsonc?$/))
-                js = `(${js})`
-            let preset = (function(): any {
-                let old_log = console.log;
-                console.log = function(message){
-                    actionLog(`Console output: ` + message)
-                }
-                let preset = eval(js)
-                console.log = old_log;
-                return preset
-            })()
-            let config = vscode.workspace.getConfiguration("modalkeys")
-            if(!preset.keybindings)
-                throw new Error(`Could not find "keybindings" in ${uri}`)
-            else
-                config.update("keybindings", preset.keybindings, true)
-            checkExtensions(preset.extensions)
-            if(preset.docKinds){
-                config.update("docKinds", preset.docKinds, true)
-                vscode.commands.executeCommand('modalkeys.showKeymap')
-            }
-            vscode.window.showInformationMessage(
-                "ModalKeys: Keybindings imported.")
-        }
-        catch (e) {
-            vscode.window.showWarningMessage("ModalKeys: Bindings not imported."+
-                `\n ${e}`)
+            if(file) importFile(file[0])
+        }else if((<Browse>choice)?.id === 'url'){
+            let file = await vscode.window.showInputBox({prompt: "Enter a valid URL"})
+            if(file) importFile(vscode.Uri.parse(file, true))
+        }else{
+            let preset = (<Preset>choice)
+            importFile(preset.uri)
         }
     }
 }
