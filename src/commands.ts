@@ -1438,8 +1438,8 @@ function checkExtensions(extension_ids: string[] | undefined){
         if(!vscode.extensions.getExtension(id)){
             const install = "Install Extension"
             const view = "View Extension"
-            vscode.window.showErrorMessage(`The current ModalKeys keybindings
-                expected to find an extension (\`${id}\`), but it is not installed.`,view, install).then(sel => {
+            vscode.window.showWarningMessage(`The current ModalKeys keybindings
+                needs the extension (\`${id}\`), but it may not be installed.`,view, install).then(sel => {
                     if(sel === view){
                         vscode.commands.executeCommand("workbench.extensions.search", id)
                     }else if(sel === install){

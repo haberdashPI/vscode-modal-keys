@@ -587,10 +587,10 @@ export class KeyState {
 
     error(){
         
-        const define = "Fix: Define keymap"
-        const show = "Help: visual keymap"
-        const docs = "Help: keymap configuration"
-        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: " + this.keySequence.join(""), define, show, docs).
+        const define = "Fix: Import"
+        const show = "Help: Visual"
+        const docs = "Help: Details"
+        vscode.window.showWarningMessage("ModalKeys - Undefined key binding: `"+this.keySequence.join("")+"`", define, show, docs).
         then(selection => {
             if(selection === define){
                 vscode.commands.executeCommand("modalkeys.importPresets")
