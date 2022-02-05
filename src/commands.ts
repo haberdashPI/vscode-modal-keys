@@ -1452,24 +1452,18 @@ function checkExtensions(extension_ids: string[] | undefined){
 }
 
 async function exportPreset(){
-    let presetsPath = vscode.extensions.getExtension("haberdashpi.vscode-modal-keys")!
-        .extensionPath + "/presets"
-    let fs = vscode.workspace.fs
-    let presets = ((await fs.readDirectory(vscode.Uri.file(presetsPath))).
-        map(t => t[0]))
-    let choice = await vscode.window.showQuickPick(presets).then(item => {
-        if(item){
-            let storePreset = vscode.window.showSaveDialog({
-                saveLabel: "Export",
-                title: "Export preset keybinding"+item
-            }).then(tofile => {
-                if(tofile){
-                    let from = vscode.Uri.joinPath(vscode.Uri.file(presetsPath), item);
-                    fs.copy(from, tofile)
-                }
-            })
+    let presets = await findExtensionPresets()
+    let choice = await vscode.window.showQuickPick(presets)
+    if(choice){
+        let storePreset = await vscode.window.showSaveDialog({
+            saveLabel: "Export",
+            title: "Export preset keybinding "+choice.label
+        })
+        
+        if(storePreset){
+            vscode.workspace.fs.copy(choice.uri, storePreset)
         }
-    })
+    }
 }
 
 async function toggleKeymap(){
