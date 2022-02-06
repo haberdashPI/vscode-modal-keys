@@ -55,9 +55,9 @@
 module.exports = {
 extensions: [
     "dbankier.vscode-quick-select",
-    "haberdashpi.vscode-select-by-indent",
-    "haberdashpi.selection-utilities",
-    "haberdashpi.move-cursor-by-argument",
+    "haberdashPI.vscode-select-by-indent",
+    "haberdashPI.selection-utilities",
+    "haberdashPI.move-cursor-by-argument",
     "pustelto.bracketeer",
     "wmaurer.change-case",
     "pranshuagrawal.toggle-case",
@@ -65,7 +65,7 @@ extensions: [
     "pkief.markdown-checkbox",
     "edgardmessias.clipboard-manager",
     "stkb.rewrap",
-    "haberdashpi.terminal-polyglot",
+    "haberdashPI.terminal-polyglot",
     "jack89ita.open-file-from-path",
     "koalamer.labeled-bookmarks",
 ],
@@ -169,6 +169,8 @@ keybindings: {
     "::doc::#": { kind: "select", label: "number →", detail: "previous number" },
     "::doc::';": { kind: "select", label: "comment →", detail: "next commented region" },
     "::doc::':": { kind: "select", label: "comment ←", detail: "previous commented region" },
+    "::doc::,;": { kind: "select", label: "blk commt →", detail: "next block commented region" },
+    "::doc::,:": { kind: "select", label: "blk commt ←", detail: "previous block commented region" },
     "::doc::p": { kind: "select", label: "pargrph →", detail: "next pagaraph" },
     "::doc::P": { kind: "select", label: "pargrph ←", detail: "previous paragraph" },
     "::doc::')": { kind: "select", label: "sec →", detail: "next section" },
@@ -215,6 +217,8 @@ keybindings: {
         // comments
         "';": { unit: "comment", boundary: "both", selectWhole: true, value: '(__count || 1)'},
         "':": { unit: "comment", boundary: "both", selectWhole: true, value: '-(__count || 1)'},
+        ",;": { unit: "block_comment", boundary: "both", selectWhole: true, value: '(__count || 1)'},
+        ",:": { unit: "block_comment", boundary: "both", selectWhole: true, value: '-(__count || 1)'},
 
         // paragraphs and sections
         p:     { unit: "paragraph",  boundary: "start", select:    true, value: '(__count || 1)'  },
@@ -441,7 +445,8 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::u[": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)'},    "u]": { "modalkeys.selectBetween": {
+    "::doc::u[": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)'},    
+    "u]": { "modalkeys.selectBetween": {
         from: "[", to: "]",
         inclusive: true,
         caseSensitive: true,
@@ -456,6 +461,7 @@ keybindings: {
         docScope: true
     }},
 
+    "::doc::uC": {kind: 'select', label: 'between bracket pair', detail: 'around/inside some bracket pairs' },
     "::doc::uC(": {kind: 'select', label: 'inside ()', detail: 'inside first pair of `()` (non syntactical, useful inside comments)' },  
     "uC(": { "modalkeys.selectBetween": {
         from: "(", to: ")",
@@ -924,6 +930,22 @@ keybindings: {
     gl: "git.pull",
     "::doc::gp": {kind: "action", label: "git push", detail: "push changes to remote"},
     gp: "git.push",
+    "::doc::gc": {kind: "action", label: "→ conflict", detail: "move to next merge conflict"},
+    gc: "merge-conflict.next",
+    "::doc::gC": {kind: "action", label: "← conflict", detail: "move to previous merge conflict"},
+    gC: "merge-conflict.previous",
+    "::doc::g[": {kind: "action", label: "current", detail: "accept current change"},
+    "g[": "merge-conflict.accept.current",
+    "::doc::g]": {kind: "action", label: "incoming", detail: "accept incoming change"},
+    "g]": "merge-conflict.accept.incoming",
+    "::doc::g\\": {kind: "action", label: "both", detail: "accept both changes"},
+    "g\\": "merge-conflict.accept.both",
+    "::doc::g{": {kind: "action", label: "all current", detail: "accept all current changes"},
+    "g{": "merge-conflict.accept.all-current",
+    "::doc::g}": {kind: "action", label: "all incoming", detail: "accept all incoming changes"},
+    "g}": "merge-conflict.accept.all-current",
+    "::doc::g|": {kind: "action", label: "all both", detail: "accept all both changes"},
+    "g|": "merge-conflict.accept.all-both",
     "::doc::,e": {kind: "select", label: "error →", detail: "move to next error"},
     ",e": "editor.action.marker.next",
     "::doc::,E": {kind: "select", label: "error ←", detail: "move to previous error"},
