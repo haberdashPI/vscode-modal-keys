@@ -83,16 +83,79 @@ docKinds: [
     { name: 'leader',   description: "Leaders serve as prefixes to an entire list of key commands" }
 ],
 
+// TODO: would be better if instead of `keys`, the ::doc:: section referred to
+// the various places in docTips, so if you cahnge the key you need only change
+// the doc in one place, not two (in progress)
+
+docTips: [
+    { 
+        title: "Basic Motions" ,
+        commnet: "The standard motions to move around and select text.",
+        id: "basic",
+        prefixes: [ "", "'", "u", "g" ],
+        priority: { normal: 0, visual: 10 },
+        entries: [
+            { title: "Cursor Movement", id: "cursor" },
+            { title: "Advanced Cursor Movement", id: "advanced" },
+            { title: "Word Movement", id: "word" },
+            { title: "Document Movement", id: "document" },
+            { note: "Many additional selection commands", id: "select_leader" },
+            { note: "Selects around an entire object (e.g. word)", id: 'around_tip' }
+        ]
+    },
+    { 
+        title: "Search",
+        comment: "Selection by searching specific strings",
+        key: "search",
+        prefix: [ "" ],
+        entries: [
+            { title: "By Cursor", keys: [ '*', "&" ] },
+            { title: "By Character", keys: [ 'f', 'F', 't', 'T', 's', 'S' ]},
+            { title: "By String", keys: [ '/', '?' ] },
+            { title: "Iteration", keys: [ 'n', 'N', ';', ':' ]},
+        ]
+    },
+    { 
+        title: "Advanced Motions",
+        key: "advanced",
+        comment: "Many of the most useful, more complex motions for selecting text.",
+        prefix: [ "", "'", "u" ],
+        priority: { normal: 0, visual: 10 },
+        entries: [
+            { title: "Numbers", id: "number" },
+            { title: "Comments", id: "comment" },
+            { title: "Regions", id: "region" },
+            { title: "Brackets", id: "bracket" },
+            { title: "Indent", id: "ident" },
+            { more: [ "notebook", "argument", "text" ] },
+            { note: "Many additional selection commands", id: "select_leader" },
+            { note: "Selects around an entire object (e.g. word)", key: 'u' }
+        ]
+    },
+    { 
+        title: "Function Argument Motions",
+        key: "argument",
+        prefix: [ ",", "u" ],
+        keys: [ ",w", ",b", ",W", ",B", "u.", "u,", "u>", "u<" ]
+    },
+    {
+        title: "Notebook Motions",
+        key: "notebook",
+        priority: { normal: 0, visual: 10 },
+        keys: [ "'y", "'yc", "'yC", "uy" ],
+    },
+],
+
 keybindings: {
     // ### Motions
 
     // basic movement
-    "::doc::h": { kind: "select", label: "←", detail: "move left" },
-    "::doc::j": { kind: "select", label: '↓', detail: "move down" },
-    "::doc::k": { kind: "select", label: '↑', detail: "move up" },
-    "::doc::l": { kind: "select", label: '→', detail: "move right" },
+    "::doc::h": { kind: "select", label: "←", detail: "move left", tip: [ "basic", "cursor" ]},
+    "::doc::j": { kind: "select", label: '↓', detail: "move down", tip: [ "basic", "cursor" ] },
+    "::doc::k": { kind: "select", label: '↑', detail: "move up", tip: [ "basic", "cursor" ] },
+    "::doc::l": { kind: "select", label: '→', detail: "move right", tip: [ "basic", "cursor" ] },
     "::doc::g": { kind: "leader", label: "actions (mostly)", detail: "additional commands (mostly actions)" },
-    "::doc::gj": { kind: "select", label: 'unwrp ↓', detail: "Down unwrapped line" },
+    "::doc::gj": { kind: "select", label: 'unwrp ↓', detail: "Down unwrapped line"},
     "::doc::gk": { kind: "select", label: 'unwrp ↑', detail: "Up unwrapped line"},
     "::using::cursorMove::": {
         h: { to: 'left', select: "__mode !== 'normal'", value: '__count' },
@@ -104,33 +167,33 @@ keybindings: {
     },
 
     // line related movements
-    "::doc::H": { kind: "select", label: "start", detail: "start of line (alterantes between first non-whitepace, and first)" },
+    "::doc::H": { kind: "select", label: "start", detail: "start of line (alterantes between first non-whitepace, and first)", tip: [ "basic", "advanced" ] },
     H: "cursorHomeSelect",
-    "::doc::L": { kind: "select", label: "end", detail: "end of line" },
+    "::doc::L": { kind: "select", label: "end", detail: "end of line", tip: [ "basic", "advanced" ] },
     L: { "cursorMove": { to: "wrappedLineEnd", select: true } },
-    "::doc::G": { kind: "select", label: "expand", detail: "expand selections to full lines" },
+    "::doc::G": { kind: "select", label: "expand", detail: "expand selections to full lines", tip: [ "basic", "advanced" ] },
     G:  "expandLineSelection",
-    "::doc::K": { kind: "select", label: "sel ↑", detail: "select lines upwards" },    
+    "::doc::K": { kind: "select", label: "sel ↑", detail: "select lines upwards", tip: [ "basic", "advanced" ] },    
     K: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'up', by: 'wrappedLine', select: true, value: '__count' } },
         "expandLineSelection",
         "selection-utilities.activeAtStart"
     ],
-    "::doc::J": { kind: "select", label: "sel ↓", detail: "select lines downwards" },    
+    "::doc::J": { kind: "select", label: "sel ↓", detail: "select lines downwards", tip: [ "basic", "advanced" ] },    
     J: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'down', by: 'wrappedLine', select: true, value: '__count' } },
         "expandLineSelection",
     ],
-    "::doc::gK": { kind: "select", label: 'unwrp sel ↑', detail: "select unwrapped lines upwards" },
+    "::doc::gK": { kind: "select", label: 'unwrp sel ↑', detail: "select unwrapped lines upwards", tip: [ "basic", "advanced" ] },
     gK: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'up', by: 'line', select: true, value: '__count' } },
         "expandLineSelection",
         "selection-utilities.activeAtStart"
     ],
-    "::doc::gJ": { kind: "select", label: 'unwrp sel ↓', detail: "select unwrapped lines downwards" },
+    "::doc::gJ": { kind: "select", label: 'unwrp sel ↓', detail: "select unwrapped lines downwards", tip: [ "basic", "advanced" ] },
     gJ: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'down', by: 'line', select: true, value: '__count' } },
@@ -138,54 +201,54 @@ keybindings: {
     ],
 
 
-    "::doc::\\": { kind: "select", label: 'right character', detail: "select *just* the character to the right" },
+    "::doc::\\": { kind: "select", label: 'right character', detail: "select *just* the character to the right", tip: [ "basic", "advanced" ] },
     "\\": [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'right', select: true, value: '__count' } }
     ],
-    "::doc::|": { kind: "select", label: 'left character', detail: "select *just* the character to the left" },
+    "::doc::|": { kind: "select", label: 'left character', detail: "select *just* the character to the left", tip: [ "basic", "advanced" ] },
     "|": [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'left', select: true, value: '__count' } }
     ],
 
     // movements around regex units
-    "::doc::'": { kind: "leader", label: "select (mostly)", detail: "additional commands (mostly selection/view related)"},
-    "::doc::u": { kind: "leader", label: "around", detail: "selection commands that move start and end of a selection to surround the entire object (rather than extending to specified start/end point)" },
+    "::doc::'": { kind: "leader", label: "select (mostly)", detail: "additional commands (mostly selection/view related)", tip: [ "select_leader" ]},
+    "::doc::u": { kind: "leader", label: "around", detail: "selection commands that move start and end of a selection to surround the entire object (rather than extending to specified start/end point)", tip: [ "around_tip" ] },
     "::doc::u'": { kind: "leader", label: "select", detail: "additional selections"},
-    "::doc::w": { kind: "select", label: "subwrd →", detail: "next subword (camel/snake case)" },
-    "::doc::W": { kind: "select", label: "word →", detail: "next word"},
-    "::doc::e": { kind: "select", label: "word end →", detail: "next word end" },
-    "::doc::b": { kind: "select", label: "subwrd ←", detail: "previous subword (came/snake case)" },
-    "::doc::B": { kind: "select", label: "word ←", detail: "previous word" },
-    "::doc::E": { kind: "select", label: "word end ←", detail: "previous word end" },
+    "::doc::w": { kind: "select", label: "subwrd →", detail: "next subword (camel/snake case)", tip: [ "basic", "word" ] },
+    "::doc::W": { kind: "select", label: "word →", detail: "next word", tip: [ "basic", "word" ]},
+    "::doc::e": { kind: "select", label: "word end →", detail: "next word end", tip: [ "basic", "word" ] },
+    "::doc::b": { kind: "select", label: "subwrd ←", detail: "previous subword (came/snake case)", tip: [ "basic", "word" ] },
+    "::doc::B": { kind: "select", label: "word ←", detail: "previous word", tip: [ "basic", "word" ] },
+    "::doc::E": { kind: "select", label: "word end ←", detail: "previous word end", tip: [ "basic", "word" ] },
     "::doc::uw": { kind: "select", label: "subwrd →", detail: "select entire subword with and trailing whitespace (camel/snake case)" },
     "::doc::uW": { kind: "select", label: "word →", detail: "select entire word and trailing whitespace"},
     "::doc::ue": { kind: "select", label: "in word →", detail: "select entire word (no whitespace)" },
     "::doc::ub": { kind: "select", label: "subwrd ←", detail: "select previous subword and trailing whitespace (came/snake case)" },
     "::doc::uB": { kind: "select", label: "word ←", detail: "select previous word and trailing whitespace" },
     "::doc::uE": { kind: "select", label: "in word ←", detail: "select previous word (no whitespace)" },    
-    "::doc::@": { kind: "select", label: "number ←", detail: "next number" },
-    "::doc::#": { kind: "select", label: "number →", detail: "previous number" },
-    "::doc::';": { kind: "select", label: "comment →", detail: "next commented region" },
-    "::doc::':": { kind: "select", label: "comment ←", detail: "previous commented region" },
-    "::doc::,;": { kind: "select", label: "blk commt →", detail: "next block commented region" },
-    "::doc::,:": { kind: "select", label: "blk commt ←", detail: "previous block commented region" },
-    "::doc::p": { kind: "select", label: "pargrph →", detail: "next pagaraph" },
-    "::doc::P": { kind: "select", label: "pargrph ←", detail: "previous paragraph" },
-    "::doc::')": { kind: "select", label: "sec →", detail: "next section" },
-    "::doc::'(": { kind: "select", label: "sec ←", detail: "previous section" },
-    "::doc::)": { kind: "select", label: "subsec →", detail: "next subsection" },
-    "::doc::(": { kind: "select", label: "subsec ←", detail: "previous subsection" },
+    "::doc::@": { kind: "select", label: "number ←", detail: "next number", tip: [ "advanced", "number" ] },
+    "::doc::#": { kind: "select", label: "number →", detail: "previous number", tip: [ "advanced", "number" ] },
+    "::doc::';": { kind: "select", label: "comment →", detail: "next commented region" , tip: [ "advanced", "comment" ]},
+    "::doc::':": { kind: "select", label: "comment ←", detail: "previous commented region" , tip: [ "advanced", "comment" ]},
+    "::doc::,;": { kind: "select", label: "blk commt →", detail: "next block commented region" , tip: [ "advanced", "comment" ]},
+    "::doc::,:": { kind: "select", label: "blk commt ←", detail: "previous block commented region" , tip: [ "advanced", "comment" ]},
+    "::doc::p": { kind: "select", label: "pargrph →", detail: "next pagaraph", tip: [ "advanced", "region" ] },
+    "::doc::P": { kind: "select", label: "pargrph ←", detail: "previous paragraph", tip: [ "advanced", "region" ] },
+    "::doc::')": { kind: "select", label: "sec →", detail: "next section", tip: [ "advanced", "region" ] },
+    "::doc::'(": { kind: "select", label: "sec ←", detail: "previous section", tip: [ "advanced", "region" ] },
+    "::doc::)": { kind: "select", label: "subsec →", detail: "next subsection", tip: [ "advanced", "region" ] },
+    "::doc::(": { kind: "select", label: "subsec ←", detail: "previous subsection", tip: [ "advanced", "region" ] },
     "::doc::up": { kind: "select", label: "pargrph →", detail: "next pagaraph" },
     "::doc::uP": { kind: "select", label: "pargrph ←", detail: "previous paragraph" },
     "::doc::u')": { kind: "select", label: "sec →", detail: "next section" },
     "::doc::u'(": { kind: "select", label: "sec ←", detail: "previous section" },
     "::doc::u)": { kind: "select", label: "subsec →", detail: "next subsection" },
     "::doc::u(": { kind: "select", label: "subsec ←", detail: "previous subsection" },
-    "::doc::'w": { kind: "select", label: "WORD →", detail: "next WORD; e.g. contiguous non-whitespace region"},
-    "::doc::'b": { kind: "select", label: "WORD ←", detail: "previous WORD; e.g. contiguous non-whitespace region"},
-    "::doc::'e": { kind: "select", label: "WORD end →", detail: "to end of WORD; e.g. contiguous non-whitespace region"},
+    "::doc::'w": { kind: "select", label: "WORD →", detail: "next WORD; e.g. contiguous non-whitespace region", tip: [ "basic", "word" ]},
+    "::doc::'b": { kind: "select", label: "WORD ←", detail: "previous WORD; e.g. contiguous non-whitespace region", tip: [ "basic", "word" ]},
+    "::doc::'e": { kind: "select", label: "WORD end →", detail: "to end of WORD; e.g. contiguous non-whitespace region", tip: [ "basic", "word" ]},
     "::doc::u'w": { kind: "select", label: "WORD →", detail: "select entire WORD and trailing whitespace; a WORD is a contiguous non-whitespace region" },
     "::doc::u'e": { kind: "select", label: "WORD →", detail: "select entire WORD; a WORD is a contiguous non-whitespace region" },
 
@@ -266,15 +329,15 @@ keybindings: {
     },
 
     // generic, magic selection
-    "::doc::uu": { kind: 'select', label: "smart expand", detail: "Use VSCode's built-in smart expansion command"},
+    "::doc::uu": { kind: 'select', label: "smart expand", detail: "Use VSCode's built-in smart expansion command", tip: [ "advanced", "region" ]},
     "uu": "editor.action.smartSelect.expand",
 
     // buffer related
-    "::doc::$": { kind: "select", label: "all", detail: "Select the entire document" },
+    "::doc::$": { kind: "select", label: "all", detail: "Select the entire document", tip: [ "basic", "document" ] },
     $: [ "editor.action.selectAll" ],
-    "::doc::gG": { kind: 'select', label: 'doc end'},
+    "::doc::gG": { kind: 'select', label: 'doc end', tip: [ "basic", "document" ] },
     "gG": "cursorBottomSelect",
-    "::doc::gg": { kind: 'select', label: 'doc start'},
+    "::doc::gg": { kind: 'select', label: 'doc start', tip: [ "basic", "document" ] },
     "gg": "cursorTopSelect",
 
     // search related
@@ -377,14 +440,14 @@ keybindings: {
 
     // ### more complex syntactic selections
 
-    "::doc::%": { kind: 'select', label: 'to bracket', detail: "Move to matching bracket"},
+    "::doc::%": { kind: 'select', label: 'to bracket', detail: "Move to matching bracket", tip: [ "advanced", "bracket" ]},
     '%': "editor.action.jumpToBracket",
-    "::doc::''": {kind: 'select', label: 'in quotes', detail: "text within current quotes"},
+    "::doc::''": {kind: 'select', label: 'in quotes', detail: "text within current quotes", tip: [ "advanced", "bracket" ]},
     "''": "bracketeer.selectQuotesContent",
-    "::doc::'\"": {kind: 'select', label: 'around quotes', detail: "quotes and text within current quotes"},
+    "::doc::'\"": {kind: 'select', label: 'around quotes', detail: "quotes and text within current quotes", tip: [ "advanced", "bracket" ]},
     "'\"": ["bracketeer.selectQuotesContent", "bracketeer.selectQuotesContent"],
     // the below is a bit hacky; I want to add these commandsto my extension
-    "::doc::[": {kind: 'select', label: 'in parens', detail: 'text inside parents/brackets/braces'},
+    "::doc::[": {kind: 'select', label: 'in parens', detail: 'text inside parents/brackets/braces', tip: [ "advanced", "bracket" ]},
     "[": [
         {
             if: "!__selection.isEmpty",
@@ -397,7 +460,7 @@ keybindings: {
         },
         { "editor.action.selectToBracket": {"selectBrackets": false} }
     ],
-    "::doc::{": {kind: 'select', label: 'arnd parens', detail: 'parents/brackets/braces and their contents'},
+    "::doc::{": {kind: 'select', label: 'arnd parens', detail: 'parents/brackets/braces and their contents', tip: [ "advanced", "bracket" ]},
     "{": [
         {
             if: "!__selection.isEmpty",
@@ -411,18 +474,19 @@ keybindings: {
         { "editor.action.selectToBracket": {"selectBrackets": true} }
     ],
 
-    "::doc::'>": { kind: 'select', label: 'in <>', detail: 'text inside angle brackets'},
+    "::doc::'>": { kind: 'select', label: 'in <>', detail: 'text inside angle brackets', tip: [ "advanced", "bracket" ]},
     "'>": "extension.selectAngleBrackets",
-    "::doc::'<": { kind: 'select', label: 'in ><', detail: 'text inside tag pairs (e.g. <a>text</a>)'},
+    "::doc::'<": { kind: 'select', label: 'in ><', detail: 'text inside tag pairs (e.g. <a>text</a>)', tip: [ "advanced", "bracket" ]},
     "'<": "extension.selectInTag",
 
-    "::doc::']": {kind: 'select', label: 'indent+top', detail: 'all text at same indent and the unindent line just above it (ala python syntax)'},
+    "::doc::']": {kind: 'select', label: 'indent+top', detail: 'all text at same indent and the unindent line just above it (ala python syntax)', tip: [ "advanced", "ident" ]},
     "']": "vscode-select-by-indent.select-outer-top-only",
-    "::doc::]": {kind: 'select', label: 'inside indent', detail: 'all text at same indent'},
+    "::doc::]": {kind: 'select', label: 'inside indent', detail: 'all text at same indent', tip: [ "advanced", "ident" ]},
     "]": "vscode-select-by-indent.select-inner",
-    "::doc::}": {kind: 'select', label: 'around indent', detail: 'all text at same indent along with the line above and below this (ala c-like synatx)'},
+    "::doc::}": {kind: 'select', label: 'around indent', detail: 'all text at same indent along with the line above and below this (ala c-like synatx)', tip: [ "advanced", "ident" ]},
     "}": "vscode-select-by-indent.select-outer",
 
+    // TODO: this is where I stopped adding commands to `docTips`
     "::doc::u`": {kind: 'select', label: 'inside ``', detail: 'inside first character pair `` (non syntactical, useful inside comments)'},
     "u`": { "modalkeys.selectBetween": {
         from: "`", to: "`",
