@@ -81,6 +81,7 @@ export interface Keyhelp{
     kind: string
     detail?: string,
     keys?: IHash<Keyhelp>
+    tip?: string,
 }
 
 export interface Keymodes {

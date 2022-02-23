@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { IHash } from './util';
-import { KeyState } from "./actions";
+import { Keyhelp, KeyState } from "./actions";
 import { Keymodes } from "./actions"
 
 let extensionUri: vscode.Uri;
@@ -69,14 +69,13 @@ interface KeyDoc {
     key: string,
     kind: string,
     label: string,
-    detail: string,
-    tip: string
+    detail?: string,
 }
 
-type KeyDocs = IHash<KeyDoc[]>
+type KeyDocs = IHash<IHash<KeyDoc[]>>
 let keyDocs: KeyDocs = {};
 type TipNode = TipGroup|TipItem|TipNote
-let docTips: TipGroup[] = []
+let docTips: IHash<TipGroup[]> = {}
 
 export function register(context: vscode.ExtensionContext) {
     const treeProvider = new KeytipProvider()
@@ -91,22 +90,50 @@ export function updateFromConfig(): void {
     docTips = config.get<TipGroup[]>("docTips", []);
 }
 
+function setKeytip(help: IHash<Keyhelp>, mode: string, prefix: string = ""){
+    for(let key of Object.keys(help)){
+        let keyhelp: Keyhelp = help[key]
+        if(keyhelp.tip){
+            if(!keyDocs[mode][keyhelp.tip]){
+                keyDocs[mode][keyhelp.tip] = []
+            }
+            keyDocs[mode][keyhelp.tip].push({
+                key: prefix+key,
+                label: keyhelp.label, 
+                kind: keyhelp.kind, 
+                detail: keyhelp.detail
+            })
+        }
+        if(keyhelp.keys){
+            setKeytip(keyhelp.keys, mode, prefix+key)
+        }
+    }
+}
 
+// TODO: probably need someway to indicate there's an update to the tree
+// TODO: filter tips by keystate (after we get the tree displaying)
 export class KeytipProvider implements vscode.TreeDataProvider <TipNode|KeyDoc> {
-    private keymodes: Keymodes;
+    private mode: string = ""
+    update(state: KeyState, mode: string){
+        this.mode = mode
+    }
     setKeymodes(modes: Keymodes){
-        this.keymodes = modes;
-        // TODO: update doctips here
+        keyDocs = {}
+        for(let mode of Object.keys(modes)){
+            if(modes.help){
+                setKeytip(modes.help[mode], mode)
+            }
+        }
     }
     getChildren(element?: TipNode|KeyDoc) {
         if(!element){
-            return docTips;
+            return docTips[this.mode];
         }else{
             let entries = (<TipGroup>element)?.entries
             if(entries){
                 return entries
             }else if((<TipItem>element)?.title){
-                return keyDocs[(<TipItem>element).id];
+                return keyDocs[this.mode][(<TipItem>element).id];
             }
         }
     }
