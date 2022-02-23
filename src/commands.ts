@@ -14,6 +14,7 @@ import { IHash } from './util'
 import { TextDecoder } from 'text-encoding'
 import { DocViewProvider } from './keymap'
 import { Utils } from 'vscode-uri'
+import { KeytipProvider } from './keytips'
 
 //#endregion
 /**
@@ -257,6 +258,7 @@ export function revealActive(editor: vscode.TextEditor){
 }
 
 let docKeymap: DocViewProvider | undefined
+let docKeytips: KeytipProvider | undefined
 
 /**
  * ## Registering Commands
@@ -266,7 +268,7 @@ let docKeymap: DocViewProvider | undefined
  * decorations.
  */
 let _extensionUri: vscode.Uri
-export function register(context: vscode.ExtensionContext, _docKeymap: DocViewProvider) {
+export function register(context: vscode.ExtensionContext, _docKeymap: DocViewProvider, _keyTips: KeytipProvider) {
     context.subscriptions.push(
         vscode.commands.registerCommand(enterModeId, enterMode),
         vscode.commands.registerCommand(enterInsertId, enterInsert),
@@ -310,6 +312,9 @@ export function register(context: vscode.ExtensionContext, _docKeymap: DocViewPr
 
     docKeymap = _docKeymap;
     docKeymap?.update(keyState, realMode(keyMode))
+
+    docKeytips = _keyTips;
+    docKeytips?.update(keyState, realMode(keyMode))
 
     updateSearchHighlights();
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
@@ -489,6 +494,7 @@ export function onSelectionChanged(e: vscode.TextEditorSelectionChangeEvent){
 async function runActionForKey(key: string, mode: string = keyMode, state: KeyState = keyState) {
     await state.handleKey(key, realMode(mode))
     docKeymap!.update(state, realMode(keyMode))
+    docKeytips!.update(state, realMode(keyMode))
     return !state.waitingForKey()
 }
 
@@ -594,6 +600,7 @@ export async function enterMode(args: string | EnterModeArgs) {
         await vscode.commands.executeCommand("setContext", "modalkeys.mode", keyMode)
     }
     docKeymap?.update(keyState, realMode(keyMode))
+    docKeytips?.update(keyState, realMode(keyMode))
 }
 
 export async function restoreEditorMode(editor: vscode.TextEditor | undefined){
@@ -1357,6 +1364,10 @@ async function importFile(uri: vscode.Uri){
             throw new Error(`Could not find "keybindings" in ${uri}`)
         else
             config.update("keybindings", preset.keybindings, true)
+        if(preset.docTips){
+            config.update("docTips", preset.docTips, true) 
+            vscode.commands.executeCommand('modalkeys.showTips')
+        }
         checkExtensions(preset.extensions)
         if(preset.docKinds){
             config.update("docKinds", preset.docKinds, true)
@@ -1493,3 +1504,5 @@ async function showKeymap(){
     await vscode.commands.executeCommand('workbench.view.extension.modalKeyBindingView')
     editor && vscode.window.showTextDocument(editor.document)
 }
+
+// TODO: toggle key tips

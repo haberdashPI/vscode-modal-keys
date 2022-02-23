@@ -12,6 +12,7 @@ import { mergeWith, merge, uniq, cloneDeep } from 'lodash'
 import { IHash } from './util'
 
 import * as vscode from 'vscode'
+import { KeytipProvider } from './keytips'
 /**
  * ## Action Definitions
  *
@@ -194,6 +195,12 @@ export function setOutputChannel(channel: vscode.OutputChannel) {
 export function log(message: string) {
     outputChannel.appendLine(message)
 }
+
+let keyTipState: KeytipProvider
+export function registerKeytips(provider: KeytipProvider){
+    keyTipState = provider
+}
+
 /**
  * ## Updating Configuration from settings.json
  *
@@ -243,8 +250,10 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     if (errors > 0)
         log(`Found ${errors} error${errors > 1 ? "s" : ""}. ` +
             "Keybindings might not work correctly.")
-    else
+    else{
         log("Validation completed successfully.")
+        keyTipState.setKeymodes(rootKeymodes!)
+    }
 }
 
 /**

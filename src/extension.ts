@@ -18,19 +18,21 @@ import * as keymap from './keymap'
  * which means that the extension is activated as soon as VS Code is running.
  */
 export function activate(context: vscode.ExtensionContext) {
-	let keymapState = keymap.register(context)
+	let keymapState = keymap.register(context);
+	let keyTipState = keytips.register(context)
 
 	/**
 	 * The commands are defined in the `package.json` file. We register them
 	 * with function defined in the `commands` module.
 	 */
-	commands.register(context, keymapState)
+	commands.register(context, keymapState, keyTipState)
 	/**
 	 * We create an output channel for diagnostic messages and pass it to the
 	 * `actions` module.
 	 */
 	let channel = vscode.window.createOutputChannel("ModalKeys")
 	actions.setOutputChannel(channel)
+	actions.registerKeytips(keyTipState)
 
 	/**
 	 * Then we subscribe to events we want to react to.

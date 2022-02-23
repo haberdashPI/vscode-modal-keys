@@ -52,6 +52,14 @@
                     "icon": "icon.svg",
                     "visibility": "visible"
                 }
+            ],
+            "modalKeyTips": [
+                {
+                    "type": "tree",
+                    "id": "modalkeys.tipView",
+                    "name": "Tips",
+                    "visibility": "visible"
+                }
             ]
         },
         "viewsContainers": {
@@ -59,6 +67,13 @@
                 {
                     "id": "modalKeyBindingView",
                     "title": "Modal Key Bindings",
+                    "icon": "icon.svg"
+                }
+            ],
+            "activitybar": [
+                {
+                    "id": "modalKeyTips",
+                    "title": "Modal-Keybinding Tips",
                     "icon": "icon.svg"
                 }
             ]
