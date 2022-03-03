@@ -469,8 +469,8 @@ module.exports = {
     "ca(": [ "modalkeys.cancelMultipleSelections", "extension.selectParenthesis", "extension.selectParenthesis", "deleteLeft", "modalkeys.enterInsert" ],
     "ci[": [ "modalkeys.cancelMultipleSelections", "extension.selectSquareBrackets", "deleteLeft", "modalkeys.enterInsert" ],
     "ca[": [ "modalkeys.cancelMultipleSelections", "extension.selectSquareBrackets", "extension.selectSquareBrackets", "deleteLeft", "modalkeys.enterInsert" ],
-    "ci{": [ "modalkeys.cancelMultipleSelections", "extension.selectAngleBrackets", "deleteLeft", "modalkeys.enterInsert" ],
-    "ca{": [ "modalkeys.cancelMultipleSelections", "extension.selectAngleBrackets", "extension.selectAngleBrackets", "deleteLeft", "modalkeys.enterInsert" ],
+    "ci{": [ "modalkeys.cancelMultipleSelections", "extension.selectCurlyBrackets", "deleteLeft", "modalkeys.enterInsert" ],
+    "ca{": [ "modalkeys.cancelMultipleSelections", "extension.selectCurlyBrackets", "extension.selectCurlyBrackets", "deleteLeft", "modalkeys.enterInsert" ],
 
 // For each of these commands we first clear the selection, while leaving multiple cursors intact, to ensure the subsequent commands behave properly. Then we use the extension to select the appropriate region of text, delete it, and enter insert mode.
 
