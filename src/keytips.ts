@@ -77,6 +77,35 @@ let keyDocs: KeyDocs = {};
 type TipNode = TipGroup|TipItem|TipNote
 let docTips: IHash<TipGroup[]> = {}
 
+function nodeCases<T>(element: TipNode|KeyDoc, cases: {
+    group?: (x: TipGroup) => T, 
+    item?: (x: TipItem) => T, 
+    note?: (x: TipNote) => T,
+    doc?: (x: KeyDoc) => T}){
+
+    if((<TipGroup>element)?.entries){
+        if(cases.group)
+            return cases.group((<TipGroup>element))
+        else
+            return undefined
+    }else if((<TipItem>element).title){
+        if(cases.item)
+            return cases.item(<TipItem>element)
+        else
+            return undefined
+    }else if((<KeyDoc>element).kind){
+        if(cases.doc)
+            return cases.doc(<KeyDoc>element)
+        else
+            return undefined
+    }else{ // if((<TipNote>element).note){
+        if(cases.note)
+            return cases.note(<TipNote>element);
+        else
+            return undefined
+    }
+}
+
 export function register(context: vscode.ExtensionContext) {
     const treeProvider = new KeytipProvider()
     vscode.window.registerTreeDataProvider('modalkeys.tipView', treeProvider)
@@ -87,7 +116,25 @@ export function register(context: vscode.ExtensionContext) {
 
 export function updateFromConfig(): void {
     const config = vscode.workspace.getConfiguration("modalkeys")
-    docTips = config.get<TipGroup[]>("docTips", []);
+    let allTips = config.get<TipGroup[]>("docTips", []);
+    addTips(allTips, keyDocs)
+}
+
+// TODO: filter all items for a given mode and map them to the docTips IHash
+export function addTips(tips: TipNode[], keyDocs: KeyDocs){
+    for(let tip of tips){
+        
+        if((<TipGroup>tip)?.entries){
+            addTips((<TipGroup>tip)?.entries, keyDocs)
+        }
+        for(let node of (tip?.entries || [])){
+            if((<TipGroup>node).entries){
+                addTips((<TipGroup>node).entries, keyDocs)
+            }
+            for(let mode of Object.keys(keyDocs)){
+            }
+        }
+    }
 }
 
 function setKeytip(help: IHash<Keyhelp>, mode: string, prefix: string = ""){
@@ -129,23 +176,18 @@ export class KeytipProvider implements vscode.TreeDataProvider <TipNode|KeyDoc> 
         if(!element){
             return docTips[this.mode];
         }else{
-            let entries = (<TipGroup>element)?.entries
-            if(entries){
-                return entries
-            }else if((<TipItem>element)?.title){
-                return keyDocs[this.mode][(<TipItem>element).id];
-            }
+            nodeCases<(TipNode|KeyDoc)[]>(element, {
+                group: group => group.entries, 
+                item: item => keyDocs[this.mode][item.id],
+            })
         }
     }
     getTreeItem(element: TipNode|KeyDoc) {
-        if((<TipGroup>element)?.entries){
-            return new TreeGroupItem(<TipGroup>element)
-        }else if((<TipItem>element).title){
-            return new TreeTipItem(<TipItem>element)
-        }else if((<KeyDoc>element).kind){
-            return new TreeKeyItem(<KeyDoc>element)
-        }else{ // if((<TipNote>element).note){
-            return new TreeNoteItem(<TipNote>element);
-        }
+        return (nodeCases<vscode.TreeItem>(element, { 
+            group: x => new TreeGroupItem(x),
+            item: x => new TreeTipItem(x),
+            doc: x => new TreeKeyItem(x),
+            note: x => new TreeNoteItem(x)
+        })!
     }
 }
