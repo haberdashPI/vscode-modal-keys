@@ -5,17 +5,74 @@ import { Keymodes } from "./actions"
 
 let extensionUri: vscode.Uri;
 
-interface TipItem {
+// how tips are represented in the configuration file by the user
+
+type UserTipNode = UserTipGroup|UserTipItem|UserTipNote
+
+interface UserTipGroup {
+    title: string
+    comment?: string
+    id: string
+    icon?: string
+    entries: UserTipNode[];
+}
+
+interface UserTipItem {
     title: string,
     comment: string,
     icon?: string,
     id: string
 }
 
-class TreeTipItem extends vscode.TreeItem {
-    constructor(item: TipItem){ 
+interface UserTipNote {
+    note: string,
+    id: string
+}
+
+// the internal representation of the doc tips
+
+interface TipNode {
+    title: string,
+    icon?: string,
+    description: string,
+    tooltip?: string,
+    type: string,
+    entries: TipNode[],
+}
+
+function userToNode(element: UserTipNode, keyModes: Keymodes) {
+    if((<UserTipGroup>element)?.entries){
+        return { 
+            title: 
+        }
+    }else if((<UserTipItem>element).title){
+        let e = <UserTipItem>element;
+        return {
+            title: e.title,
+            icon: e.icon,
+            description: e.comment,
+            type: 'item',
+            entries: findKeys(e.id, keyModes),
+
+        }
+    }else if((<KeyDoc>element).kind){
+        if(cases.doc)
+            return cases.doc(<KeyDoc>element)
+        else
+            return undefined
+    }else{ // if((<UserTipNote>element).note){
+        if(cases.note)
+            return cases.note(<UserTipNote>element);
+        else
+            return undefined
+    }
+}
+
+// TODO: STOPPED here
+class TipItem extends vscode.TreeItem {
+    constructor(item: TipNode){ 
         super(item.title, vscode.TreeItemCollapsibleState.Expanded); 
-        this.description = item.comment;
+        this.description = item.description;
         if(item.icon)
             this.iconPath = new vscode.ThemeIcon(item.icon);
     }
@@ -31,11 +88,6 @@ class TreeKeyItem extends vscode.TreeItem {
     }
 }
 
-interface TipNote {
-    note: string,
-    id: string
-}
-
 class TreeNoteItem extends vscode.TreeItem {
     constructor(item: TipNote){
         super("Note")
@@ -45,14 +97,6 @@ class TreeNoteItem extends vscode.TreeItem {
         this.description = item.note + ": " + keyDocs[item.id].join(", ")
         this.iconPath = new vscode.ThemeIcon("note")
     }
-}
-
-interface TipGroup {
-    title: string
-    comment?: string
-    id: string
-    icon?: string
-    entries: TipNode[];
 }
 
 class TreeGroupItem extends vscode.TreeItem {
@@ -74,37 +118,8 @@ interface KeyDoc {
 
 type KeyDocs = IHash<IHash<KeyDoc[]>>
 let keyDocs: KeyDocs = {};
-type TipNode = TipGroup|TipItem|TipNote
+type TipEntry = TipNode|KeyDoc
 let docTips: IHash<TipGroup[]> = {}
-
-function nodeCases<T>(element: TipNode|KeyDoc, cases: {
-    group?: (x: TipGroup) => T, 
-    item?: (x: TipItem) => T, 
-    note?: (x: TipNote) => T,
-    doc?: (x: KeyDoc) => T}){
-
-    if((<TipGroup>element)?.entries){
-        if(cases.group)
-            return cases.group((<TipGroup>element))
-        else
-            return undefined
-    }else if((<TipItem>element).title){
-        if(cases.item)
-            return cases.item(<TipItem>element)
-        else
-            return undefined
-    }else if((<KeyDoc>element).kind){
-        if(cases.doc)
-            return cases.doc(<KeyDoc>element)
-        else
-            return undefined
-    }else{ // if((<TipNote>element).note){
-        if(cases.note)
-            return cases.note(<TipNote>element);
-        else
-            return undefined
-    }
-}
 
 export function register(context: vscode.ExtensionContext) {
     const treeProvider = new KeytipProvider()
@@ -121,9 +136,9 @@ export function updateFromConfig(): void {
 }
 
 // TODO: filter all items for a given mode and map them to the docTips IHash
-export function addTips(tips: TipNode[], keyDocs: KeyDocs){
+export function filterTips(tips: TipEntry[], keyDocs: KeyDocs){
     for(let tip of tips){
-        
+        let filtered = 
         if((<TipGroup>tip)?.entries){
             addTips((<TipGroup>tip)?.entries, keyDocs)
         }
@@ -159,7 +174,7 @@ function setKeytip(help: IHash<Keyhelp>, mode: string, prefix: string = ""){
 
 // TODO: probably need someway to indicate there's an update to the tree
 // TODO: filter tips by keystate (after we get the tree displaying)
-export class KeytipProvider implements vscode.TreeDataProvider <TipNode|KeyDoc> {
+export class KeytipProvider implements vscode.TreeDataProvider <TipEntry> {
     private mode: string = ""
     update(state: KeyState, mode: string){
         this.mode = mode
@@ -172,17 +187,17 @@ export class KeytipProvider implements vscode.TreeDataProvider <TipNode|KeyDoc> 
             }
         }
     }
-    getChildren(element?: TipNode|KeyDoc) {
+    getChildren(element?: TipEntry) {
         if(!element){
             return docTips[this.mode];
         }else{
-            nodeCases<(TipNode|KeyDoc)[]>(element, {
+            nodeCases<TipEntry[]>(element, {
                 group: group => group.entries, 
                 item: item => keyDocs[this.mode][item.id],
             })
         }
     }
-    getTreeItem(element: TipNode|KeyDoc) {
+    getTreeItem(element: TipEntry) {
         return (nodeCases<vscode.TreeItem>(element, { 
             group: x => new TreeGroupItem(x),
             item: x => new TreeTipItem(x),
