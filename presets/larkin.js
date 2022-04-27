@@ -83,10 +83,6 @@ docKinds: [
     { name: 'leader',   description: "Leaders serve as prefixes to an entire list of key commands" }
 ],
 
-// TODO: would be better if instead of `keys`, the ::doc:: section referred to
-// the various places in docTips, so if you cahnge the key you need only change
-// the doc in one place, not two (in progress)
-
 docTips: [
     { 
         title: "Basic Motions" ,

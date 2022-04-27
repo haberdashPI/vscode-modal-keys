@@ -6,14 +6,13 @@ import { Keymodes } from "./actions"
 let extensionUri: vscode.Uri;
 
 // how tips are represented in the configuration file by the user
-
-type UserTipNode = UserTipGroup|UserTipItem|UserTipNote
+type UserTipNode = UserTipGroup|UserTipItem|UserTipNote|Keyhelp
 
 interface UserTipGroup {
     title: string
     comment?: string
-    id: string
     icon?: string
+    id: string
     entries: UserTipNode[];
 }
 
@@ -30,41 +29,80 @@ interface UserTipNote {
 }
 
 // the internal representation of the doc tips
+type Icon = vscode.Uri | {dark: string | vscode.Uri, light: string | vscode.Uri} | vscode.ThemeIcon
 
+enum NodeType { Item, Group, Note, Key }
 interface TipNode {
     title: string,
-    icon?: string,
+    icon?:  Icon,
     description: string,
     tooltip?: string,
-    type: string,
+    type: NodeType,
     entries: TipNode[],
 }
 
-function userToNode(element: UserTipNode, keyModes: Keymodes) {
+function findKeys(parent: UserTipNode, id: string, doc: IHash<Keyhelp> | undefined, 
+                  mode: string, keyModes: Keymodes, prefix: string = ""): TipNode[] {
+    let keys: TipNode[] = []
+    if(doc){
+        for(let key of Object.keys(doc)){
+            let keydoc = doc[key]
+            if(keydoc.tip === id){
+                keys.push(userToNode(parent, keydoc, mode, keyModes))
+            }
+            if(keydoc.keys){
+                keys = keys.concat(findKeys(parent, id, keydoc.keys, mode, keyModes, doc[key].label))
+            }
+        }
+    }
+    return keys
+}
+
+function makeSeeAlso(id: string, parent: UserTipNode){
+    // TODO: filter on all see also groups
+}
+
+function userToNode(parent: UserTipNode, element: UserTipNode, mode: string, keyModes: Keymodes): TipNode {
     if((<UserTipGroup>element)?.entries){
+        let e = <UserTipGroup>element;
+        let entries = e.entries.map(x => userToNode(parent, x, mode, keyModes))
+        entries.concat(makeSeeAlso(e.more, parent))
         return { 
-            title: 
+            title: e.title,
+            icon: e.icon ? new vscode.ThemeIcon(e.icon) : undefined,
+            description: e.comment || "",
+            type: NodeType.Group,
+            entries: entries
         }
     }else if((<UserTipItem>element).title){
         let e = <UserTipItem>element;
         return {
             title: e.title,
-            icon: e.icon,
+            icon: e.icon ? new vscode.ThemeIcon(e.icon) : undefined,
             description: e.comment,
-            type: 'item',
-            entries: findKeys(e.id, keyModes),
-
+            type: NodeType.Item,
+            entries: findKeys(parent, e.id, keyModes.help && keyModes.help[mode], mode, keyModes),
         }
-    }else if((<KeyDoc>element).kind){
-        if(cases.doc)
-            return cases.doc(<KeyDoc>element)
-        else
-            return undefined
+    }else if((<Keyhelp>element).kind){
+        let e = <Keyhelp>element;
+        return {
+            title: e.label,
+            icon: {light: vscode.Uri.joinPath(extensionUri, "icons", "lightkey.svg"), 
+                   dark: vscode.Uri.joinPath(extensionUri, "icons", 'darkkey.svg')},
+            description: e.detail || "",
+            type: NodeType.Key,
+            entries: []
+        }
     }else{ // if((<UserTipNote>element).note){
-        if(cases.note)
-            return cases.note(<UserTipNote>element);
-        else
-            return undefined
+        let e = <UserTipNote>element;
+        return {
+            title: "Note",
+            icon: {light: vscode.Uri.joinPath(extensionUri, "icons", "lightkey.svg"), 
+                    dark: vscode.Uri.joinPath(extensionUri, "icons", 'darkkey.svg')},
+            description: e.note,
+            type: NodeType.Note,
+            entries: []
+        }
     }
 }
 
@@ -73,14 +111,19 @@ class TipItem extends vscode.TreeItem {
     constructor(item: TipNode){ 
         super(item.title, vscode.TreeItemCollapsibleState.Expanded); 
         this.description = item.description;
+        this.tooltip = item.tooltip;
         if(item.icon)
             this.iconPath = new vscode.ThemeIcon(item.icon);
+        else if(item.type === NodeType.Key)
+            this.iconPath = vscode.Uri.joinPath(extensionUri, "icons", "key.svg");
+        else if(item.type === NodeType.Note)
+            this.iconPath = new vscode.ThemeIcon("note")
     }
 }
 
 // TOOD: how to get key name from keyDoc
 class TreeKeyItem extends vscode.TreeItem {
-    constructor(item: KeyDoc){
+    constructor(item: Keyhelp){
         super(item.key)
         this.description = item.label
         this.tooltip = item.detail
@@ -109,16 +152,9 @@ class TreeGroupItem extends vscode.TreeItem {
     }
 }
 
-interface KeyDoc {
-    key: string,
-    kind: string,
-    label: string,
-    detail?: string,
-}
-
-type KeyDocs = IHash<IHash<KeyDoc[]>>
-let keyDocs: KeyDocs = {};
-type TipEntry = TipNode|KeyDoc
+type Keyhelps = IHash<IHash<Keyhelp[]>>
+let keyDocs: Keyhelps = {};
+type TipEntry = TipNode|Keyhelp
 let docTips: IHash<TipGroup[]> = {}
 
 export function register(context: vscode.ExtensionContext) {
@@ -136,7 +172,7 @@ export function updateFromConfig(): void {
 }
 
 // TODO: filter all items for a given mode and map them to the docTips IHash
-export function filterTips(tips: TipEntry[], keyDocs: KeyDocs){
+export function filterTips(tips: TipEntry[], keyDocs: Keyhelps){
     for(let tip of tips){
         let filtered = 
         if((<TipGroup>tip)?.entries){
