@@ -13,6 +13,7 @@ interface UserTipGroup {
     comment?: string
     icon?: string
     id: string
+    more: string[],
     entries: UserTipNode[];
 }
 
@@ -31,7 +32,7 @@ interface UserTipNote {
 // the internal representation of the doc tips
 type Icon = vscode.Uri | {dark: string | vscode.Uri, light: string | vscode.Uri} | vscode.ThemeIcon
 
-enum NodeType { Item, Group, Note, Key }
+enum NodeType { Item, Group, Note, Key, SeeAlso }
 interface TipNode {
     title: string,
     icon?:  Icon,
@@ -41,32 +42,44 @@ interface TipNode {
     entries: TipNode[],
 }
 
-function findKeys(parent: UserTipNode, id: string, doc: IHash<Keyhelp> | undefined, 
+function findKeys(tipIndex: IHash<UserTipGroup>, id: string, doc: IHash<Keyhelp> | undefined, 
                   mode: string, keyModes: Keymodes, prefix: string = ""): TipNode[] {
     let keys: TipNode[] = []
     if(doc){
         for(let key of Object.keys(doc)){
             let keydoc = doc[key]
             if(keydoc.tip === id){
-                keys.push(userToNode(parent, keydoc, mode, keyModes))
+                keys.push(userToNode(tipIndex, keydoc, mode, keyModes))
             }
             if(keydoc.keys){
-                keys = keys.concat(findKeys(parent, id, keydoc.keys, mode, keyModes, doc[key].label))
+                keys = keys.concat(findKeys(tipIndex, id, keydoc.keys, mode, keyModes, doc[key].label))
             }
         }
     }
     return keys
 }
 
-function makeSeeAlso(id: string, parent: UserTipNode){
-    // TODO: filter on all see also groups
+function indexTips(docTips: UserTipGroup[]){
+    let result: IHash<UserTipGroup> = {}
+    for(let node of docTips){
+        result[node.id] = node
+    }
+    return result
 }
 
-function userToNode(parent: UserTipNode, element: UserTipNode, mode: string, keyModes: Keymodes): TipNode {
+function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: string, 
+                    keyModes: Keymodes): TipNode {
     if((<UserTipGroup>element)?.entries){
         let e = <UserTipGroup>element;
-        let entries = e.entries.map(x => userToNode(parent, x, mode, keyModes))
-        entries.concat(makeSeeAlso(e.more, parent))
+        let entries = e.entries.map(x => userToNode(tipIndex, x, mode, keyModes))
+        if(e.more){
+            entries.push({
+                title: "See also",
+                description: e.more.map(id => tipIndex[id].title).join(", "),
+                type: NodeType.SeeAlso,
+                entries: []
+            })
+        }
         return { 
             title: e.title,
             icon: e.icon ? new vscode.ThemeIcon(e.icon) : undefined,
@@ -81,7 +94,7 @@ function userToNode(parent: UserTipNode, element: UserTipNode, mode: string, key
             icon: e.icon ? new vscode.ThemeIcon(e.icon) : undefined,
             description: e.comment,
             type: NodeType.Item,
-            entries: findKeys(parent, e.id, keyModes.help && keyModes.help[mode], mode, keyModes),
+            entries: findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], mode, keyModes),
         }
     }else if((<Keyhelp>element).kind){
         let e = <Keyhelp>element;
@@ -102,52 +115,6 @@ function userToNode(parent: UserTipNode, element: UserTipNode, mode: string, key
             description: e.note,
             type: NodeType.Note,
             entries: []
-        }
-    }
-}
-
-// TODO: STOPPED here
-class TipItem extends vscode.TreeItem {
-    constructor(item: TipNode){ 
-        super(item.title, vscode.TreeItemCollapsibleState.Expanded); 
-        this.description = item.description;
-        this.tooltip = item.tooltip;
-        if(item.icon)
-            this.iconPath = new vscode.ThemeIcon(item.icon);
-        else if(item.type === NodeType.Key)
-            this.iconPath = vscode.Uri.joinPath(extensionUri, "icons", "key.svg");
-        else if(item.type === NodeType.Note)
-            this.iconPath = new vscode.ThemeIcon("note")
-    }
-}
-
-// TOOD: how to get key name from keyDoc
-class TreeKeyItem extends vscode.TreeItem {
-    constructor(item: Keyhelp){
-        super(item.key)
-        this.description = item.label
-        this.tooltip = item.detail
-        this.iconPath = vscode.Uri.joinPath(extensionUri, "icons", "key.svg");
-    }
-}
-
-class TreeNoteItem extends vscode.TreeItem {
-    constructor(item: TipNote){
-        super("Note")
-        if(!keyDocs[item.id]){
-            vscode.window.showErrorMessage(`Key tip with id \`${item.id}\` not found!` )
-        }
-        this.description = item.note + ": " + keyDocs[item.id].join(", ")
-        this.iconPath = new vscode.ThemeIcon("note")
-    }
-}
-
-class TreeGroupItem extends vscode.TreeItem {
-    constructor(item: TipGroup){
-        super(item.title, vscode.TreeItemCollapsibleState.Expanded)
-        this.description = item.comment;
-        if(item.icon){
-            this.iconPath = new vscode.ThemeIcon(item.icon);
         }
     }
 }
