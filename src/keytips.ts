@@ -52,7 +52,8 @@ function findKeys(tipIndex: IHash<UserTipGroup>, id: string, doc: IHash<Keyhelp>
                 keys.push(userToNode(tipIndex, keydoc, mode, keyModes))
             }
             if(keydoc.keys){
-                keys = keys.concat(findKeys(tipIndex, id, keydoc.keys, mode, keyModes, doc[key].label))
+                keys = keys.concat(findKeys(tipIndex, id, keydoc.keys, mode, keyModes, 
+                                            prefix + key))
             }
         }
     }
@@ -121,8 +122,7 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
 
 type Keyhelps = IHash<IHash<Keyhelp[]>>
 let keyDocs: Keyhelps = {};
-type TipEntry = TipNode|Keyhelp
-let docTips: IHash<TipGroup[]> = {}
+let docTips: UserTipGroup[] = []
 
 export function register(context: vscode.ExtensionContext) {
     const treeProvider = new KeytipProvider()
@@ -132,9 +132,11 @@ export function register(context: vscode.ExtensionContext) {
     return treeProvider;
 }
 
+// TODO: stopped here; need to figure out how 
+// to use new data types above in the below setup
 export function updateFromConfig(): void {
     const config = vscode.workspace.getConfiguration("modalkeys")
-    let allTips = config.get<TipGroup[]>("docTips", []);
+    let allTips = config.get<UserTipGroup[]>("docTips", []);
     addTips(allTips, keyDocs)
 }
 
