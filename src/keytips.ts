@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { IHash } from './util';
 import { Keyhelp, KeyState } from "./actions";
 import { Keymodes } from "./actions"
+import { union } from "lodash";
 
 let extensionUri: vscode.Uri;
 
@@ -37,6 +38,7 @@ interface TipNode {
     title: string,
     icon?:  Icon,
     description: string,
+    prefixes: string[],
     tooltip?: string,
     type: NodeType,
     entries: TipNode[],
@@ -49,7 +51,9 @@ function findKeys(tipIndex: IHash<UserTipGroup>, id: string, doc: IHash<Keyhelp>
         for(let key of Object.keys(doc)){
             let keydoc = doc[key]
             if(keydoc.tip === id){
-                keys.push(userToNode(tipIndex, keydoc, mode, keyModes))
+                let keyel = userToNode(tipIndex, keydoc, mode, keyModes)
+                keyel.prefixes = [prefix]
+                keys.push(keyel)
             }
             if(keydoc.keys){
                 keys = keys.concat(findKeys(tipIndex, id, keydoc.keys, mode, keyModes, 
@@ -78,6 +82,7 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
                 title: "See also",
                 description: e.more.map(id => tipIndex[id].title).join(", "),
                 type: NodeType.SeeAlso,
+                prefixes: [],
                 entries: []
             })
         }
@@ -86,16 +91,20 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
             icon: e.icon ? new vscode.ThemeIcon(e.icon) : undefined,
             description: e.comment || "",
             type: NodeType.Group,
+            prefixes: union(...entries.map(x => x.prefixes)),
             entries: entries
         }
     }else if((<UserTipItem>element).title){
         let e = <UserTipItem>element;
+        let keys = findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], 
+                            mode, keyModes)
         return {
             title: e.title,
             icon: e.icon ? new vscode.ThemeIcon(e.icon) : undefined,
             description: e.comment,
             type: NodeType.Item,
-            entries: findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], mode, keyModes),
+            prefixes: union(...keys.map(x => x.prefixes)),
+            entries: keys
         }
     }else if((<Keyhelp>element).kind){
         let e = <Keyhelp>element;
@@ -105,6 +114,7 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
                    dark: vscode.Uri.joinPath(extensionUri, "icons", 'darkkey.svg')},
             description: e.detail || "",
             type: NodeType.Key,
+            prefixes: [],
             entries: []
         }
     }else{ // if((<UserTipNote>element).note){
@@ -115,14 +125,15 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
                     dark: vscode.Uri.joinPath(extensionUri, "icons", 'darkkey.svg')},
             description: e.note,
             type: NodeType.Note,
+            prefixes: [],
             entries: []
         }
     }
 }
 
-type Keyhelps = IHash<IHash<Keyhelp[]>>
-let keyDocs: Keyhelps = {};
-let docTips: UserTipGroup[] = []
+let userDocTips: UserTipGroup[] = []
+let keyModes: Keymodes
+let docTips: IHash<TipNode[]> = {}
 
 export function register(context: vscode.ExtensionContext) {
     const treeProvider = new KeytipProvider()
@@ -132,82 +143,52 @@ export function register(context: vscode.ExtensionContext) {
     return treeProvider;
 }
 
+function organizeTips(){
+    let index = indexTips(userDocTips)
+    if(keyModes.command){
+        for(let mode of Object.keys(keyModes.command)){
+            docTips[mode] = userDocTips.map(tip => userToNode(index, tip, mode, keyModes))
+        }
+    }
+}
+
 // TODO: stopped here; need to figure out how 
 // to use new data types above in the below setup
 export function updateFromConfig(): void {
     const config = vscode.workspace.getConfiguration("modalkeys")
-    let allTips = config.get<UserTipGroup[]>("docTips", []);
-    addTips(allTips, keyDocs)
+    userDocTips = config.get<UserTipGroup[]>("docTips", []);
+    organizeTips()
 }
 
-// TODO: filter all items for a given mode and map them to the docTips IHash
-export function filterTips(tips: TipEntry[], keyDocs: Keyhelps){
-    for(let tip of tips){
-        let filtered = 
-        if((<TipGroup>tip)?.entries){
-            addTips((<TipGroup>tip)?.entries, keyDocs)
-        }
-        for(let node of (tip?.entries || [])){
-            if((<TipGroup>node).entries){
-                addTips((<TipGroup>node).entries, keyDocs)
-            }
-            for(let mode of Object.keys(keyDocs)){
-            }
+function prefixMatches(prefix: string){
+    return function(node: TipNode){
+        if(node.prefixes.length === 0){
+            return true
+        }else{
+            return node.prefixes.some(x => x == prefix)
         }
     }
 }
 
-function setKeytip(help: IHash<Keyhelp>, mode: string, prefix: string = ""){
-    for(let key of Object.keys(help)){
-        let keyhelp: Keyhelp = help[key]
-        if(keyhelp.tip){
-            if(!keyDocs[mode][keyhelp.tip]){
-                keyDocs[mode][keyhelp.tip] = []
-            }
-            keyDocs[mode][keyhelp.tip].push({
-                key: prefix+key,
-                label: keyhelp.label, 
-                kind: keyhelp.kind, 
-                detail: keyhelp.detail
-            })
-        }
-        if(keyhelp.keys){
-            setKeytip(keyhelp.keys, mode, prefix+key)
-        }
-    }
-}
-
-// TODO: probably need someway to indicate there's an update to the tree
-// TODO: filter tips by keystate (after we get the tree displaying)
-export class KeytipProvider implements vscode.TreeDataProvider <TipEntry> {
+export class KeytipProvider implements vscode.TreeDataProvider <TipNode> {
     private mode: string = ""
+    private prefix: string = ""
     update(state: KeyState, mode: string){
         this.mode = mode
+        this.prefix = state.keySequence.reduce((x,y) => x+y)
     }
     setKeymodes(modes: Keymodes){
-        keyDocs = {}
-        for(let mode of Object.keys(modes)){
-            if(modes.help){
-                setKeytip(modes.help[mode], mode)
-            }
-        }
+        keyModes = modes
+        organizeTips()
     }
-    getChildren(element?: TipEntry) {
+    getChildren(element?: TipNode) {
         if(!element){
-            return docTips[this.mode];
+            return docTips[this.mode].filter(prefixMatches(this.prefix));
         }else{
-            nodeCases<TipEntry[]>(element, {
-                group: group => group.entries, 
-                item: item => keyDocs[this.mode][item.id],
-            })
+            return element.entries.filter(prefixMatches(this.prefix));
         }
     }
-    getTreeItem(element: TipEntry) {
-        return (nodeCases<vscode.TreeItem>(element, { 
-            group: x => new TreeGroupItem(x),
-            item: x => new TreeTipItem(x),
-            doc: x => new TreeKeyItem(x),
-            note: x => new TreeNoteItem(x)
-        })!
+    getTreeItem(element: TipNode) {
+        return element
     }
 }
