@@ -44,6 +44,11 @@ interface TipNode {
     entries: TipNode[],
 }
 
+interface IndexedTipNode extends TipNode {
+    id: string,
+    parent?: string
+}
+
 function nodeToTreeItem(x: TipNode): vscode.TreeItem {
     let collapsibleState = vscode.TreeItemCollapsibleState.Expanded
     if([NodeType.Key, NodeType.Note, NodeType.SeeAlso].includes(x.type))
@@ -149,7 +154,8 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
 
 let userDocTips: UserTipGroup[] = []
 let keyModes: Keymodes
-let docTips: IHash<TipNode[]> = {}
+let docTips: IHash<IndexedTipNode[]> = {}
+let tipIndex: IHash<IndexedTipNode> = {}
 
 export function register(context: vscode.ExtensionContext) {
     const treeProvider = new KeytipProvider()
@@ -159,13 +165,18 @@ export function register(context: vscode.ExtensionContext) {
     return treeProvider;
 }
 
+
+function indexParents(tips: TipNode[]): [IndexedTipNode[], IHash<IndexedTipNode>]{
+    // TODO: index all the tip nodes so we can easily find parents later on
+}
+
 function organizeTips(tips: UserTipGroup[] = userDocTips){
     userDocTips = tips
     let index = indexTips(userDocTips)
     if(keyModes.command){
         for(let mode of Object.keys(keyModes.command)){
-            let newTips = userDocTips.map(tip => userToNode(index, tip, mode, keyModes))
-            docTips[mode] = newTips
+            let newTips = userDocTips.map(tip => userToNode(index, tip, mode, keyModes));
+            docTips[mode], tipIndex = indexParents(newTips);
         }
     }
 }
@@ -187,30 +198,36 @@ function prefixMatches(prefix: string){
     }
 }
 
-export class KeytipProvider implements vscode.TreeDataProvider <TipNode> {
+export class KeytipProvider implements vscode.TreeDataProvider <IndexedTipNode> {
     private mode: string = ""
     private prefix: string = ""
     update(state: KeyState, mode: string){
         this.mode = mode
         this.prefix = state.keySequence.reduce((x,y) => x+y, "")
-        this._onDidChangeTreeData.fire
+        this._onDidChangeTreeData.fire()
     }
     private _onDidChangeTreeData =
-        new vscode.EventEmitter<TipNode | undefined | null | void>()
+        new vscode.EventEmitter<IndexedTipNode | undefined | null | void>()
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event
     
     setKeymodes(modes: Keymodes){
         keyModes = modes
         organizeTips()
     }
-    getChildren(element?: TipNode) {
+    getChildren(element?: IndexedTipNode) {
         if(!element){
             return docTips[this.mode].filter(prefixMatches(this.prefix));
         }else{
             return element.entries.filter(prefixMatches(this.prefix));
         }
     }
-    getTreeItem(element: TipNode) {
+
+    getParent(element?: IndexedTipNode, parent?: IndexedTipNode | undefined){
+        if(!element) return undefined
+        if(!element.parent) return undefined
+        return tipIndex[element.parent]
+    }
+    getTreeItem(element: IndexedTipNode) {
         return nodeToTreeItem(element);
     }
 }
