@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { IHash } from './util';
 import { Keyhelp, KeyState } from "./actions";
 import { Keymodes } from "./actions"
-import { union } from "lodash";
+import { isLength, union } from "lodash";
 
 let extensionUri: vscode.Uri;
 
@@ -35,8 +35,8 @@ type Icon = vscode.Uri | {dark: string | vscode.Uri, light: string | vscode.Uri}
 
 enum NodeType { Item, Group, Note, Key, SeeAlso }
 interface TipNode {
-    title: string,
-    icon?:  Icon,
+    title: string | vscode.TreeItemLabel,
+    icon?: Icon,
     description: string,
     prefixes: string[],
     tooltip?: string,
@@ -50,8 +50,8 @@ function nodeToTreeItem(x: TipNode): vscode.TreeItem {
         collapsibleState = vscode.TreeItemCollapsibleState.None
     return {
         collapsibleState,
-        description: NodeType.Key ? x.description : undefined,
-        tooltip: NodeType.Key ? undefined : x.description,
+        description: x.description,
+        tooltip: x.description,
         iconPath: x.icon,
         label: x.title,
     }
@@ -65,7 +65,8 @@ function findKeys(tipIndex: IHash<UserTipGroup>, id: string, doc: IHash<Keyhelp>
             let keydoc = doc[key]
             if(keydoc.tip === id){
                 let keyel = userToNode(tipIndex, keydoc, mode, keyModes)
-                keyel.title = prefix+key+": "+keyel.title
+                let seq = prefix+key
+                keyel.title = {label: seq+"  "+keyel.title, highlights: [[0, seq.length]]},
                 keyel.prefixes = [prefix]
                 keys.push(keyel)
             }
@@ -98,6 +99,7 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
                 title: "See also",
                 description,
                 type: NodeType.SeeAlso,
+                icon: new vscode.ThemeIcon('more'),
                 prefixes: [],
                 entries: []
             })
@@ -126,8 +128,6 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
         let e = <Keyhelp>element;
         return {
             title: e.label,
-            icon: {light: vscode.Uri.joinPath(extensionUri, "icons", "lightkey.svg"), 
-                   dark: vscode.Uri.joinPath(extensionUri, "icons", 'darkkey.svg')},
             description: e.detail || "",
             type: NodeType.Key,
             prefixes: [],
@@ -135,10 +135,10 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
         }
     }else{ // if((<UserTipNote>element).note){
         let e = <UserTipNote>element;
+        let keys = findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], mode, keyModes)
         return {
-            title: "Note",
-            icon: {light: vscode.Uri.joinPath(extensionUri, "icons", "lightkey.svg"), 
-                    dark: vscode.Uri.joinPath(extensionUri, "icons", 'darkkey.svg')},
+            title: keys[0].title,
+            icon: new vscode.ThemeIcon('note'),
             description: e.note,
             type: NodeType.Note,
             prefixes: [],
