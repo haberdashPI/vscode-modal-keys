@@ -8,6 +8,7 @@ import * as vscode from 'vscode'
 import * as actions from './actions'
 import * as commands from './commands'
 import * as keymap from './keymap'
+import * as keytips from "./keytips"
 
 /**
  * This method is called when the extension is activated. The activation events
@@ -42,6 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.workspace.onDidChangeConfiguration(e => {
 			actions.updateFromConfig()
 			keymap.updateFromConfig()
+			keytips.updateFromConfig()
 			commands.enterMode('normal')
 		}),
 		vscode.window.onDidChangeActiveTextEditor(commands.restoreEditorMode),

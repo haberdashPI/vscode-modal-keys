@@ -493,8 +493,8 @@ export function onSelectionChanged(e: vscode.TextEditorSelectionChangeEvent){
  */
 async function runActionForKey(key: string, mode: string = keyMode, state: KeyState = keyState) {
     await state.handleKey(key, realMode(mode))
-    docKeymap!.update(state, realMode(keyMode))
-    docKeytips!.update(state, realMode(keyMode))
+    docKeymap?.update(state, realMode(keyMode))
+    docKeytips?.update(state, realMode(keyMode))
     return !state.waitingForKey()
 }
 
