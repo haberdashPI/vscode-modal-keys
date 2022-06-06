@@ -2,6 +2,9 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.10.2
+- **Bugfix**: `enterNormal` clears the visual selection
+
 # Version 0.10.1
 - **Bugfix**: vim search handles selection properly
 - **Bugfix**: `selectTillMatch` edgecase

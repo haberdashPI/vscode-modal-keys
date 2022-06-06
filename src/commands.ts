@@ -564,7 +564,13 @@ let modeHooks: any = {
     },
 }
 
-export async function enterNormal(){ enterMode('normal'); keyState.reset() }
+export async function enterNormal(){ 
+    enterMode('normal')
+    keyState.reset()
+    visualFlag=false 
+    cancelMultipleSelections()
+}
+
 export async function enterInsert(){ enterMode('insert') }
 
 export async function enterMode(args: string | EnterModeArgs) {
