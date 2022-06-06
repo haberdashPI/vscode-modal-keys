@@ -711,7 +711,7 @@ keybindings: {
     "::doc::d": {kind: "action", label: "delete", detail: "Delete selection and save to paste buffer"},
     d: countSelectsLines('down', [
         "editor.action.clipboardCutAction",
-        "modalkeys.enterNormal"
+        { "modalkeys.enterMode": { mode: "normal" } }, // modalkeys.enterNormal has async issues that cause the entire line to be deleted here
     ]),
 
     "::doc::D": {kind: "action", label: "delete (eol/up)", detail: "without count: Delete from cursor to end of line; with count: Delete from current line up `count` number of keys."},
@@ -722,7 +722,7 @@ keybindings: {
     ],
     [
         "editor.action.clipboardCutAction",
-        "editor.action.enterNormal"
+        { "modalkeys.enterMode": { mode: "normal" } }, // modalkeys.enterNormal has async issues that cause the entire line to be deleted here
     ]),
 
     "::doc::x": {kind: "action", label: "delete char", detail: "delete the character under the cursor"},
