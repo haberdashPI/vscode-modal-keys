@@ -2,6 +2,10 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.10.4
+- **Bugfix**: fix bug in 'd' command in `larkin.js` caused by recent fixes to
+`modalkeys.enterNormal`.
+
 # Version 0.10.3
 - **Bugfix**: gracefully handle missing keybinding folder
 
