@@ -2,6 +2,9 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.10.3
+- **Bugfix**: gracefully handle missing keybinding folder
+
 # Version 0.10.2
 - **Bugfix**: `enterNormal` clears the visual selection
 

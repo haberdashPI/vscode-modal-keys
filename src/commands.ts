@@ -1318,16 +1318,20 @@ async function findUserPresets(folder?: string){
 
         if(userPresetsPath){
             let dir = vscode.Uri.file(userPresetsPath)
-            let allFiles = (await fs.readDirectory(dir))
-            let files = allFiles.filter(x => x[0].match(/\.(js$)|(jsonc?$)/))
-            return files.map(file => {
-                let uri = Utils.joinPath(dir, file[0])
-                return { 
-                    uri,
-                    label: presetLabel("User", uri),
-                    source: 'user'
-                }
-            })
+            try{
+                let allFiles = (await fs.readDirectory(dir))
+                let files = allFiles.filter(x => x[0].match(/\.(js$)|(jsonc?$)/))
+                return files.map(file => {
+                    let uri = Utils.joinPath(dir, file[0])
+                    return { 
+                        uri,
+                        label: presetLabel("User", uri),
+                        source: 'user'
+                    }
+                })
+            }catch{
+                return []
+            }
         }
     }
     return []
