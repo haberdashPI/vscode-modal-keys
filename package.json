@@ -7,7 +7,7 @@
         "url": "https://github.com/haberdashPI/vscode-modal-keys"
     },
     "icon": "logo.png",
-    "version": "0.10.0",
+    "version": "0.10.1",
     "engines": {
         "vscode": "^1.64.0"
     },

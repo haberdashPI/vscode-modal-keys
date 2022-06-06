@@ -2,6 +2,10 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.10.1
+- **Bugfix**: vim search handles selection properly
+- **Bugfix**: `selectTillMatch` edgecase
+
 # Version 0.10.0
 - **Feature**: support vscode.dev
 - **Bugfix**: coloring in detailed visual docs description was illegible for
