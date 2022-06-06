@@ -285,7 +285,9 @@ const search_objects = {
         acceptAfter: 2,
         backwards: false,
         offset: 'start',
-        wrapAround: true
+        wrapAround: true,
+        selectTillMatch: "__mode == 'visual'",
+
     }},
     "::doc::S": { kind: "motion", label: "char pair back", detail: "move/operate to previous character pair"},
     S: { "modalkeys.search": {
@@ -293,7 +295,8 @@ const search_objects = {
         acceptAfter: 2,
         backwards: true,
         offset: 'start',
-        wrapAround: true
+        wrapAround: true,
+        selectTillMatch: "__mode == 'visual'",
     }},
 }
 
@@ -843,7 +846,7 @@ module.exports = {
                     "caseSensitive": true,
                     "wrapAround": true,
                     "register": "search",
-                    "selectTillMatch": "mode == 'visual'"
+                    "selectTillMatch": "__mode == 'visual'"
                 }
             }
         ],
@@ -854,13 +857,13 @@ module.exports = {
                 "caseSensitive": true,
                 "wrapAround": true,
                 "register": "search",
-                "selectTillMatch": "mode == 'visual'"
+                "selectTillMatch": "__mode == 'visual'"
             }
         },
         "::doc::n": { kind: "motion", label: "search →", detail: "go to the next search match" },
-        n: { "modalkeys.nextMatch": {register: "search", selectTillMatch: "mode == 'visual'"}},
+        n: { "modalkeys.nextMatch": {register: "search", selectTillMatch: "__mode == 'visual'"}},
         "::doc::N": { kind: "motion", label: "search ←", detail: "go to the previous search match" },
-        N: { "modalkeys.previousMatch": {register: "search", selectTillMatch: "mode == 'visual'" } },
+        N: { "modalkeys.previousMatch": {register: "search", selectTillMatch: "__mode == 'visual'" } },
         "::doc::*": { kind: "motion", label: "match →", detail: "go to next match of object under cursor (or current selection)"},
         "normal::*": [
             { "modalkeys.search": {

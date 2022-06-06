@@ -910,11 +910,13 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
                 let [active, anchor] = state.args.backwards ?
                     [result.value.start, result.value.end] :
                     [result.value.end, result.value.start]
-                if (!state.args.selectTillMatch) anchor = active
-                else anchor = sel.anchor
                 newsel = positionSearch(new vscode.Selection(anchor, active), doc,
                     result.value.end.character - result.value.start.character, 
                     state.args)
+                if (state.args.selectTillMatch){
+                    newsel = new vscode.Selection(sel.anchor, newsel.active)
+                } 
+
                 if(!newsel.start.isEqual(sel.start) || !newsel.end.isEqual(sel.end)) break
 
                 result = matches.next()
