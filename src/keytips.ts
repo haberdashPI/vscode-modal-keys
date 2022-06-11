@@ -172,7 +172,7 @@ export function register(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('modalkeys.nextKeytip', 
                                                                nextKeytip))
     context.subscriptions.push(vscode.commands.registerCommand('modalkeys.previousKeytip', 
-                                                               nextKeytip))
+                                                               prevKeytip))
 
     return treeProvider;
 }
@@ -205,14 +205,13 @@ export async function prevKeytip(){
 
 export async function showKeytip(index: number){
     if(currentTips){
-        await vscode.commands.executeCommand('workbench.actions.treeView.modalkeys.tipView.collapseAll')
         revealAll(currentTips[index], { select: true, focus: false, expand: true })
     }
 }
 
 function revealAll(tip: IndexedTipNode, options: {expand?: boolean | number, focus?: boolean, select?: boolean}){
     for(let entry of tip.entries){
-        revealAll(entry, {expand: true})
+        revealAll(entry, {expand: true, select: false, focus: false})
     }
     treeView.reveal(tip, options)
 }
