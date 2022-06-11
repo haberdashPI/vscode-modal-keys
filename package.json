@@ -371,6 +371,14 @@
             {
                 "command": "modalkeys.replayMacro",
                 "title": "ModalKeys: Replay macro"
+            },
+            {
+                "command": "modalkeys.nextKeytip",
+                "title": "ModalKeys: Next Keytip"
+            },
+            {
+                "command": "modalkeys.previousKeytip",
+                "title": "ModalKeys: Previous Keytip"
             }
         ],
         "keybindings": [

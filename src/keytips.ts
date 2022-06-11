@@ -45,8 +45,9 @@ interface TipNode {
 }
 
 interface IndexedTipNode extends TipNode {
-    id: string,
-    parent?: string
+    id: number,
+    parent: number
+    entries: IndexedTipNode[]
 }
 
 function nodeToTreeItem(x: TipNode): vscode.TreeItem {
@@ -155,19 +156,102 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
 let userDocTips: UserTipGroup[] = []
 let keyModes: Keymodes
 let docTips: IHash<IndexedTipNode[]> = {}
-let tipIndex: IHash<IndexedTipNode> = {}
+let tipIndex: IHash<IndexedTipNode[]> = {}
+let treeView: vscode.TreeView<IndexedTipNode>
+let treeProvider: KeytipProvider
 
 export function register(context: vscode.ExtensionContext) {
-    const treeProvider = new KeytipProvider()
+    treeProvider = new KeytipProvider()
+    treeView = vscode.window.createTreeView('modalkeys.tipView', {
+        treeDataProvider: treeProvider
+    })
     vscode.window.registerTreeDataProvider('modalkeys.tipView', treeProvider)
     extensionUri = context.extensionUri;
+
+    
+    context.subscriptions.push(vscode.commands.registerCommand('modalkeys.nextKeytip', 
+                                                               nextKeytip))
+    context.subscriptions.push(vscode.commands.registerCommand('modalkeys.previousKeytip', 
+                                                               nextKeytip))
 
     return treeProvider;
 }
 
+let keytipIndex = 0
+let currentTips: IndexedTipNode[] | undefined
+export async function nextKeytip(){
+    if(currentTips && currentTips.length > 0){
+        keytipIndex += 1
+        if(keytipIndex > currentTips.length){
+            keytipIndex = 1
+        }
+    }else{
+        keytipIndex = 0
+    }
+    showKeytip(keytipIndex-1)
+}
 
-function indexParents(tips: TipNode[]): [IndexedTipNode[], IHash<IndexedTipNode>]{
-    // TODO: index all the tip nodes so we can easily find parents later on
+export async function prevKeytip(){
+    if(currentTips && currentTips.length > 0){
+        keytipIndex -= 1
+        if(keytipIndex < 1){
+            keytipIndex = currentTips.length
+        }
+    }else{
+        keytipIndex = 0
+    }
+    showKeytip(keytipIndex-1)
+}
+
+export async function showKeytip(index: number){
+    if(currentTips){
+        await vscode.commands.executeCommand('workbench.actions.treeView.modalkeys.tipView.collapseAll')
+        revealAll(currentTips[index], { select: true, focus: false, expand: true })
+    }
+}
+
+function revealAll(tip: IndexedTipNode, options: {expand?: boolean | number, focus?: boolean, select?: boolean}){
+    for(let entry of tip.entries){
+        revealAll(entry, {expand: true})
+    }
+    treeView.reveal(tip, options)
+}
+
+function addIndices(tip: TipNode, indexed: IndexedTipNode[] = [], 
+                    parentIndex: number = -1, nextIndex: number = 0): [IndexedTipNode, IndexedTipNode[], number]{
+    let entries: IndexedTipNode[] = []
+    let currentIndex = nextIndex;
+    nextIndex += 1
+    if(tip.entries.length > 0){
+        for(let entry of tip.entries){
+            let result = addIndices(entry, indexed, currentIndex, nextIndex)
+            entries.push(result[0])
+            indexed = result[1]
+            nextIndex = result[2]
+        }
+    }
+
+    let indexedTip = {
+        ...tip,
+        id: currentIndex,
+        parent: parentIndex,
+        entries
+    }
+    indexed[currentIndex] = indexedTip
+
+    return [indexedTip, indexed, nextIndex] 
+}
+
+function addParents(tips: TipNode[]):  [IndexedTipNode[], IndexedTipNode[]]{
+    let parentNode = {
+        entries: tips, 
+        title: "", 
+        description: "", 
+        prefixes: [""], 
+        type: NodeType.Group 
+    }
+    let [parent, indexed, _] = addIndices(parentNode)
+    return [parent.entries, indexed]
 }
 
 function organizeTips(tips: UserTipGroup[] = userDocTips){
@@ -176,7 +260,9 @@ function organizeTips(tips: UserTipGroup[] = userDocTips){
     if(keyModes.command){
         for(let mode of Object.keys(keyModes.command)){
             let newTips = userDocTips.map(tip => userToNode(index, tip, mode, keyModes));
-            docTips[mode], tipIndex = indexParents(newTips);
+            let [tips_, indexed_] = addParents(newTips)
+            docTips[mode] = tips_
+            tipIndex[mode] = indexed_
         }
     }
 }
@@ -199,7 +285,7 @@ function prefixMatches(prefix: string){
 }
 
 export class KeytipProvider implements vscode.TreeDataProvider <IndexedTipNode> {
-    private mode: string = ""
+    mode: string = ""
     private prefix: string = ""
     update(state: KeyState, mode: string){
         this.mode = mode
@@ -216,17 +302,20 @@ export class KeytipProvider implements vscode.TreeDataProvider <IndexedTipNode> 
     }
     getChildren(element?: IndexedTipNode) {
         if(!element){
-            return docTips[this.mode].filter(prefixMatches(this.prefix));
+            let result = docTips[this.mode].filter(prefixMatches(this.prefix))
+            currentTips = result
+            return result;
         }else{
             return element.entries.filter(prefixMatches(this.prefix));
         }
     }
 
-    getParent(element?: IndexedTipNode, parent?: IndexedTipNode | undefined){
+    getParent(element: IndexedTipNode){
         if(!element) return undefined
-        if(!element.parent) return undefined
-        return tipIndex[element.parent]
+        if(element.parent < 0) return undefined
+        return tipIndex[this.mode][element.parent]
     }
+    
     getTreeItem(element: IndexedTipNode) {
         return nodeToTreeItem(element);
     }
