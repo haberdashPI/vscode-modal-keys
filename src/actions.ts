@@ -411,7 +411,7 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
                     for(const mode of modes){
                         if(!keymodes.help) keymodes.help = {}
                         keymodes.help[mode] = keymodes.help[mode] === undefined ? obj :
-                            merge(keymodes.help[mode], obj)
+                            mergeWith(keymodes.help[mode], obj, overloadHelpEntries)
                     }
                 }else{
                     if(state.sequencesFor[mode]?.some((oldseq: string) => {
@@ -453,6 +453,7 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
 }
 
 const overloadCommands = (oldval: Action, newval: Action) => { if(isCommand(oldval)){ return newval } }
+const overloadHelpEntries  = (oldval: Action, newval: Action) => { if(isHelpEntry(oldval)){ return newval } }
 
 function expandBindings(bindings: any): [Keymodes | undefined, number] {
     let state = {sequencesFor: <IHash<string[]>>{}, errors: 0}
@@ -507,6 +508,10 @@ function isNumber(x: any): x is number {
  */
 function isObject(x: any): boolean {
     return x && typeof x === "object"
+}
+
+function isHelpEntry(x: any){
+    return x && x.label !== undefined && x.detail !== undefined
 }
 /**
  * This checks if a value is a command.
