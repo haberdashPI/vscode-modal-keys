@@ -1366,7 +1366,7 @@ async function importFile(uri: vscode.Uri){
             config.update("keybindings", preset.keybindings, true)
         if(preset.docTips){
             config.update("docTips", preset.docTips, true) 
-            vscode.commands.executeCommand('modalkeys.showTips')
+            // vscode.commands.executeCommand('modalkeys.showTips')
         }
         checkExtensions(preset.extensions)
         if(preset.docKinds){

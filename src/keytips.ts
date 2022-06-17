@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { IHash } from './util';
-import { Keyhelp, KeyState } from "./actions";
+import { Keyhelp, KeyState, log } from "./actions";
 import { Keymodes } from "./actions"
 import { isLength, union } from "lodash";
 
@@ -93,12 +93,22 @@ function indexTips(docTips: UserTipGroup[]){
     return result
 }
 
+// TODO: more generally this shoudl gracefully handle bad data
 function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: string, 
                     keyModes: Keymodes): TipNode {
     if((<UserTipGroup>element)?.entries){
-        let e = <UserTipGroup>element;
-        let entries = e.entries.map(x => userToNode(tipIndex, x, mode, keyModes))
-        let seeAlso = e.more && e.more.filter(id => id in tipIndex)
+        console.log("[ModalKeys] UserTipGroup start")
+        let egroup = <UserTipGroup>element;
+        console.dir(egroup)
+        console.log("e: "+egroup)
+        let entries = egroup.entries.map(x => {
+            console.log("[ModalKeys] x: ")
+            console.dir(x)
+            return userToNode(tipIndex, x, mode, keyModes)
+        })
+        console.log("past userToNode")
+        console.log("e: "+egroup)
+        let seeAlso = egroup.more && egroup.more.filter(id => id in tipIndex)
         if(seeAlso){
             let description = seeAlso.map(id => tipIndex[id].title).join(", ")
             entries.push({
@@ -110,15 +120,21 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
                 entries: []
             })
         }
+        console.log("[ModalKeys] UserTipGroup return")
+        console.log("e: "+egroup)
+        if(!egroup){
+            console.log("[ModalKeys] Bad E!!")
+        }
         return { 
-            title: e.title,
-            icon: e.icon ? new vscode.ThemeIcon(e.icon) : undefined,
-            description: e.comment || "",
+            title: egroup.title,
+            icon: egroup.icon ? new vscode.ThemeIcon(egroup.icon) : undefined,
+            description: egroup.comment || "",
             type: NodeType.Group,
             prefixes: union(...entries.map(x => x.prefixes)),
             entries: entries
         }
     }else if((<UserTipItem>element).title){
+        console.log("[ModalKeys] UserTipItem start")
         let e = <UserTipItem>element;
         let keys = findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], 
                             mode, keyModes)
@@ -131,6 +147,7 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
             entries: keys
         }
     }else if((<Keyhelp>element).kind){
+        console.log("[ModalKeys] Keyhelp start")
         let e = <Keyhelp>element;
         return {
             title: e.label,
@@ -140,8 +157,15 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
             entries: []
         }
     }else{ // if((<UserTipNote>element).note){
+        console.log("[ModalKeys] UserTipNote start")
         let e = <UserTipNote>element;
         let keys = findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], mode, keyModes)
+        let title = undefined
+        if(keys.length = 0){
+            log("Error reading docTips: missing tip id `"+e.id+"`.")
+        }else{
+            title = keys[0].title
+        }
         return {
             title: keys[0].title,
             icon: new vscode.ThemeIcon('note'),
@@ -253,24 +277,10 @@ function addParents(tips: TipNode[]):  [IndexedTipNode[], IndexedTipNode[]]{
     return [parent.entries, indexed]
 }
 
-function organizeTips(tips: UserTipGroup[] = userDocTips){
-    userDocTips = tips
-    let index = indexTips(userDocTips)
-    if(keyModes.command){
-        for(let mode of Object.keys(keyModes.command)){
-            let newTips = userDocTips.map(tip => userToNode(index, tip, mode, keyModes));
-            let [tips_, indexed_] = addParents(newTips)
-            docTips[mode] = tips_
-            tipIndex[mode] = indexed_
-        }
-    }
-}
-
-// TODO: stopped here; need to figure out how 
-// to use new data types above in the below setup
 export function updateFromConfig(): void {
     const config = vscode.workspace.getConfiguration("modalkeys")
-    organizeTips(config.get<UserTipGroup[]>("docTips", []))
+    userDocTips = config.get<UserTipGroup[]>("docTips", [])
+    treeProvider.organizeTips()
 }
 
 function prefixMatches(prefix: string){
@@ -297,8 +307,25 @@ export class KeytipProvider implements vscode.TreeDataProvider <IndexedTipNode> 
     
     setKeymodes(modes: Keymodes){
         keyModes = modes
-        organizeTips()
+        // this.organizeTips()
     }
+
+    organizeTips(tips: UserTipGroup[] = userDocTips){
+        console.log("[organizeTips]")
+        userDocTips = tips
+        let index = indexTips(userDocTips)
+        if(keyModes.command){
+            for(let mode of Object.keys(keyModes.command)){
+                let newTips = userDocTips.map(tip => userToNode(index, tip, mode, keyModes));
+                let [tips_, indexed_] = addParents(newTips)
+                docTips[mode] = tips_
+                tipIndex[mode] = indexed_
+            }
+        }
+        console.log("[organized]")
+        this._onDidChangeTreeData.fire()
+    }
+    
     getChildren(element?: IndexedTipNode) {
         if(!element){
             let result = docTips[this.mode].filter(prefixMatches(this.prefix))
