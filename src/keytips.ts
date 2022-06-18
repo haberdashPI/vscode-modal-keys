@@ -160,14 +160,14 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
         console.log("[ModalKeys] UserTipNote start")
         let e = <UserTipNote>element;
         let keys = findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], mode, keyModes)
-        let title = undefined
-        if(keys.length = 0){
+        let title: string | vscode.TreeItemLabel = ""
+        if(keys.length === 0){
             log("Error reading docTips: missing tip id `"+e.id+"`.")
         }else{
             title = keys[0].title
         }
         return {
-            title: keys[0].title,
+            title,
             icon: new vscode.ThemeIcon('note'),
             description: e.note,
             type: NodeType.Note,
@@ -327,6 +327,7 @@ export class KeytipProvider implements vscode.TreeDataProvider <IndexedTipNode> 
     }
     
     getChildren(element?: IndexedTipNode) {
+        
         if(!element){
             let result = docTips[this.mode].filter(prefixMatches(this.prefix))
             currentTips = result
