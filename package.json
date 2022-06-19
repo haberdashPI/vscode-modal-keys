@@ -73,7 +73,7 @@
             "activitybar": [
                 {
                     "id": "modalKeyTips",
-                    "title": "Modal-Keybinding Tips",
+                    "title": "Modal Key",
                     "icon": "icon.svg"
                 }
             ]
@@ -389,7 +389,7 @@
             },
             {
                 "key": "alt+;",
-                "command": "modelkeys.nextKeytip"
+                "command": "modalkeys.nextKeytip"
             },
             {
                 "key": "shift+alt+;",
