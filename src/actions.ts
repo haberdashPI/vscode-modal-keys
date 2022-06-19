@@ -453,7 +453,9 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
 }
 
 const overloadCommands = (oldval: Action, newval: Action) => { if(isCommand(oldval)){ return newval } }
-const overloadHelpEntries  = (oldval: Action, newval: Action) => { if(isHelpEntry(oldval)){ return newval } }
+const overloadHelpEntries  = (oldval: Keyhelp, newval: Keyhelp) => { 
+    if(isHelpEntry(oldval)){ return newval } 
+}
 
 function expandBindings(bindings: any): [Keymodes | undefined, number] {
     let state = {sequencesFor: <IHash<string[]>>{}, errors: 0}
@@ -463,20 +465,21 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
     allModes.push('normal', 'visual')
     allModes = uniq(allModes)
     let result: any = {}
-    function resolveAll<T>(x?: IHash<T>){
+    function resolveAll<T>(x: IHash<T> | undefined, overload: any){
         if(!x) return x
         let result = x
         if(x.__all__){
             for(let mode of allModes){
                 if(mode !== '__all__')
-                    result[mode] = mergeWith(cloneDeep(x.__all__), result[mode], overloadCommands)
+                    result[mode] = mergeWith(cloneDeep(x.__all__), result[mode], overload)
+
             }
             delete result.__all__
         }
         return result
     }
-    keymodes.command = resolveAll(keymodes.command)
-    keymodes.help = resolveAll(keymodes.help)
+    keymodes.command = resolveAll(keymodes.command, overloadCommands)
+    keymodes.help = resolveAll(keymodes.help, overloadHelpEntries)
     return [keymodes, state.errors]
 }
 
