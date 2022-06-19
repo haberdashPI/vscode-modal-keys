@@ -388,6 +388,14 @@
                 "command": "modalkeys.toggleKeymap"
             },
             {
+                "key": "alt+;",
+                "command": "modelkeys.nextKeytip"
+            },
+            {
+                "key": "shift+alt+;",
+                "command": "modalkeys.previousKeytip"
+            },
+            {
                 "key": "Escape",
                 "command": "modalkeys.enterNormal",
                 "when": "editorTextFocus && !suggestWidgetMultipleSuggestions && !suggestWidgetVisible"
