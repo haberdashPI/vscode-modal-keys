@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { IHash } from './util';
 import { Keyhelp, KeyState, log } from "./actions";
 import { Keymodes } from "./actions"
-import { isLength, union } from "lodash";
+import { isLength, union, clone } from "lodash";
 
 let extensionUri: vscode.Uri;
 
@@ -33,7 +33,7 @@ interface UserTipNote {
 // the internal representation of the doc tips
 type Icon = vscode.Uri | {dark: string | vscode.Uri, light: string | vscode.Uri} | vscode.ThemeIcon
 
-enum NodeType { Item, Group, Note, Key, SeeAlso }
+enum NodeType { Item, Group, Note, Key, SeeAlso, KeyMode }
 interface TipNode {
     title: string | vscode.TreeItemLabel,
     icon?: Icon,
@@ -52,7 +52,7 @@ interface IndexedTipNode extends TipNode {
 
 function nodeToTreeItem(x: TipNode): vscode.TreeItem {
     let collapsibleState = vscode.TreeItemCollapsibleState.Expanded
-    if([NodeType.Key, NodeType.Note, NodeType.SeeAlso].includes(x.type))
+    if([NodeType.Key, NodeType.Note, NodeType.SeeAlso, NodeType.KeyMode].includes(x.type))
         collapsibleState = vscode.TreeItemCollapsibleState.None
     return {
         collapsibleState,
@@ -293,6 +293,20 @@ function prefixMatches(prefix: string){
     }
 }
 
+function addKeyMode(tips: IndexedTipNode[], keymode: string){
+    let result = clone(tips);
+    result.unshift({
+        title: "Mode: "+keymode,
+        description: "The keymode determines which shortcuts are active",
+        id: -2,
+        parent: -1,
+        entries: [],
+        prefixes: [],
+        type: NodeType.KeyMode
+    })
+    return result
+}
+
 export class KeytipProvider implements vscode.TreeDataProvider <IndexedTipNode> {
     mode: string = ""
     private prefix: string = ""
@@ -327,13 +341,11 @@ export class KeytipProvider implements vscode.TreeDataProvider <IndexedTipNode> 
     }
     
     getChildren(element?: IndexedTipNode) {
-        
         if(!element){
-            let result = docTips[this.mode].filter(prefixMatches(this.prefix))
-            currentTips = result
-            return result;
+            currentTips = docTips[this.mode].filter(prefixMatches(this.prefix))
+            return addKeyMode(currentTips, this.mode)
         }else{
-            return element.entries.filter(prefixMatches(this.prefix));
+            return addKeyMode(element.entries.filter(prefixMatches(this.prefix)), this.mode);
         }
     }
 
