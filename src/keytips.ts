@@ -97,17 +97,17 @@ function indexTips(docTips: UserTipGroup[]){
 function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: string, 
                     keyModes: Keymodes): TipNode {
     if((<UserTipGroup>element)?.entries){
-        console.log("[ModalKeys] UserTipGroup start")
+        // console.log("[ModalKeys] UserTipGroup start")
         let egroup = <UserTipGroup>element;
         console.dir(egroup)
-        console.log("e: "+egroup)
+        // console.log("e: "+egroup)
         let entries = egroup.entries.map(x => {
-            console.log("[ModalKeys] x: ")
+            // console.log("[ModalKeys] x: ")
             console.dir(x)
             return userToNode(tipIndex, x, mode, keyModes)
         })
-        console.log("past userToNode")
-        console.log("e: "+egroup)
+        // console.log("past userToNode")
+        // console.log("e: "+egroup)
         let seeAlso = egroup.more && egroup.more.filter(id => id in tipIndex)
         if(seeAlso){
             let description = seeAlso.map(id => tipIndex[id].title).join(", ")
@@ -120,10 +120,10 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
                 entries: []
             })
         }
-        console.log("[ModalKeys] UserTipGroup return")
-        console.log("e: "+egroup)
+        // console.log("[ModalKeys] UserTipGroup return")
+        // console.log("e: "+egroup)
         if(!egroup){
-            console.log("[ModalKeys] Bad E!!")
+            // console.log("[ModalKeys] Bad E!!")
         }
         return { 
             title: egroup.title,
@@ -134,7 +134,7 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
             entries: entries
         }
     }else if((<UserTipItem>element).title){
-        console.log("[ModalKeys] UserTipItem start")
+        // console.log("[ModalKeys] UserTipItem start")
         let e = <UserTipItem>element;
         let keys = findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], 
                             mode, keyModes)
@@ -147,7 +147,7 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
             entries: keys
         }
     }else if((<Keyhelp>element).kind){
-        console.log("[ModalKeys] Keyhelp start")
+        // console.log("[ModalKeys] Keyhelp start")
         let e = <Keyhelp>element;
         return {
             title: e.label,
@@ -157,7 +157,7 @@ function userToNode(tipIndex: IHash<UserTipGroup>, element: UserTipNode, mode: s
             entries: []
         }
     }else{ // if((<UserTipNote>element).note){
-        console.log("[ModalKeys] UserTipNote start")
+        // console.log("[ModalKeys] UserTipNote start")
         let e = <UserTipNote>element;
         let keys = findKeys(tipIndex, e.id, keyModes.help && keyModes.help[mode], mode, keyModes)
         let title: string | vscode.TreeItemLabel = ""
