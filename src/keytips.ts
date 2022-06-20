@@ -342,10 +342,17 @@ export class KeytipProvider implements vscode.TreeDataProvider <IndexedTipNode> 
     
     getChildren(element?: IndexedTipNode) {
         if(!element){
-            currentTips = docTips[this.mode].filter(prefixMatches(this.prefix))
-            return addKeyMode(currentTips, this.mode)
+            let modeTips = docTips[this.mode]
+            if(modeTips){
+                currentTips = docTips[this.mode].filter(prefixMatches(this.prefix))
+                return addKeyMode(currentTips, this.mode)
+            }
+            return []
         }else{
-            return addKeyMode(element.entries.filter(prefixMatches(this.prefix)), this.mode);
+            if(element.entries && element.entries.length > 0){
+                return element.entries.filter(prefixMatches(this.prefix));
+            }
+            return []
         }
     }
 
