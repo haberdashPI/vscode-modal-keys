@@ -454,7 +454,8 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
 
 const overloadCommands = (oldval: Action, newval: Action) => { if(isCommand(oldval)){ return newval } }
 const overloadHelpEntries  = (oldval: Keyhelp, newval: Keyhelp) => { 
-    if(isHelpEntry(oldval)){ return newval } 
+    if((isHelpEntry(oldval) && !newval?.keys)){ return newval } 
+    if(!oldval?.keys && isHelpEntry(newval)){ return newval }
 }
 
 function expandBindings(bindings: any): [Keymodes | undefined, number] {
