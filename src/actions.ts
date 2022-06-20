@@ -454,8 +454,10 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
 
 const overloadCommands = (oldval: Action, newval: Action) => { if(isCommand(oldval)){ return newval } }
 const overloadHelpEntries  = (oldval: Keyhelp, newval: Keyhelp) => { 
-    if((isHelpEntry(oldval) && !newval?.keys)){ return newval } 
-    if(!oldval?.keys && isHelpEntry(newval)){ return newval }
+    if((oldval?.keys && isHelpEntry(newval)) || (newval?.keys && isHelpEntry(oldval))){
+        return undefined
+    }
+    if(isHelpEntry(oldval)){ return newval } 
 }
 
 function expandBindings(bindings: any): [Keymodes | undefined, number] {
@@ -515,7 +517,7 @@ function isObject(x: any): boolean {
 }
 
 function isHelpEntry(x: any){
-    return x && x.label !== undefined && x.detail !== undefined
+    return x && x?.label !== undefined && x?.kind !== undefined
 }
 /**
  * This checks if a value is a command.
