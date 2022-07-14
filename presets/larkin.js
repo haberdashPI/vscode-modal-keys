@@ -129,11 +129,14 @@ docTips: [
         modes: [ "normal" ],
         more: [ "notebook", "argument", "select_text" ],
         entries: [
-            { title: "Numbers", id: "number" },
-            { title: "Comments", id: "comment" },
+            { title: "Adjustments", id: "adjust"},
             { title: "Regions", id: "region" },
+            { title: "Comments", id: "comment" },
             { title: "Brackets", id: "bracket" },
             { title: "Indent", id: "indent" },
+            { title: "Quotes", id: "quote"},
+            { title: "Numbers", id: "number" },
+            { title: "Around Chars", id: "around_chars"},
             { note: "Selects around an entire object (e.g. word)", id: 'around_tip' }
         ]
     },
@@ -501,22 +504,21 @@ keybindings: {
     "::doc::}": {kind: 'select', label: 'around indent', detail: 'all text at same indent along with the line above and below this (ala c-like synatx)', tip: "ident"},
     "}": "vscode-select-by-indent.select-outer",
 
-    // TODO: this is where I stopped adding selection commands to `docTips`
-    "::doc::u`": {kind: 'select', label: 'inside ``', detail: 'inside first character pair `` (non syntactical, useful inside comments)'},
+    "::doc::u`": {kind: 'select', label: 'inside ``', detail: 'inside first character pair `` (non syntactical, useful inside comments)', tip: "quote"},
     "u`": { "modalkeys.selectBetween": {
         from: "`", to: "`",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::u[": {kind: 'select', label: 'inside []', detail: 'inside first character pair `[]` (non syntactical, useful inside comments)'},
+    "::doc::u[": {kind: 'select', label: 'inside []', detail: 'inside first character pair `[]` (non syntactical, useful inside comments)', tip: "bracket"},
     "u[": { "modalkeys.selectBetween": {
         from: "[", to: "]",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::u{": {kind: 'select', label: 'inside {}', detail: 'inside first character pair `{}` (non syntactical, useful inside comments)'},
+    "::doc::u{": {kind: 'select', label: 'inside {}', detail: 'inside first character pair `{}` (non syntactical, useful inside comments)', tip: "bracket"},
     "u{": { "modalkeys.selectBetween": {
         from: "{", to: "}",
         inclusive: false,
@@ -524,7 +526,7 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::u[": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)'},    
+    "::doc::u]": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)', tip: "bracket"},    
     "u]": { "modalkeys.selectBetween": {
         from: "[", to: "]",
         inclusive: true,
@@ -532,7 +534,7 @@ keybindings: {
         docScope: true
     }},
     
-    "::doc::u{": {kind: 'select', label: 'around {}', detail: 'around first character pair `{}` (non syntactical, useful inside comments)'},    
+    "::doc::u}": {kind: 'select', label: 'around {}', detail: 'around first character pair `{}` (non syntactical, useful inside comments)', tip: "bracket"},    
     "u}": { "modalkeys.selectBetween": {
         from: "{", to: "}",
         inclusive: true,
@@ -540,43 +542,43 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::uC": {kind: 'select', label: 'between bracket pair', detail: 'around/inside some bracket pairs' },
-    "::doc::uC(": {kind: 'select', label: 'inside ()', detail: 'inside first pair of `()` (non syntactical, useful inside comments)' },  
+    "::doc::uC": {kind: 'select', label: 'between bracket pair', detail: 'around/inside some bracket pairs'},
+    "::doc::uC(": {kind: 'select', label: 'inside ()', detail: 'inside first pair of `()` (non syntactical, useful inside comments)', tip: "bracket" },  
     "uC(": { "modalkeys.selectBetween": {
         from: "(", to: ")",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC)": {kind: 'select', label: 'around ()', detail: 'around first pair of `()` (non syntactical, useful inside comments)' },  
+    "::doc::uC)": {kind: 'select', label: 'around ()', detail: 'around first pair of `()` (non syntactical, useful inside comments)', tip: "bracket" },  
     "uC)": { "modalkeys.selectBetween": {
         from: "(", to: ")",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC,": {kind: 'select', label: 'inside <>', detail: 'inside first character pair `<>` (non syntactical, useful inside comments)'},    
+    "::doc::uC,": {kind: 'select', label: 'inside <>', detail: 'inside first character pair `<>` (non syntactical, useful inside comments)', tip: "bracket" },
     "uC.": { "modalkeys.selectBetween": {
         from: "<", to: ">",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC.": {kind: 'select', label: 'inside ><', detail: 'inside first character pair `><` (non syntactical, useful inside comments)'},    
+    "::doc::uC.": {kind: 'select', label: 'inside ><', detail: 'inside first character pair `><` (non syntactical, useful inside comments)', tip: "bracket" },
     "uC.": { "modalkeys.selectBetween": {
         from: ">", to: "<",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC<": {kind: 'select', label: 'around <>', detail: 'around first character pair `<>` (non syntactical, useful inside comments)'},    
+    "::doc::uC<": {kind: 'select', label: 'around <>', detail: 'around first character pair `<>` (non syntactical, useful inside comments)', tip: "bracket" },
     "uC<": { "modalkeys.selectBetween": {
         from: "<", to: ">",
         inclusive: true,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC>": {kind: 'select', label: 'around ><', detail: 'around first character pair `><` (non syntactical, useful inside comments)'},    
+    "::doc::uC>": {kind: 'select', label: 'around ><', detail: 'around first character pair `><` (non syntactical, useful inside comments)', tip: "bracket" },
     "uC>": { "modalkeys.selectBetween": {
         from: ">", to: "<",
         inclusive: true,
@@ -584,7 +586,7 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::uc": {kind: 'select', label: 'between pair', detail: 'between two instances of any character, exclusive of the pair (non syntatical, useful inside comments)'},
+    "::doc::uc": {kind: 'select', label: 'between pair', detail: 'between two instances of any character, exclusive of the pair (non syntatical, useful inside comments)', tip: "around_chars"},
     uc: { "modalkeys.captureChar": {
         acceptAfter: 1,
         executeAfter: { "modalkeys.selectBetween": {
@@ -596,7 +598,7 @@ keybindings: {
         }},
     }},
 
-    "::doc::uv": {kind: 'select', label: 'around pair', detail: 'between two instance of any character, inclusive of the pair (non syntatical, useful inside comments)'},
+    "::doc::uv": {kind: 'select', label: 'around pair', detail: 'between two instance of any character, inclusive of the pair (non syntatical, useful inside comments)', tip: "around_chars"},
     uv: { "modalkeys.captureChar": {
         acceptAfter: 1,
         executeAfter: { "modalkeys.selectBetween": {
@@ -610,16 +612,16 @@ keybindings: {
 
     // ### Selection Modifiers
 
-    "::doc::normal::R": {kind: "select", label: 'expand no wht', detail: 'select full line(s), and trim external whitespace'},
+    "::doc::normal::R": {kind: "select", label: 'expand no wht', detail: 'select full line(s), and trim external whitespace', tip: "adjust"},
     "normal::R": [ "expandLineSelection", "selection-utilities.trimSelectionWhitespace" ],
-    "::doc::R": {kind: "modifier", label: 'trim whitespace', detail: 'shrink selection to avoid external whitespace'},
+    "::doc::R": {kind: "modifier", label: 'trim whitespace', detail: 'shrink selection to avoid external whitespace', tip: "adjust"},
     "R": "selection-utilities.trimSelectionWhitespace" ,
-    "::doc::U": {kind: "modifier", label: 'narrow to subword', detail: "Narrow current selection so it starts and stops at a subword (e.g. 'snake' in snake_case)"},
+    "::doc::U": {kind: "modifier", label: 'narrow to subword', detail: "Narrow current selection so it starts and stops at a subword (e.g. 'snake' in snake_case)", tip: "adjust"},
     U: { "selection-utilities.narrowTo": { unit: "subident", boundary: "both", } },
 
-    "::doc::r": {kind: "modifier", label: 'clear', detail: "Clear the current selection"},
+    "::doc::r": {kind: "modifier", label: 'clear', detail: "Clear the current selection", tip: "adjust"},
     r: "modalkeys.cancelMultipleSelections",
-    "::doc:: ": {kind: "mode", label: 'hold', detail: "Start visual mode (enabling selection)"},
+    "::doc:: ": {kind: "mode", label: 'hold', detail: "Start visual mode (enabling selection)", tip: "adjust"},
     " ": "modalkeys.enableSelection",
 
     // ### Actions
