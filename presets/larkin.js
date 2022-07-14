@@ -205,7 +205,7 @@ keybindings: {
         E:     { unit: "word",    boundary: "end",   select:      true, value: '-(__count || 1)' },
         "'w":  { unit: "WORD",    boundary: "start", select:      true, value: " (__count || 1)" },
         "'b":  { unit: "WORD",    boundary: "start", select:      true, value: "-(__count || 1)" },
-        "'e":  { unit: "WORD",    boundary: "end",   select:      true, value: "-(__count || 1)" },
+        "'e":  { unit: "WORD",    boundary: "end",   select:      true, value: " (__count || 1)" },
         "u'w": { unit: "WORD",    boundary: "start", selectWhole: true, value: " (__count || 1)" },
         "u'e": { unit: "WORD",    boundary: "both",  selectWhole: true, value: " (__count || 1)" },
         "u'b": { unit: "WORD",    boundary: "start", selectWhole: true, value: "-(__count || 1)" },
@@ -236,13 +236,38 @@ keybindings: {
     },
 
     // jupyter based cell selection
-    "::doc::'y": { kind: "select", label: "jupyter", detail: "jupyter related selection commands"},
-    "::doc::'yc": { kind: "select", label: "cell →", detail: "next jupyter notebook cell"},
-    "'yc": ["jupyter.gotoNextCellInFile", "jupyter.selectCell"],
-    "::doc::'yC": { kind: "select", label: "cell ←", detail: "previous jupyter notebook cell"},
-    "'yC": ["jupyter.gotoPrevCellInFile", "jupyter.selectCell"],
+    "::doc::'y": { kind: "select", label: "cell →", detail: "next jupyter notebook cell"},
+    "'y": {
+        if: "__language == 'markdown' || __language == 'quarto'",
+        then: "terminal-polyglot.next-fence-select",
+        else: [
+            { "jupyter.gotoNextCellInFile": {}, repeat: "__count" },
+            { "revealLine": { lineNumber: '__line', at: 'center' } },
+            "jupyter.selectCell"
+        ],
+    },
+    "::doc::'Y": { kind: "select", label: "cell ←", detail: "previous jupyter notebook cell"},
+    "'Y": {
+        if: "__language == 'markdown' || __language == 'quarto'",
+        then: "terminal-polyglot.prev-fence-select",
+        else: [
+            { "jupyter.gotoPrevCellInFile": {}, repeat: "__count" }, 
+            { "revealLine": { lineNumber: '__line', at: 'center' } },
+            "jupyter.selectCell"
+        ],
+    },
     "::doc::uy": { kind: "select", label: "cell", detail: "select a jyputer notebook cell"},
-    uy: "jupyter.selectCell",
+    uy: {
+        if: "__language == 'markdown' || __language == 'quarto'",
+        then: "terminal-polyglot.select-fence",
+        else: "jupyter.selectCell",
+    },
+    "::doc::,y": { kind: "action", label: "create cell", detail: "Create a new jupyter notebook cell"},
+    ",y": {
+        if: "__language == 'quarto'",
+        then: "quarto.insertCodeCell",
+        else: "jupyter.selectCell",
+    },
 
     // function arguments
     "::doc::,": { kind: "leader", label: "window (mostly)", detail: "additional commands, mostly related to changes to the editor/view/window" },
@@ -445,8 +470,7 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::u[": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)'},    
-    "u]": { "modalkeys.selectBetween": {
+    "::doc::u[": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)'},    "u]": { "modalkeys.selectBetween": {
         from: "[", to: "]",
         inclusive: true,
         caseSensitive: true,
@@ -472,6 +496,34 @@ keybindings: {
     "::doc::uC)": {kind: 'select', label: 'around ()', detail: 'around first pair of `()` (non syntactical, useful inside comments)' },  
     "uC)": { "modalkeys.selectBetween": {
         from: "(", to: ")",
+        inclusive: false,
+        caseSensitive: true,
+        docScope: true
+    }},
+    "::doc::uC[": {kind: 'select', label: 'inside []', detail: 'inside first pair of `[]` (non syntactical, useful inside comments)' },  
+    "uC[": { "modalkeys.selectBetween": {
+        from: "[", to: "]",
+        inclusive: false,
+        caseSensitive: true,
+        docScope: true
+    }},
+    "::doc::uC]": {kind: 'select', label: 'around []', detail: 'around first pair of `[]` (non syntactical, useful inside comments)' },  
+    "uC]": { "modalkeys.selectBetween": {
+        from: "[", to: "]",
+        inclusive: false,
+        caseSensitive: true,
+        docScope: true
+    }},
+    "::doc::uC{": {kind: 'select', label: 'inside {}', detail: 'inside first pair of `{}` (non syntactical, useful inside comments)' },  
+    "uC{": { "modalkeys.selectBetween": {
+        from: "{", to: "}",
+        inclusive: false,
+        caseSensitive: true,
+        docScope: true
+    }},
+    "::doc::uC}": {kind: 'select', label: 'around {}', detail: 'around first pair of `{}` (non syntactical, useful inside comments)' },  
+    "uC}": { "modalkeys.selectBetween": {
+        from: "{", to: "}",
         inclusive: false,
         caseSensitive: true,
         docScope: true
@@ -511,6 +563,54 @@ keybindings: {
         executeAfter: { "modalkeys.selectBetween": {
             from: "__captured",
             to: "__captured",
+            inclusive: false,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+
+    "::doc::uz": {kind: 'select', label: 'in 2char pair ex.', detail: 'between two sets of characters pairs (four total chars), exclusive of the pair; for example, select bob in the string [{bob}] by typing uz[{}]'},
+    uz: { "modalkeys.captureChar": {
+        acceptAfter: 4,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured.slice(0,2)",
+            to: "__captured.slice(2,4)",
+            inclusive: false,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+
+    "::doc::uZ": {kind: 'select', label: 'in 2char pair in.', detail: 'between two sets of characters pairs (four total chars), inclusive of the pair; for example, select the string [{bob}] by typing uz[{}]'},
+    uZ: { "modalkeys.captureChar": {
+        acceptAfter: 4,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured.slice(0,2)",
+            to: "__captured.slice(2,4)",
+            inclusive: true,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+
+    "::doc::ux": {kind: 'select', label: 'btwn chars ex.', detail: 'between two distinct characters, exclusive of the pair'},
+    ux: { "modalkeys.captureChar": {
+        acceptAfter: 2,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured[0]",
+            to: "__captured[1]",
+            inclusive: false,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+
+    "::doc::uX": {kind: 'select', label: 'btwn chars inc.', detail: 'between two distinct characters, inclusive of the pair'},
+    uX: { "modalkeys.captureChar": {
+        acceptAfter: 2,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured[0]",
+            to: "__captured[1]",
             inclusive: false,
             caseSensitive: true,
             docScope: true
@@ -853,6 +953,14 @@ keybindings: {
     "-": "cursorUndo",
     "::doc::_": {kind: "history", label: "cursor redo", detail: "VSCode Cursor Redo"},
     "_": "cursorRedo",
+    "::doc::g-": {kind: "history", label: "nav ←", detail: "Go back in navigation history (e.g. goto definition)"},
+    "g-": "workbench.action.navigateBackInNavigationLocations",
+    "::doc::g_": {kind: "history", label: "nav →", detail: "Go forward in navigation history (e.g. goto definition)"},
+    "g_": "workbench.action.navigateForwardInNavigationLocations",
+    "::doc::'-": {kind: "history", label: "edit hist ←", detail: "Go back in edit history (e.g. goto definition)"},
+    "'-": "workbench.action.navigateBackInEditLocations",
+    "::doc::'_": {kind: "history", label: "edit hist →", detail: "Go forward in edit history (e.g. goto definition)"},
+    "'_": "workbench.action.navigateForwardInEditLocations",
 
     "::doc::.": {kind: "history", label: "repeat", detail: "repeat last sentence (last selection and action pair)"},
     ".": [
@@ -884,8 +992,8 @@ keybindings: {
     "gq": "rewrap.rewrapComment",
 
     // ### terminal actions
-    "::doc::m": {kind: "action", label: "to repl", detail: "send text to a terminal (usually containing a REPL); use langauge specific extensions when available and put the pasted code into a block (when defined)."},
-    m: countSelectsLines('down', [
+    "::doc::M": {kind: "action", label: "to repl", detail: "send text to a terminal (usually containing a REPL); use langauge specific extensions when available and put the pasted code into a block (when defined)."},
+    M: countSelectsLines('down', [
         {
             if: "__language == 'julia'",
             then: {
@@ -902,8 +1010,8 @@ keybindings: {
         "modalkeys.cancelMultipleSelections",
         "modalkeys.touchDocument"
     ]),
-    "::doc::M": {kind: "action", label: "to repl (v2)", detail: "send text to a terminal (usually containing a REPL), placing in a block when defined."},
-    M: countSelectsLines('down', [
+    "::doc::m": {kind: "action", label: "to repl (v2)", detail: "send text to a terminal (usually containing a REPL), placing in a block when defined."},
+    m: countSelectsLines('down', [
         {
             if: "!__selection.isSingleLine",
             then: "terminal-polyglot.send-block-text",
@@ -934,18 +1042,30 @@ keybindings: {
     gc: "merge-conflict.next",
     "::doc::gC": {kind: "action", label: "← conflict", detail: "move to previous merge conflict"},
     gC: "merge-conflict.previous",
-    "::doc::g[": {kind: "action", label: "current", detail: "accept current change"},
+    "::doc::g[": {kind: "action", label: "acpt current", detail: "accept current change"},
     "g[": "merge-conflict.accept.current",
-    "::doc::g]": {kind: "action", label: "incoming", detail: "accept incoming change"},
+    "::doc::g]": {kind: "action", label: "acpt incoming", detail: "accept incoming change"},
     "g]": "merge-conflict.accept.incoming",
-    "::doc::g\\": {kind: "action", label: "both", detail: "accept both changes"},
+    "::doc::g\\": {kind: "action", label: "acpt both", detail: "accept both changes"},
     "g\\": "merge-conflict.accept.both",
     "::doc::g{": {kind: "action", label: "all current", detail: "accept all current changes"},
     "g{": "merge-conflict.accept.all-current",
     "::doc::g}": {kind: "action", label: "all incoming", detail: "accept all incoming changes"},
-    "g}": "merge-conflict.accept.all-current",
+    "g}": "merge-conflict.accept.all-incoming",
     "::doc::g|": {kind: "action", label: "all both", detail: "accept all both changes"},
     "g|": "merge-conflict.accept.all-both",
+    "::doc::,p": {kind: "action", label: "→ conflict", detail: "move to next merge conflict (merge editor)"},
+    ",p": "merge.goToNextConflict",
+    "::doc::,P": {kind: "action", label: "← conflict", detail: "move to previous merge conflict (merge editor)"},
+    ",P": "merge.goToPreviousConflict",
+    "::doc::,[": {kind: "action", label: "acpt current", detail: "accept current change (merge editor)"},
+    ",[": "merge.toggleActiveConflictInput1",
+    "::doc::,{": {kind: "action", label: "cmpr current", detail: "compare current change (merge editor)"},
+    ",{": "mergeEditor.compareInput1WithBase",
+    "::doc::,]": {kind: "action", label: "acpt current", detail: "accept current change (merge editor)"},
+    ",]": "merge.toggleActiveConflictInput2",
+    "::doc::,}": {kind: "action", label: "cmpr current", detail: "compare current change (merge editor)"},
+    ",}": "mergeEditor.compareInput2WithBase",
     "::doc::,e": {kind: "select", label: "error →", detail: "move to next error"},
     ",e": "editor.action.marker.next",
     "::doc::,E": {kind: "select", label: "error ←", detail: "move to previous error"},
@@ -1108,8 +1228,8 @@ keybindings: {
         "editor.action.selectHighlights",
         { "modalkeys.enterMode": { mode: "selectedit" } },
     ],
-    "::doc::'-": { kind: "modifier", label: "restore sel", detail: "restore the most recently cleared selection"},
-    "'-": [
+    "::doc::,-": { kind: "modifier", label: "restore sel", detail: "restore the most recently cleared selection"},
+    ",-": [
         { "selection-utilities.restoreAndClear": {register: "cancel"} },
         { if: "__selections.length > 1", then: { "modalkeys.enterMode": { mode: "selectedit" }}}
     ],
