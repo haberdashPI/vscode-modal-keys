@@ -58,6 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 */
 	actions.updateFromConfig()
 	keymap.updateFromConfig()
+	keytips.updateFromConfig()
 	if (actions.getStartInNormalMode())
         commands.enterMode('normal')
 	else

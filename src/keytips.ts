@@ -230,6 +230,13 @@ export async function prevKeytip(){
 export async function showKeytip(index: number){
     if(currentTips){
         revealAll(currentTips[index], { select: true, focus: false, expand: true })
+    }else{
+        let children = treeProvider.getChildren()
+        if(children.length > 1){
+            revealAll(children[1], { select: true, focus: false, expand: true })
+        }else if(children.length > 0){
+            revealAll(children[0], { select: true, focus: false, expand: true })
+        }
     }
 }
 
