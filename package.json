@@ -440,7 +440,7 @@
         "build-docs": "npm-run-all --serial build-html-docs parcel-build-docs",
         "build-dev-docs": "npm-run-all --serial build-html-docs parcel-build-dev-docs",
         "predebug": "rm -rf dist",
-        "debug": "npx tsc --outDir dist",
+        "debug": "npx webpack --mode development",
         "prepackage": "rm -rf dist",
         "lint": "eslint src --ext ts"
     },
