@@ -61,7 +61,7 @@ they are same as the rest of text in the status bar.
 | `searchStatusColor`| `undefined`               | Status text color when search is active
 | `selectStatusColor`| `undefined`               | Status text color when selection is active in normal mode
 
-## Start in Normal Mode
+## Custom Start Mode
 
-If you want VS Code to be in insert mode when it starts, set the
-`startInNormalMode` setting to `false` (it defaults to `true`).
+If you want VS Code to be in custom mode when it starts, set the
+`startMode` setting to mode name (it defaults to `normal`).
