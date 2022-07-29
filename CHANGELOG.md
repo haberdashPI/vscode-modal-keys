@@ -2,6 +2,12 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.11.0
+- **Feature**: Suport for keybinding tips (shown in activity bar) via
+`docTips` configuration key. See documetnation for details.
+- **Bugfix**: fix bug that lead to rare merging of documentation entries 
+(when key was the same but mode was different)
+
 # Version 0.10.4
 - **Bugfix**: fix bug in 'd' command in `larkin.js` caused by recent fixes to
 `modalkeys.enterNormal`.

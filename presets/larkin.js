@@ -83,16 +83,97 @@ docKinds: [
     { name: 'leader',   description: "Leaders serve as prefixes to an entire list of key commands" }
 ],
 
+docTips: [
+    { 
+        title: "Basic Motions" ,
+        comment: "The standard motions to move around and select text.",
+        id: "basic",
+        more: [ "advanced", "argument" ],
+        entries: [
+            { title: "Basic Cursor Movement", id: "cursor" },
+            { title: "Cursor Movement", id: "cursor_advanced" },
+            { title: "Word Movement", id: "word" },
+            { title: "Document Movement", id: "document" },
+            { note: "Many additional selection commands", id: "select_leader" },
+            { note: "Selects around an entire object (e.g. word)", id: 'around_tip' }
+        ]
+    },
+    { 
+        title: "Modifying Text",
+        comment: "The most common commands used to manipulate text",
+        id: "text",
+        more: [ "advanced_text", ],
+        entries: [
+            { title: "Insert", id: "insert" },
+            { title: "Change", id: "change" },
+            { title: "Cut/Delete", id: "delete" },
+            { title: "Copy/Paste", id: "copy" },
+            { note: "Many additional selection commands", id: 'action_leader' },
+        ]
+    },
+    { 
+        title: "Search Motions",
+        comment: "Selection by searching specific strings",
+        id: "search",
+        entries: [
+            { title: "By Cursor", id: "search_cursor" },
+            { title: "By Character", id: "character" },
+            { title: "By String", id: "string" },
+            { title: "Iteration", id: "iteration" },
+        ]
+    },
+    { 
+        title: "Advanced Motions",
+        id: "advanced",
+        comment: "Many of the most useful, more complex motions for selecting text.",
+        modes: [ "normal" ],
+        more: [ "notebook", "argument", "select_text" ],
+        entries: [
+            { title: "Adjustments", id: "adjust"},
+            { title: "Regions", id: "region" },
+            { title: "Comments", id: "comment" },
+            { title: "Brackets", id: "bracket" },
+            { title: "Indent", id: "indent" },
+            { title: "Quotes", id: "quote"},
+            { title: "Numbers", id: "number" },
+            { title: "Around Chars", id: "around_chars"},
+            { note: "Selects around an entire object (e.g. word)", id: 'around_tip' }
+        ]
+    },
+    { 
+        title: "Advanced text modification",
+        comment: "Many of hte most useful, more complex text manipulation commands", 
+        id: "advanced_text",
+        entries: [
+            { title: "Insert", id: "advanced_insert" },
+            { title: "Copy/Paste", id: "advanced_copy" },
+            { title: "Change brackets", id: "text_bracket" },
+            { title: "Change captilization", id: "case" },
+            { title: "Change a number", id: "text_number" },
+            { title: "Indent Lines", id: "text_indent" }
+        ]
+    },
+    { 
+        title: "Function Argument Motions",
+        id: "argument",
+    },
+    {
+        title: "Notebook Motions",
+        id: "notebook",
+    },
+
+],
+
 keybindings: {
     // ### Motions
 
     // basic movement
-    "::doc::h": { kind: "select", label: "←", detail: "move left" },
-    "::doc::j": { kind: "select", label: '↓', detail: "move down" },
-    "::doc::k": { kind: "select", label: '↑', detail: "move up" },
-    "::doc::l": { kind: "select", label: '→', detail: "move right" },
-    "::doc::g": { kind: "leader", label: "actions (mostly)", detail: "additional commands (mostly actions)" },
-    "::doc::gj": { kind: "select", label: 'unwrp ↓', detail: "Down unwrapped line" },
+    "::doc::h": { kind: "select", label: "←", detail: "move left", tip: "cursor"},
+    "::doc::j": { kind: "select", label: '↓', detail: "move down", tip: "cursor" },
+    "::doc::k": { kind: "select", label: '↑', detail: "move up", tip: "cursor" },
+    "::doc::l": { kind: "select", label: '→', detail: "move right", tip: "cursor" },
+    "::doc::g": { kind: "leader", label: "actions (mostly)", detail: "additional commands (mostly actions)", tip: "action_leader" },
+    "::doc::gj": { kind: "select", label: 'unwrp ↓', detail: "Down unwrapped line"},
     "::doc::gk": { kind: "select", label: 'unwrp ↑', detail: "Up unwrapped line"},
     "::using::cursorMove::": {
         h: { to: 'left', select: "__mode !== 'normal'", value: '__count' },
@@ -104,33 +185,33 @@ keybindings: {
     },
 
     // line related movements
-    "::doc::H": { kind: "select", label: "start", detail: "start of line (alterantes between first non-whitepace, and first)" },
+    "::doc::H": { kind: "select", label: "start", detail: "start of line (alterantes between first non-whitepace, and first)", tip: "cursor_advanced" },
     H: "cursorHomeSelect",
-    "::doc::L": { kind: "select", label: "end", detail: "end of line" },
+    "::doc::L": { kind: "select", label: "end", detail: "end of line", tip: "cursor_advanced" },
     L: { "cursorMove": { to: "wrappedLineEnd", select: true } },
-    "::doc::G": { kind: "select", label: "expand", detail: "expand selections to full lines" },
+    "::doc::G": { kind: "select", label: "expand", detail: "expand selections to full lines", tip: "cursor_advanced" },
     G:  "expandLineSelection",
-    "::doc::K": { kind: "select", label: "sel ↑", detail: "select lines upwards" },    
+    "::doc::K": { kind: "select", label: "sel ↑", detail: "select lines upwards", tip: "cursor_advanced" },    
     K: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'up', by: 'wrappedLine', select: true, value: '__count' } },
         "expandLineSelection",
         "selection-utilities.activeAtStart"
     ],
-    "::doc::J": { kind: "select", label: "sel ↓", detail: "select lines downwards" },    
+    "::doc::J": { kind: "select", label: "sel ↓", detail: "select lines downwards", tip: "cursor_advanced" },    
     J: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'down', by: 'wrappedLine', select: true, value: '__count' } },
         "expandLineSelection",
     ],
-    "::doc::gK": { kind: "select", label: 'unwrp sel ↑', detail: "select unwrapped lines upwards" },
+    "::doc::gK": { kind: "select", label: 'unwrp sel ↑', detail: "select unwrapped lines upwards", tip: "cursor_advanced" },
     gK: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'up', by: 'line', select: true, value: '__count' } },
         "expandLineSelection",
         "selection-utilities.activeAtStart"
     ],
-    "::doc::gJ": { kind: "select", label: 'unwrp sel ↓', detail: "select unwrapped lines downwards" },
+    "::doc::gJ": { kind: "select", label: 'unwrp sel ↓', detail: "select unwrapped lines downwards", tip: "cursor_advanced" },
     gJ: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'down', by: 'line', select: true, value: '__count' } },
@@ -138,54 +219,54 @@ keybindings: {
     ],
 
 
-    "::doc::\\": { kind: "select", label: 'right character', detail: "select *just* the character to the right" },
+    "::doc::\\": { kind: "select", label: 'right character', detail: "select *just* the character to the right", tip: "cursor_advanced" },
     "\\": [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'right', select: true, value: '__count' } }
     ],
-    "::doc::|": { kind: "select", label: 'left character', detail: "select *just* the character to the left" },
+    "::doc::|": { kind: "select", label: 'left character', detail: "select *just* the character to the left", tip: "cursor_advanced" },
     "|": [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'left', select: true, value: '__count' } }
     ],
 
     // movements around regex units
-    "::doc::'": { kind: "leader", label: "select (mostly)", detail: "additional commands (mostly selection/view related)"},
-    "::doc::u": { kind: "leader", label: "around", detail: "selection commands that move start and end of a selection to surround the entire object (rather than extending to specified start/end point)" },
+    "::doc::'": { kind: "leader", label: "select (mostly)", detail: "additional commands (mostly selection/view related)", tip: "select_leader"},
+    "::doc::u": { kind: "leader", label: "around", detail: "selection commands that move start and end of a selection to surround the entire object (rather than extending to specified start/end point)", tip: "around_tip" },
     "::doc::u'": { kind: "leader", label: "select", detail: "additional selections"},
-    "::doc::w": { kind: "select", label: "subwrd →", detail: "next subword (camel/snake case)" },
-    "::doc::W": { kind: "select", label: "word →", detail: "next word"},
-    "::doc::e": { kind: "select", label: "word end →", detail: "next word end" },
-    "::doc::b": { kind: "select", label: "subwrd ←", detail: "previous subword (came/snake case)" },
-    "::doc::B": { kind: "select", label: "word ←", detail: "previous word" },
-    "::doc::E": { kind: "select", label: "word end ←", detail: "previous word end" },
+    "::doc::w": { kind: "select", label: "subwrd →", detail: "next subword (camel/snake case)", tip: "word" },
+    "::doc::W": { kind: "select", label: "word →", detail: "next word", tip: "word"},
+    "::doc::e": { kind: "select", label: "word end →", detail: "next word end", tip: "word" },
+    "::doc::b": { kind: "select", label: "subwrd ←", detail: "previous subword (came/snake case)", tip: "word" },
+    "::doc::B": { kind: "select", label: "word ←", detail: "previous word", tip: "word" },
+    "::doc::E": { kind: "select", label: "word end ←", detail: "previous word end", tip: "word" },
     "::doc::uw": { kind: "select", label: "subwrd →", detail: "select entire subword with and trailing whitespace (camel/snake case)" },
     "::doc::uW": { kind: "select", label: "word →", detail: "select entire word and trailing whitespace"},
     "::doc::ue": { kind: "select", label: "in word →", detail: "select entire word (no whitespace)" },
     "::doc::ub": { kind: "select", label: "subwrd ←", detail: "select previous subword and trailing whitespace (came/snake case)" },
     "::doc::uB": { kind: "select", label: "word ←", detail: "select previous word and trailing whitespace" },
     "::doc::uE": { kind: "select", label: "in word ←", detail: "select previous word (no whitespace)" },    
-    "::doc::@": { kind: "select", label: "number ←", detail: "next number" },
-    "::doc::#": { kind: "select", label: "number →", detail: "previous number" },
-    "::doc::';": { kind: "select", label: "comment →", detail: "next commented region" },
-    "::doc::':": { kind: "select", label: "comment ←", detail: "previous commented region" },
-    "::doc::,;": { kind: "select", label: "blk commt →", detail: "next block commented region" },
-    "::doc::,:": { kind: "select", label: "blk commt ←", detail: "previous block commented region" },
-    "::doc::p": { kind: "select", label: "pargrph →", detail: "next pagaraph" },
-    "::doc::P": { kind: "select", label: "pargrph ←", detail: "previous paragraph" },
-    "::doc::')": { kind: "select", label: "sec →", detail: "next section" },
-    "::doc::'(": { kind: "select", label: "sec ←", detail: "previous section" },
-    "::doc::)": { kind: "select", label: "subsec →", detail: "next subsection" },
-    "::doc::(": { kind: "select", label: "subsec ←", detail: "previous subsection" },
+    "::doc::@": { kind: "select", label: "number ←", detail: "next number", tip: "number" },
+    "::doc::#": { kind: "select", label: "number →", detail: "previous number", tip: "number" },
+    "::doc::';": { kind: "select", label: "comment →", detail: "next commented region" , tip: "comment"},
+    "::doc::':": { kind: "select", label: "comment ←", detail: "previous commented region" , tip: "comment"},
+    "::doc::,;": { kind: "select", label: "blk commt →", detail: "next block commented region" , tip: "comment"},
+    "::doc::,:": { kind: "select", label: "blk commt ←", detail: "previous block commented region" , tip: "comment"},
+    "::doc::p": { kind: "select", label: "pargrph →", detail: "next pagaraph", tip: "region" },
+    "::doc::P": { kind: "select", label: "pargrph ←", detail: "previous paragraph", tip: "region" },
+    "::doc::')": { kind: "select", label: "sec →", detail: "next section", tip: "region" },
+    "::doc::'(": { kind: "select", label: "sec ←", detail: "previous section", tip: "region" },
+    "::doc::)": { kind: "select", label: "subsec →", detail: "next subsection", tip: "region" },
+    "::doc::(": { kind: "select", label: "subsec ←", detail: "previous subsection", tip: "region" },
     "::doc::up": { kind: "select", label: "pargrph →", detail: "next pagaraph" },
     "::doc::uP": { kind: "select", label: "pargrph ←", detail: "previous paragraph" },
     "::doc::u')": { kind: "select", label: "sec →", detail: "next section" },
     "::doc::u'(": { kind: "select", label: "sec ←", detail: "previous section" },
     "::doc::u)": { kind: "select", label: "subsec →", detail: "next subsection" },
     "::doc::u(": { kind: "select", label: "subsec ←", detail: "previous subsection" },
-    "::doc::'w": { kind: "select", label: "WORD →", detail: "next WORD; e.g. contiguous non-whitespace region"},
-    "::doc::'b": { kind: "select", label: "WORD ←", detail: "previous WORD; e.g. contiguous non-whitespace region"},
-    "::doc::'e": { kind: "select", label: "WORD end →", detail: "to end of WORD; e.g. contiguous non-whitespace region"},
+    "::doc::'w": { kind: "select", label: "WORD →", detail: "next WORD; e.g. contiguous non-whitespace region", tip: "word"},
+    "::doc::'b": { kind: "select", label: "WORD ←", detail: "previous WORD; e.g. contiguous non-whitespace region", tip: "word"},
+    "::doc::'e": { kind: "select", label: "WORD end →", detail: "to end of WORD; e.g. contiguous non-whitespace region", tip: "word"},
     "::doc::u'w": { kind: "select", label: "WORD →", detail: "select entire WORD and trailing whitespace; a WORD is a contiguous non-whitespace region" },
     "::doc::u'e": { kind: "select", label: "WORD →", detail: "select entire WORD; a WORD is a contiguous non-whitespace region" },
 
@@ -205,7 +286,7 @@ keybindings: {
         E:     { unit: "word",    boundary: "end",   select:      true, value: '-(__count || 1)' },
         "'w":  { unit: "WORD",    boundary: "start", select:      true, value: " (__count || 1)" },
         "'b":  { unit: "WORD",    boundary: "start", select:      true, value: "-(__count || 1)" },
-        "'e":  { unit: "WORD",    boundary: "end",   select:      true, value: "-(__count || 1)" },
+        "'e":  { unit: "WORD",    boundary: "end",   select:      true, value: " (__count || 1)" },
         "u'w": { unit: "WORD",    boundary: "start", selectWhole: true, value: " (__count || 1)" },
         "u'e": { unit: "WORD",    boundary: "both",  selectWhole: true, value: " (__count || 1)" },
         "u'b": { unit: "WORD",    boundary: "start", selectWhole: true, value: "-(__count || 1)" },
@@ -236,49 +317,74 @@ keybindings: {
     },
 
     // jupyter based cell selection
-    "::doc::'y": { kind: "select", label: "jupyter", detail: "jupyter related selection commands"},
-    "::doc::'yc": { kind: "select", label: "cell →", detail: "next jupyter notebook cell"},
-    "'yc": ["jupyter.gotoNextCellInFile", "jupyter.selectCell"],
-    "::doc::'yC": { kind: "select", label: "cell ←", detail: "previous jupyter notebook cell"},
-    "'yC": ["jupyter.gotoPrevCellInFile", "jupyter.selectCell"],
-    "::doc::uy": { kind: "select", label: "cell", detail: "select a jyputer notebook cell"},
-    uy: "jupyter.selectCell",
+    "::doc::'y": { kind: "select", label: "cell →", detail: "next jupyter notebook cell", tip: "notebook"},
+    "'y": {
+        if: "__language == 'markdown' || __language == 'quarto'",
+        then: "terminal-polyglot.next-fence-select",
+        else: [
+            { "jupyter.gotoNextCellInFile": {}, repeat: "__count" },
+            { "revealLine": { lineNumber: '__line', at: 'center' } },
+            "jupyter.selectCell"
+        ],
+    },
+    "::doc::'Y": { kind: "select", label: "cell ←", detail: "previous jupyter notebook cell", tip: "notebook"},
+    "'Y": {
+        if: "__language == 'markdown' || __language == 'quarto'",
+        then: "terminal-polyglot.prev-fence-select",
+        else: [
+            { "jupyter.gotoPrevCellInFile": {}, repeat: "__count" }, 
+            { "revealLine": { lineNumber: '__line', at: 'center' } },
+            "jupyter.selectCell"
+        ],
+    },
+    "::doc::uy": { kind: "select", label: "cell", detail: "select a jyputer notebook cell", tip: "notebook"},
+    uy: {
+        if: "__language == 'markdown' || __language == 'quarto'",
+        then: "terminal-polyglot.select-fence",
+        else: "jupyter.selectCell",
+    },
+    "::doc::,y": { kind: "action", label: "create cell", detail: "Create a new jupyter notebook cell", tip: "notebook"},
+    ",y": {
+        if: "__language == 'quarto'",
+        then: "quarto.insertCodeCell",
+        else: "jupyter.selectCell",
+    },
 
     // function arguments
     "::doc::,": { kind: "leader", label: "window (mostly)", detail: "additional commands, mostly related to changes to the editor/view/window" },
     "::using::move-cursor-by-argument.move-by-argument": {
-        "::doc::,w": { kind: "select", label: "arg →", detail: "Next function argument"},
+        "::doc::,w": { kind: "select", label: "arg →", detail: "Next function argument", tip: "argument"},
         ",w":  { value: "(__count || 1)",  boundary: "end", select:      true },
-        "::doc::,b": { kind: "select", label: "arg ←", detail: "Previous function argument"},
+        "::doc::,b": { kind: "select", label: "arg ←", detail: "Previous function argument", tip: "argument"},
         ",b":  { value: "-(__count || 1)", boundary: "start", select:      true },
-        "::doc::,W": { kind: "select", label: "arg(+,) →", detail: "Next function argument (and comma)"},
+        "::doc::,W": { kind: "select", label: "arg(+,) →", detail: "Next function argument (and comma)", tip: "argument"},
         ",W":  { value: "(__count || 1)",  boundary: "start", select:      true },
-        "::doc::,B": { kind: "select", label: "arg(+,) ←", detail: "Previous function argument (and comma)"},
+        "::doc::,B": { kind: "select", label: "arg(+,) ←", detail: "Previous function argument (and comma)", tip: "argument"},
         ",B":  { value: "-(__count || 1)", boundary: "end",   select:      true },
-        "::doc::u.": { kind: 'select', label: "arg →", detail: "Around next argument"},
+        "::doc::u.": { kind: 'select', label: "arg →", detail: "Around next argument", tip: "argument"},
         "u.": { value: "(__count || 1)",  boundary: "both", selectWhole: true },
-        "::doc::u,": { kind: 'select', label: "arg ←", detail: "Around previous argument"},
+        "::doc::u,": { kind: 'select', label: "arg ←", detail: "Around previous argument", tip: "argument"},
         "u,": { value: "-(__count || 1)", boundary: "both", selectWhole: true },
-        "::doc::u>": { kind: 'select', label: "arg →", detail: "Around next argument (with comma)"},
+        "::doc::u>": { kind: 'select', label: "arg →", detail: "Around next argument (with comma)", tip: "argument"},
         "u>": { value: "(__count || 1)",  boundary: "start", selectWhole: true },
-        "::doc::u<": { kind: 'select', label: "arg ←", detail: "Around previous argument (with comma)"},
+        "::doc::u<": { kind: 'select', label: "arg ←", detail: "Around previous argument (with comma)", tip: "argument"},
         "u<": { value: "-(__count || 1)", boundary: "end",   selectWhole: true },
     },
 
     // generic, magic selection
-    "::doc::uu": { kind: 'select', label: "smart expand", detail: "Use VSCode's built-in smart expansion command"},
+    "::doc::uu": { kind: 'select', label: "smart expand", detail: "Use VSCode's built-in smart expansion command", tip: "region"},
     "uu": "editor.action.smartSelect.expand",
 
     // buffer related
-    "::doc::$": { kind: "select", label: "all", detail: "Select the entire document" },
+    "::doc::$": { kind: "select", label: "all", detail: "Select the entire document", tip: "document" },
     $: [ "editor.action.selectAll" ],
-    "::doc::gG": { kind: 'select', label: 'doc end'},
+    "::doc::gG": { kind: 'select', label: 'doc end', tip: "document" },
     "gG": "cursorBottomSelect",
-    "::doc::gg": { kind: 'select', label: 'doc start'},
+    "::doc::gg": { kind: 'select', label: 'doc start', tip: "document" },
     "gg": "cursorTopSelect",
 
     // search related
-    "::doc::*": { kind: "select", label: "match →", detail: "Next match to object under cursor"},
+    "::doc::*": { kind: "select", label: "match →", detail: "Next match to object under cursor", tip:  "search_cursor" },
     "*": [
         { "modalkeys.search": {
             text: "__wordstr",
@@ -286,7 +392,7 @@ keybindings: {
             register: "search"
         }}
     ],
-    "::doc::&": { kind: "select", label: "match ←", detail: "Previous match to object under cursor"},
+    "::doc::&": { kind: "select", label: "match ←", detail: "Previous match to object under cursor", tip:  "search_cursor" },
     "&": [
         { "modalkeys.search": {
             text: "__wordstr",
@@ -296,12 +402,12 @@ keybindings: {
         }}
     ],
 
-    "::doc::n": { kind: "select", label: "search →", detail: "Next match to search term"},
+    "::doc::n": { kind: "select", label: "search →", detail: "Next match to search term", tip: "iteration"},
     "n": { "modalkeys.nextMatch": {register: "search"}, repeat: "__count" },
-    "::doc::N": { kind: "select", label: "search →", detail: "Previous match to search term"},
+    "::doc::N": { kind: "select", label: "search →", detail: "Previous match to search term", tip: "iteration"},
     "N": { "modalkeys.previousMatch": {register: "search"}, repeat: "__count" },
 
-    "::doc::/": { kind: "select", label: "search", detail: "Search forwards" },
+    "::doc::/": { kind: "select", label: "search", detail: "Search forwards", tip: "string"},
     "/": { "modalkeys.search": {
         register: "search",
         caseSensitive: true,
@@ -309,7 +415,7 @@ keybindings: {
         selectTillMatch: true,
         wrapAround: true
     } },
-    "::doc::?": { kind: "select", label: "search back", detail: "Search backward" },
+    "::doc::?": { kind: "select", label: "search back", detail: "Search backward", tip: "string"},
     "?": { "modalkeys.search": {
         register: "search",
         caseSensitive: true,
@@ -318,7 +424,7 @@ keybindings: {
         wrapAround: true
     } },
 
-    "::doc::f": { kind: "select", label: "find char", detail: "To next char (include char in selection)"},
+    "::doc::f": { kind: "select", label: "find char", detail: "To next char (include char in selection)", tip: "character"},
     f: { "modalkeys.search": {
         caseSensitive: true,
         acceptAfter: 1,
@@ -326,7 +432,7 @@ keybindings: {
         selectTillMatch: true,
         wrapAround: true
     }},
-    "::doc::F": { kind: "select", label: "find char back", detail: "To previous character (include char in selection)"},
+    "::doc::F": { kind: "select", label: "find char back", detail: "To previous character (include char in selection)", tip: "character"},
     F: { "modalkeys.search": {
         caseSensitive: true,
         acceptAfter: 1,
@@ -334,7 +440,7 @@ keybindings: {
         selectTillMatch: true,
         wrapAround: true
     }},
-    "::doc::t": { kind: "select", label: "find char", detail: "To next character (exclude char in selection)"},
+    "::doc::t": { kind: "select", label: "find char", detail: "To next character (exclude char in selection)", tip: "character"},
     t: { "modalkeys.search": {
         caseSensitive: true,
         acceptAfter: 1,
@@ -343,7 +449,7 @@ keybindings: {
         offset: 'start',
         wrapAround: true
     }},
-    "::doc::T": { kind: "select", label: "find char back", detail: "To previous character (exclude char in selection)"},
+    "::doc::T": { kind: "select", label: "find char back", detail: "To previous character (exclude char in selection)", tip: "character"},
     T: { "modalkeys.search": {
         caseSensitive: true,
         acceptAfter: 1,
@@ -352,7 +458,7 @@ keybindings: {
         offset: 'end',
         wrapAround: true
     }},
-    "::doc::s": { kind: "select", label: "find char pair", detail: "To next character pair"},
+    "::doc::s": { kind: "select", label: "find char pair", detail: "To next character pair", tip: "character"},
     s: { "modalkeys.search": {
         caseSensitive: true,
         acceptAfter: 2,
@@ -361,7 +467,7 @@ keybindings: {
         offset: 'start',
         wrapAround: true
     }},
-    "::doc::S": { kind: "select", label: "char pair back", detail: "To previous character pair"},
+    "::doc::S": { kind: "select", label: "char pair back", detail: "To previous character pair", tip: "character"},
     S: { "modalkeys.search": {
         casSensitive: true,
         acceptAfter: 2,
@@ -370,21 +476,21 @@ keybindings: {
         offset: 'start',
         wrapAround: true
     }},
-    "::doc::;": {kind: "select", label: "→ match", detail: "Repeat search motion forwards (for `f`, `t`, etc...)"},
+    "::doc::;": {kind: "select", label: "→ match", detail: "Repeat search motion forwards (for `f`, `t`, etc...)", tip: "iteration"},
     ";": { "modalkeys.nextMatch": {}, repeat: "__count" },
-    "::doc:::": {kind: "select", label: "← match", detail: "Repeat search motion backwards (for `f`, `t`, etc...)"},
+    "::doc:::": {kind: "select", label: "← match", detail: "Repeat search motion backwards (for `f`, `t`, etc...)", tip: "iteration"},
     ":": { "modalkeys.previousMatch": {}, repeat: "__count" },
 
     // ### more complex syntactic selections
 
-    "::doc::%": { kind: 'select', label: 'to bracket', detail: "Move to matching bracket"},
+    "::doc::%": { kind: 'select', label: 'to bracket', detail: "Move to matching bracket", tip: "bracket"},
     '%': "editor.action.jumpToBracket",
-    "::doc::''": {kind: 'select', label: 'in quotes', detail: "text within current quotes"},
+    "::doc::''": {kind: 'select', label: 'in quotes', detail: "text within current quotes", tip: "bracket"},
     "''": "bracketeer.selectQuotesContent",
-    "::doc::'\"": {kind: 'select', label: 'around quotes', detail: "quotes and text within current quotes"},
+    "::doc::'\"": {kind: 'select', label: 'around quotes', detail: "quotes and text within current quotes", tip: "bracket"},
     "'\"": ["bracketeer.selectQuotesContent", "bracketeer.selectQuotesContent"],
     // the below is a bit hacky; I want to add these commandsto my extension
-    "::doc::[": {kind: 'select', label: 'in parens', detail: 'text inside parents/brackets/braces'},
+    "::doc::[": {kind: 'select', label: 'in parens', detail: 'text inside parents/brackets/braces', tip: "bracket"},
     "[": [
         {
             if: "!__selection.isEmpty",
@@ -397,7 +503,7 @@ keybindings: {
         },
         { "editor.action.selectToBracket": {"selectBrackets": false} }
     ],
-    "::doc::{": {kind: 'select', label: 'arnd parens', detail: 'parents/brackets/braces and their contents'},
+    "::doc::{": {kind: 'select', label: 'arnd parens', detail: 'parents/brackets/braces and their contents', tip: "bracket"},
     "{": [
         {
             if: "!__selection.isEmpty",
@@ -411,33 +517,33 @@ keybindings: {
         { "editor.action.selectToBracket": {"selectBrackets": true} }
     ],
 
-    "::doc::'>": { kind: 'select', label: 'in <>', detail: 'text inside angle brackets'},
+    "::doc::'>": { kind: 'select', label: 'in <>', detail: 'text inside angle brackets', tip: "bracket"},
     "'>": "extension.selectAngleBrackets",
-    "::doc::'<": { kind: 'select', label: 'in ><', detail: 'text inside tag pairs (e.g. <a>text</a>)'},
+    "::doc::'<": { kind: 'select', label: 'in ><', detail: 'text inside tag pairs (e.g. <a>text</a>)', tip: "bracket"},
     "'<": "extension.selectInTag",
 
-    "::doc::']": {kind: 'select', label: 'indent+top', detail: 'all text at same indent and the unindent line just above it (ala python syntax)'},
+    "::doc::']": {kind: 'select', label: 'indent+top', detail: 'all text at same indent and the unindent line just above it (ala python syntax)', tip: "ident"},
     "']": "vscode-select-by-indent.select-outer-top-only",
-    "::doc::]": {kind: 'select', label: 'inside indent', detail: 'all text at same indent'},
+    "::doc::]": {kind: 'select', label: 'inside indent', detail: 'all text at same indent', tip: "ident"},
     "]": "vscode-select-by-indent.select-inner",
-    "::doc::}": {kind: 'select', label: 'around indent', detail: 'all text at same indent along with the line above and below this (ala c-like synatx)'},
+    "::doc::}": {kind: 'select', label: 'around indent', detail: 'all text at same indent along with the line above and below this (ala c-like synatx)', tip: "ident"},
     "}": "vscode-select-by-indent.select-outer",
 
-    "::doc::u`": {kind: 'select', label: 'inside ``', detail: 'inside first character pair `` (non syntactical, useful inside comments)'},
+    "::doc::u`": {kind: 'select', label: 'inside ``', detail: 'inside first character pair `` (non syntactical, useful inside comments)', tip: "quote"},
     "u`": { "modalkeys.selectBetween": {
         from: "`", to: "`",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::u[": {kind: 'select', label: 'inside []', detail: 'inside first character pair `[]` (non syntactical, useful inside comments)'},
+    "::doc::u[": {kind: 'select', label: 'inside []', detail: 'inside first character pair `[]` (non syntactical, useful inside comments)', tip: "bracket"},
     "u[": { "modalkeys.selectBetween": {
         from: "[", to: "]",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::u{": {kind: 'select', label: 'inside {}', detail: 'inside first character pair `{}` (non syntactical, useful inside comments)'},
+    "::doc::u{": {kind: 'select', label: 'inside {}', detail: 'inside first character pair `{}` (non syntactical, useful inside comments)', tip: "bracket"},
     "u{": { "modalkeys.selectBetween": {
         from: "{", to: "}",
         inclusive: false,
@@ -445,7 +551,7 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::u[": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)'},    
+    "::doc::u]": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)', tip: "bracket"},    
     "u]": { "modalkeys.selectBetween": {
         from: "[", to: "]",
         inclusive: true,
@@ -453,7 +559,7 @@ keybindings: {
         docScope: true
     }},
     
-    "::doc::u{": {kind: 'select', label: 'around {}', detail: 'around first character pair `{}` (non syntactical, useful inside comments)'},    
+    "::doc::u}": {kind: 'select', label: 'around {}', detail: 'around first character pair `{}` (non syntactical, useful inside comments)', tip: "bracket"},    
     "u}": { "modalkeys.selectBetween": {
         from: "{", to: "}",
         inclusive: true,
@@ -461,43 +567,71 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::uC": {kind: 'select', label: 'between bracket pair', detail: 'around/inside some bracket pairs' },
-    "::doc::uC(": {kind: 'select', label: 'inside ()', detail: 'inside first pair of `()` (non syntactical, useful inside comments)' },  
+    "::doc::uC": {kind: 'select', label: 'between bracket pair', detail: 'around/inside some bracket pairs'},
+    "::doc::uC(": {kind: 'select', label: 'inside ()', detail: 'inside first pair of `()` (non syntactical, useful inside comments)', tip: "bracket" },  
     "uC(": { "modalkeys.selectBetween": {
         from: "(", to: ")",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC)": {kind: 'select', label: 'around ()', detail: 'around first pair of `()` (non syntactical, useful inside comments)' },  
+    "::doc::uC)": {kind: 'select', label: 'around ()', detail: 'around first pair of `()` (non syntactical, useful inside comments)', tip: "bracket" },  
     "uC)": { "modalkeys.selectBetween": {
         from: "(", to: ")",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC,": {kind: 'select', label: 'inside <>', detail: 'inside first character pair `<>` (non syntactical, useful inside comments)'},    
+    "::doc::uC[": {kind: 'select', label: 'inside []', detail: 'inside first pair of `[]` (non syntactical, useful inside comments)', tip: "bracket" },  
+    "uC[": { "modalkeys.selectBetween": {
+        from: "[", to: "]",
+        inclusive: false,
+        caseSensitive: true,
+        docScope: true
+    }},
+    "::doc::uC]": {kind: 'select', label: 'around []', detail: 'around first pair of `[]` (non syntactical, useful inside comments)', tip: "bracket" },  
+    "uC]": { "modalkeys.selectBetween": {
+        from: "[", to: "]",
+        inclusive: false,
+        caseSensitive: true,
+        docScope: true
+    }},
+    "::doc::uC{": {kind: 'select', label: 'inside {}', detail: 'inside first pair of `{}` (non syntactical, useful inside comments)', tip: "bracket" },  
+    "uC{": { "modalkeys.selectBetween": {
+        from: "{", to: "}",
+        inclusive: false,
+        caseSensitive: true,
+        docScope: true
+    }},
+    "::doc::uC}": {kind: 'select', label: 'around {}', detail: 'around first pair of `{}` (non syntactical, useful inside comments)', tip: "bracket" },  
+    "uC}": { "modalkeys.selectBetween": {
+        from: "{", to: "}",
+        inclusive: false,
+        caseSensitive: true,
+        docScope: true
+    }},
+    "::doc::uC,": {kind: 'select', label: 'inside <>', detail: 'inside first character pair `<>` (non syntactical, useful inside comments), tip: "bracket"'},    
     "uC.": { "modalkeys.selectBetween": {
         from: "<", to: ">",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC.": {kind: 'select', label: 'inside ><', detail: 'inside first character pair `><` (non syntactical, useful inside comments)'},    
+    "::doc::uC.": {kind: 'select', label: 'inside ><', detail: 'inside first character pair `><` (non syntactical, useful inside comments)', tip: "bracket" },
     "uC.": { "modalkeys.selectBetween": {
         from: ">", to: "<",
         inclusive: false,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC<": {kind: 'select', label: 'around <>', detail: 'around first character pair `<>` (non syntactical, useful inside comments)'},    
+    "::doc::uC<": {kind: 'select', label: 'around <>', detail: 'around first character pair `<>` (non syntactical, useful inside comments)', tip: "bracket" },
     "uC<": { "modalkeys.selectBetween": {
         from: "<", to: ">",
         inclusive: true,
         caseSensitive: true,
         docScope: true
     }},
-    "::doc::uC>": {kind: 'select', label: 'around ><', detail: 'around first character pair `><` (non syntactical, useful inside comments)'},    
+    "::doc::uC>": {kind: 'select', label: 'around ><', detail: 'around first character pair `><` (non syntactical, useful inside comments)', tip: "bracket" },
     "uC>": { "modalkeys.selectBetween": {
         from: ">", to: "<",
         inclusive: true,
@@ -505,7 +639,7 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::uc": {kind: 'select', label: 'between pair', detail: 'between two instances of any character, exclusive of the pair (non syntatical, useful inside comments)'},
+    "::doc::uc": {kind: 'select', label: 'between pair', detail: 'between two instances of any character, exclusive of the pair (non syntatical, useful inside comments)', tip: "around_chars"},
     uc: { "modalkeys.captureChar": {
         acceptAfter: 1,
         executeAfter: { "modalkeys.selectBetween": {
@@ -517,7 +651,55 @@ keybindings: {
         }},
     }},
 
-    "::doc::uv": {kind: 'select', label: 'around pair', detail: 'between two instance of any character, inclusive of the pair (non syntatical, useful inside comments)'},
+    "::doc::uz": {kind: 'select', label: 'in 2char pair ex.', detail: 'between two sets of characters pairs (four total chars), exclusive of the pair; for example, select bob in the string [{bob}] by typing uz[{}]', tip: "around_chars"},
+    uz: { "modalkeys.captureChar": {
+        acceptAfter: 4,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured.slice(0,2)",
+            to: "__captured.slice(2,4)",
+            inclusive: false,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+
+    "::doc::uZ": {kind: 'select', label: 'in 2char pair in.', detail: 'between two sets of characters pairs (four total chars), inclusive of the pair; for example, select the string [{bob}] by typing uz[{}]', tip: "around_chars"},
+    uZ: { "modalkeys.captureChar": {
+        acceptAfter: 4,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured.slice(0,2)",
+            to: "__captured.slice(2,4)",
+            inclusive: true,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+
+    "::doc::ux": {kind: 'select', label: 'btwn chars ex.', detail: 'between two distinct characters, exclusive of the pair', tip: "around_chars"},
+    ux: { "modalkeys.captureChar": {
+        acceptAfter: 2,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured[0]",
+            to: "__captured[1]",
+            inclusive: false,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+
+    "::doc::uX": {kind: 'select', label: 'btwn chars inc.', detail: 'between two distinct characters, inclusive of the pair', tip: "around_chars"},
+    uX: { "modalkeys.captureChar": {
+        acceptAfter: 2,
+        executeAfter: { "modalkeys.selectBetween": {
+            from: "__captured[0]",
+            to: "__captured[1]",
+            inclusive: false,
+            caseSensitive: true,
+            docScope: true
+        }},
+    }},
+
+    "::doc::uv": {kind: 'select', label: 'around pair', detail: 'between two instance of any character, inclusive of the pair (non syntatical, useful inside comments)', tip: "around_chars"},
     uv: { "modalkeys.captureChar": {
         acceptAfter: 1,
         executeAfter: { "modalkeys.selectBetween": {
@@ -531,37 +713,37 @@ keybindings: {
 
     // ### Selection Modifiers
 
-    "::doc::normal::R": {kind: "select", label: 'expand no wht', detail: 'select full line(s), and trim external whitespace'},
+    "::doc::normal::R": {kind: "select", label: 'expand no wht', detail: 'select full line(s), and trim external whitespace', tip: "adjust"},
     "normal::R": [ "expandLineSelection", "selection-utilities.trimSelectionWhitespace" ],
-    "::doc::R": {kind: "modifier", label: 'trim whitespace', detail: 'shrink selection to avoid external whitespace'},
+    "::doc::R": {kind: "modifier", label: 'trim whitespace', detail: 'shrink selection to avoid external whitespace', tip: "adjust"},
     "R": "selection-utilities.trimSelectionWhitespace" ,
-    "::doc::U": {kind: "modifier", label: 'narrow to subword', detail: "Narrow current selection so it starts and stops at a subword (e.g. 'snake' in snake_case)"},
+    "::doc::U": {kind: "modifier", label: 'narrow to subword', detail: "Narrow current selection so it starts and stops at a subword (e.g. 'snake' in snake_case)", tip: "adjust"},
     U: { "selection-utilities.narrowTo": { unit: "subident", boundary: "both", } },
 
-    "::doc::r": {kind: "modifier", label: 'clear', detail: "Clear the current selection"},
+    "::doc::r": {kind: "modifier", label: 'clear', detail: "Clear the current selection", tip: "adjust"},
     r: "modalkeys.cancelMultipleSelections",
-    "::doc:: ": {kind: "mode", label: 'hold', detail: "Start visual mode (enabling selection)"},
+    "::doc:: ": {kind: "mode", label: 'hold', detail: "Start visual mode (enabling selection)", tip: "adjust"},
     " ": "modalkeys.enableSelection",
 
     // ### Actions
 
     // #### Insert/append text
-    "::doc::i": {kind: "mode", label: 'insert', detail: "Switch to insert mode" },
+    "::doc::i": {kind: "mode", label: 'insert', detail: "Switch to insert mode" , tip: "insert"},
     i: [ "modalkeys.cancelMultipleSelections", "modalkeys.enterInsert" ],
-    "::doc::a": {kind: "mode", label: 'append', detail: "Switch to insert mode, moving cursor to end of current character" },
+    "::doc::a": {kind: "mode", label: 'append', detail: "Switch to insert mode, moving cursor to end of current character" , tip: "insert"},
     a: [ "modalkeys.cancelMultipleSelections", { if: "__char != ''", then: "cursorRight" }, "modalkeys.enterInsert"],
 
-    "::doc::I": {kind: "mode", label: 'insert start', detail: "Switch to insert mode, moving cursor to start of line" },
+    "::doc::I": {kind: "mode", label: 'insert start', detail: "Switch to insert mode, moving cursor to start of line" , tip: "insert"},
     I: [
         { "cursorMove": { to: "wrappedLineFirstNonWhitespaceCharacter", select: false } },
         "modalkeys.enterInsert",
     ],
 
-    "::doc::A": {kind: "mode", label: 'append eol', detail: "Switch to insert mode, moving cursor to end of line" },
+    "::doc::A": {kind: "mode", label: 'append eol', detail: "Switch to insert mode, moving cursor to end of line" , tip: "insert"},
     A: [ { "cursorMove": { to: "wrappedLineEnd", select: false } }, "modalkeys.enterInsert", ],
 
     // #### Text Changes
-    "::doc::c": {kind: "mode", label: 'change', detail: "Delete all selected text and move to insert mode"},
+    "::doc::c": {kind: "mode", label: 'change', detail: "Delete all selected text and move to insert mode", tip: "change"},
     c: countSelectsLines('down', {
         if: "!__selection.isSingleLine && __selection.end.character == 0 && __selection.start.character == 0",
         // multi-line selection
@@ -588,7 +770,7 @@ keybindings: {
         "modalkeys.enterInsert"
     ]),
 
-    "::doc::C": {kind: "mode", label: 'change to eol', detail: "Delete all text from here to end of line, and switch to insert mode"},
+    "::doc::C": {kind: "mode", label: 'change to eol', detail: "Delete all text from here to end of line, and switch to insert mode", tip: "change"},
     C: countSelectsLines('up', [
         "modalkeys.cancelMultipleSelections",
         "deleteAllRight",
@@ -600,41 +782,41 @@ keybindings: {
         "modalkeys.enterInsert"
     ]),
 
-    "::doc::gy": {kind: "action", label: 'join', detail: "Remove newline between current and next line"},
+    "::doc::gy": {kind: "action", label: 'join', detail: "Remove newline between current and next line", tip: "change"},
     "gy": countSelectsLines('down', "editor.action.joinLines"),
 
-    "::doc::`": {kind: "action", label: 'swap', detail: "Swap the style of the current selection or the identifier under the cursor (e.g. from camelCase to snake_case)"},
-    "::doc::`c": {kind: "action", label: 'camel', detail: "Swap style to lower camel case (`camelCase`)"},
+    "::doc::`": {kind: "action", label: 'swap', detail: "Swap the style of the current selection or the identifier under the cursor (e.g. from camelCase to snake_case)", tip: "case"},
+    "::doc::`c": {kind: "action", label: 'camel', detail: "Swap style to lower camel case (`camelCase`)", tip: "case"},
     "`c": "extension.changeCase.camel",
-    "::doc::`U": {kind: "action", label: 'constant', detail: "Swap style to constant (`IS_CONSTANT`)"},
+    "::doc::`U": {kind: "action", label: 'constant', detail: "Swap style to constant (`IS_CONSTANT`)", tip: "case"},
     "`U": "extension.changeCase.constant",
-    "::doc::`.": {kind: "action", label: 'dot', detail: "Swap style to dot case (`dot.case`)"},
+    "::doc::`.": {kind: "action", label: 'dot', detail: "Swap style to dot case (`dot.case`)", tip: "case"},
     "`.": "extension.changeCase.dot",
-    "::doc::`-": {kind: "action", label: 'kebab', detail: "Swap style to kebab case (`kebab-case`)"},
+    "::doc::`-": {kind: "action", label: 'kebab', detail: "Swap style to kebab case (`kebab-case`)", tip: "case"},
     "`-": "extension.changeCase.kebab",
-    "::doc::`L": {kind: "action", label: 'all lower', detail: "Swap all to lower case"},
+    "::doc::`L": {kind: "action", label: 'all lower', detail: "Swap all to lower case", tip: "case"},
     "`L": "extension.changeCase.lower",
-    "::doc::`l": {kind: "action", label: 'first lower', detail: "Swap first letter to lower case"},
+    "::doc::`l": {kind: "action", label: 'first lower', detail: "Swap first letter to lower case", tip: "case"},
     "`l": "extension.changeCase.lowerFirst",
-    "::doc::` ": {kind: "action", label: 'spaces', detail: "Swap to spaces (`camelCase` -> `camel case`)"},
+    "::doc::` ": {kind: "action", label: 'spaces', detail: "Swap to spaces (`camelCase` -> `camel case`)", tip: "case"},
     "` ": "extension.changeCase.no",
-    "::doc::`C": {kind: "action", label: 'Camel', detail: "Swap to uper camel case (`CamelCase`)"},
+    "::doc::`C": {kind: "action", label: 'Camel', detail: "Swap to uper camel case (`CamelCase`)", tip: "case"},
     "`C": "extension.changeCase.pascal",
-    "::doc::`/": {kind: "action", label: 'path', detail: "Swap to 'path' case (`path/case`)"},
+    "::doc::`/": {kind: "action", label: 'path', detail: "Swap to 'path' case (`path/case`)", tip: "case"},
     "`/": "extension.changeCase.path",
-    "::doc::`_": {kind: "action", label: 'snake', detail: "Swap to snake case (`snake_case`)"},
+    "::doc::`_": {kind: "action", label: 'snake', detail: "Swap to snake case (`snake_case`)", tip: "case"},
     "`_": "extension.changeCase.snake",
-    "::doc::`s": {kind: "action", label: 'swap', detail: "Swap upper and lower case letters"},
+    "::doc::`s": {kind: "action", label: 'swap', detail: "Swap upper and lower case letters", tip: "case"},
     "`s": "extension.changeCase.swap",
-    "::doc::`t": {kind: "action", label: 'title', detail: "Swap to title case (all words have first upper case letter)"},
+    "::doc::`t": {kind: "action", label: 'title', detail: "Swap to title case (all words have first upper case letter)", tip: "case"},
     "`t": "extension.changeCase.title",
-    "::doc::`Y": {kind: "action", label: 'all upper', detail: "Swap to use all upper case letters"},
+    "::doc::`Y": {kind: "action", label: 'all upper', detail: "Swap to use all upper case letters", tip: "case"},
     "`Y": "extension.changeCase.upper",
-    "::doc::`u": {kind: "action", label: 'first upper', detail: "Swap first character to upper case"},
+    "::doc::`u": {kind: "action", label: 'first upper', detail: "Swap first character to upper case", tip: "case"},
     "`u": "extension.changeCase.upperFirst",
-    "::doc::``": {kind: "action", label: 'toggle', detail: "Toggle through all possible cases"},
+    "::doc::``": {kind: "action", label: 'toggle', detail: "Toggle through all possible cases", tip: "case"},
     "``": "extension.toggleCase",
-    "::doc::~": {kind: "action", label: 'swap char', detail: "Swap case of character under the curser"},
+    "::doc::~": {kind: "action", label: 'swap char', detail: "Swap case of character under the curser", tip: "case"},
     "~": [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: 'right', select: true, value: '__count' } },
@@ -648,7 +830,7 @@ keybindings: {
     ],
 
     // #### Update numerical selections
-    "::doc::=": {kind: "action", label: 'inc #', detail: "Increment a number by 1 (increases increment for subsequent selections)"},
+    "::doc::=": {kind: "action", label: 'inc #', detail: "Increment a number by 1 (increases increment for subsequent selections)", tip: "text_number"},
     "=": [
         {
             if: "__selections.length === 1",
@@ -656,7 +838,7 @@ keybindings: {
             else: "extension.incrementSelection",
         },
     ],
-    "::doc::+": {kind: "action", label: 'dec #', detail: "Decrement a number by 1 (increases increment for subsequent selections)"},
+    "::doc::+": {kind: "action", label: 'dec #', detail: "Decrement a number by 1 (increases increment for subsequent selections)", tip: "text_number"},
     "+": [
         {
             if: "__selections.length === 1",
@@ -664,9 +846,9 @@ keybindings: {
             else: "extension.decrementSelection",
         },
     ],
-    "::doc::g=": {kind: "action", label: 'inc all #', detail: "Increment all numbers by 1"},
+    "::doc::g=": {kind: "action", label: 'inc all #', detail: "Increment all numbers by 1", tip: "text_number"},
     "g=": "editor.emmet.action.incrementNumberByOne",
-    "::doc::g+": {kind: "action", label: 'dec all #', detail: "Decrement all numbers by 1"},
+    "::doc::g+": {kind: "action", label: 'dec all #', detail: "Decrement all numbers by 1", tip: "text_number"},
     "g+": "editor.emmet.action.decrementNumberByOne",
 
     // #### Checkmarks
@@ -678,17 +860,17 @@ keybindings: {
     "ga": "selection-utilities.trimWhitespace",
 
     // #### Brackets
-    "::doc::gx": {kind: "action", label: 'remove pair', detail: "Delete a pairing (e.g. `()`)"},
+    "::doc::gx": {kind: "action", label: 'remove pair', detail: "Delete a pairing (e.g. `()`)", tip: "text_bracket"},
     "::doc::gx[": {kind: "action", label: 'parens/brackets', detail: "Removes pairs that start with `[`, `(` or `{`"},
     "gx[":  "bracketeer.removeBrackets",
-    "::doc::gs": {kind: "action", label: 'swap pair', detail: "Change between different kinds of pairs (e.g. `(` to `{`)"},
+    "::doc::gs": {kind: "action", label: 'swap pair', detail: "Change between different kinds of pairs (e.g. `(` to `{`)", tip: "text_bracket"},
     "::doc::gs[": {kind: "action", label: 'parens/brackets', detail: "Swap between `[`, `(` and `{`"},
     "gs[":  "bracketeer.swapBrackets",
     "::doc::gs'": {kind: "action", label: 'quotes', detail: "Change between different quotes"},
     "gs'":  "bracketeer.swapQuotes",
     "::doc::gx'": {kind: "action", label: 'quotes', detail: "Removes quotes (', \" or `)"},
     "gx'":  "bracketeer.removeQuotes",
-    "::doc::gi": {kind: "action", label: 'insert pair', detail: "Insert a pairing (e.g. ()) around a selection"},
+    "::doc::gi": {kind: "action", label: 'insert pair', detail: "Insert a pairing (e.g. ()) around a selection", tip: "text_bracket"},
     "::doc::gi(": {kind: "action", label: 'paren', detail: "Insert parenthesis around selection"},
     "gi(": [ "modalkeys.enterInsert", { "type": { text: "(" }, }, "modalkeys.enterNormal" ],
     "::doc::gi(": {kind: "action", label: 'paren', detail: "Insert parenthesis around selection"},
@@ -708,13 +890,13 @@ keybindings: {
 
     // #### Clipboard 
 
-    "::doc::d": {kind: "action", label: "delete", detail: "Delete selection and save to paste buffer"},
+    "::doc::d": {kind: "action", label: "delete", detail: "Delete selection and save to paste buffer", tip: "delete"},
     d: countSelectsLines('down', [
         "editor.action.clipboardCutAction",
         { "modalkeys.enterMode": { mode: "normal" } }, // modalkeys.enterNormal has async issues that cause the entire line to be deleted here
     ]),
 
-    "::doc::D": {kind: "action", label: "delete (eol/up)", detail: "without count: Delete from cursor to end of line; with count: Delete from current line up `count` number of keys."},
+    "::doc::D": {kind: "action", label: "delete (eol/up)", detail: "without count: Delete from cursor to end of line; with count: Delete from current line up `count` number of keys.", tip: "delete"},
     D: countSelectsLines('up', [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: "wrappedLineEnd", select: true } },
@@ -725,22 +907,22 @@ keybindings: {
         { "modalkeys.enterMode": { mode: "normal" } }, // modalkeys.enterNormal has async issues that cause the entire line to be deleted here
     ]),
 
-    "::doc::x": {kind: "action", label: "delete char", detail: "delete the character under the cursor"},
+    "::doc::x": {kind: "action", label: "delete char", detail: "delete the character under the cursor", tip: "delete"},
     x: [
         "modalkeys.cancelMultipleSelections",
         { "cursorMove": { to: "right", select: true } },
         "editor.action.clipboardCutAction",
     ],
 
-    "::doc::,r": {kind: "action", label: "replace char", detail: "replace the character under the cursor"},
+    "::doc::,r": {kind: "action", label: "replace char", detail: "replace the character under the cursor", tip: "change"},
     ",r": "modalkeys.replaceChar",
 
-    "::doc::y": {kind: "action", label: "copy", detail: "copy selected text to clipboard"},
+    "::doc::y": {kind: "action", label: "copy", detail: "copy selected text to clipboard", tip: "copy" },
     y: countSelectsLines('down', [
         "editor.action.clipboardCopyAction", "modalkeys.cancelMultipleSelections",
     ]),
 
-    "::doc::Y": {kind: "action", label: "copy (eol/up)", detail: "without a count: copy to end of line; with a count: copy this and the previous N lines"},
+    "::doc::Y": {kind: "action", label: "copy (eol/up)", detail: "without a count: copy to end of line; with a count: copy this and the previous N lines", tip: "copy"},
     Y: countSelectsLines('up', [
         { "cursorMove": { to: "wrappedLineEnd", select: true } },
         "editor.action.clipboardCopyAction",
@@ -750,7 +932,7 @@ keybindings: {
         "modalkeys.cancelMultipleSelections"
     ]),
 
-    "::doc::v": {kind: "action", label: "paste after", detail: "Paste the next after the cursor/selection"},
+    "::doc::v": {kind: "action", label: "paste after", detail: "Paste the next after the cursor/selection", tip: "copy"},
     v: [
         {
             if: "!__selection.isEmpty",
@@ -766,7 +948,7 @@ keybindings: {
         "editor.action.clipboardPasteAction",
     ],
 
-    "::doc::V": {kind: "action", label: "paste before", detail: "Paste the next before the cursor/selection"},
+    "::doc::V": {kind: "action", label: "paste before", detail: "Paste the next before the cursor/selection", tip: "copy"},
     V: [
         {
             if: "!__selection.isEmpty",
@@ -778,14 +960,14 @@ keybindings: {
         "editor.action.clipboardPasteAction",
     ],
 
-    "::doc::gV": {kind: "action", label: "paste replace", detail: "Paste, replacing the selected text"},
+    "::doc::gV": {kind: "action", label: "paste replace", detail: "Paste, replacing the selected text", tip: "advanced_copy"},
     "gV": "editor.action.clipboardPasteAction",
 
-    "::doc::gv": {kind: "action", label: "paste history", detail: "Paste from clipboard history"},
+    "::doc::gv": {kind: "action", label: "paste history", detail: "Paste from clipboard history", tip: "advanced_copy"},
     "gv": "clipboard-manager.editor.pickAndPaste" ,
 
 
-    "::doc::,v": {kind: "action", label: "paste after line", detail: "Paste text after current line"},
+    "::doc::,v": {kind: "action", label: "paste after line", detail: "Paste text after current line", tip: "advanced_copy"},
     ",v": [
         "expandLineSelection",
         "selection-utilities.activeAtEnd",
@@ -793,7 +975,7 @@ keybindings: {
         "editor.action.clipboardPasteAction",
     ],
 
-    "::doc::,V": {kind: "action", label: "paste before line", detail: "Paste text before current line"},
+    "::doc::,V": {kind: "action", label: "paste before line", detail: "Paste text before current line", tip: "advanced_copy"},
     ",V": [
         "expandLineSelection",
         "selection-utilities.activeAtStart",
@@ -803,35 +985,37 @@ keybindings: {
 
 
     // #### begin line below
-    "::doc::o": {kind: "mode", label: "open below", detail: "open a line below current line and enter insert"},
+    "::doc::o": {kind: "mode", label: "open below", detail: "open a line below current line and enter insert", tip: "advanced_insert"},
     o: ["editor.action.insertLineAfter", "modalkeys.enterInsert"],
-    "::doc::go": {kind: "action", label: "open below", detail: "open a line below current line"},
+    "::doc::go": {kind: "action", label: "open below", detail: "open a line below current line", tip: "advanced_insert"},
     go: "editor.action.insertLineAfter",
-    "::doc::visual::o": {kind: "mode", label: "open below", detail: "open a line below current selection and enter insert"},
+    "::doc::visual::o": {kind: "mode", label: "open below", detail: "open a line below current selection and enter insert", tip: "advanced_insert"},
     "visual::o": "selection-utilities.activeAtEnd",
-    "::doc::O": {kind: "mode", label: "open above", detail: "open a line above current line and enter insert"},
+    "::doc::O": {kind: "mode", label: "open above", detail: "open a line above current line and enter insert", tip: "advanced_insert"},
     O: [ "editor.action.insertLineBefore", "modalkeys.enterInsert" ],
-    "::doc::gO": {kind: "action", label: "open above", detail: "open a line above current line"},
+    "::doc::gO": {kind: "action", label: "open above", detail: "open a line above current line", tip: "advanced_insert"},
     gO: "editor.action.insertLineBefore",
-    "::doc::visual::o": {kind: "mode", label: "open before", detail: "open a line above current selection and enter insert"},
+    "::doc::visual::o": {kind: "mode", label: "open before", detail: "open a line above current selection and enter insert", tip: "advanced_insert"},
     "visual::O": "selection-utilities.activeAtStart",
 
     // #### line indent
-    "::doc::>": {kind: "action", label: "indent", detail: "Indent lines"},
+    "::doc::>": {kind: "action", label: "indent", detail: "Indent lines", tip: "text_indent"},
     ">": countSelectsLines('down', "editor.action.indentLines", [
         "editor.action.indentLines", 
         "modalkeys.cancelMultipleSelections"
     ]),
-    "::doc::<": {kind: "action", label: "deindent", detail: "Deindent lines"},
+    "::doc::<": {kind: "action", label: "deindent", detail: "Deindent lines", tip: "text_indent"},
     "<": countSelectsLines('down', "editor.action.outdentLines", [
         "editor.action.outdentLines", 
         "modalkeys.cancelMultipleSelections"
     ]),
-    "::doc::g>": {kind: "action", label: "format", detail: "Format code"},
+    "::doc::g>": {kind: "action", label: "format", detail: "Format code", tip: "text_indent"},
     "g>": countSelectsLines('down', "editor.action.formatSelection", [
         "editor.action.formatSelection",
         "modalkeys.cancelMultipleSelections"
     ]),
+
+    // TODO: this is where I stopped adding action tips
 
     // ### File/window related
     "::doc::,f": {kind: "window", label: "open file", detail: "Open file using quick open"},
@@ -853,6 +1037,14 @@ keybindings: {
     "-": "cursorUndo",
     "::doc::_": {kind: "history", label: "cursor redo", detail: "VSCode Cursor Redo"},
     "_": "cursorRedo",
+    "::doc::g-": {kind: "history", label: "nav ←", detail: "Go back in navigation history (e.g. goto definition)"},
+    "g-": "workbench.action.navigateBackInNavigationLocations",
+    "::doc::g_": {kind: "history", label: "nav →", detail: "Go forward in navigation history (e.g. goto definition)"},
+    "g_": "workbench.action.navigateForwardInNavigationLocations",
+    "::doc::'-": {kind: "history", label: "edit hist ←", detail: "Go back in edit history (e.g. goto definition)"},
+    "'-": "workbench.action.navigateBackInEditLocations",
+    "::doc::'_": {kind: "history", label: "edit hist →", detail: "Go forward in edit history (e.g. goto definition)"},
+    "'_": "workbench.action.navigateForwardInEditLocations",
 
     "::doc::.": {kind: "history", label: "repeat", detail: "repeat last sentence (last selection and action pair)"},
     ".": [
@@ -884,8 +1076,8 @@ keybindings: {
     "gq": "rewrap.rewrapComment",
 
     // ### terminal actions
-    "::doc::m": {kind: "action", label: "to repl", detail: "send text to a terminal (usually containing a REPL); use langauge specific extensions when available and put the pasted code into a block (when defined)."},
-    m: countSelectsLines('down', [
+    "::doc::M": {kind: "action", label: "to repl", detail: "send text to a terminal (usually containing a REPL); use langauge specific extensions when available and put the pasted code into a block (when defined)."},
+    M: countSelectsLines('down', [
         {
             if: "__language == 'julia'",
             then: {
@@ -902,8 +1094,8 @@ keybindings: {
         "modalkeys.cancelMultipleSelections",
         "modalkeys.touchDocument"
     ]),
-    "::doc::M": {kind: "action", label: "to repl (v2)", detail: "send text to a terminal (usually containing a REPL), placing in a block when defined."},
-    M: countSelectsLines('down', [
+    "::doc::m": {kind: "action", label: "to repl (v2)", detail: "send text to a terminal (usually containing a REPL), placing in a block when defined."},
+    m: countSelectsLines('down', [
         {
             if: "!__selection.isSingleLine",
             then: "terminal-polyglot.send-block-text",
@@ -934,18 +1126,30 @@ keybindings: {
     gc: "merge-conflict.next",
     "::doc::gC": {kind: "action", label: "← conflict", detail: "move to previous merge conflict"},
     gC: "merge-conflict.previous",
-    "::doc::g[": {kind: "action", label: "current", detail: "accept current change"},
+    "::doc::g[": {kind: "action", label: "acpt current", detail: "accept current change"},
     "g[": "merge-conflict.accept.current",
-    "::doc::g]": {kind: "action", label: "incoming", detail: "accept incoming change"},
+    "::doc::g]": {kind: "action", label: "acpt incoming", detail: "accept incoming change"},
     "g]": "merge-conflict.accept.incoming",
-    "::doc::g\\": {kind: "action", label: "both", detail: "accept both changes"},
+    "::doc::g\\": {kind: "action", label: "acpt both", detail: "accept both changes"},
     "g\\": "merge-conflict.accept.both",
     "::doc::g{": {kind: "action", label: "all current", detail: "accept all current changes"},
     "g{": "merge-conflict.accept.all-current",
     "::doc::g}": {kind: "action", label: "all incoming", detail: "accept all incoming changes"},
-    "g}": "merge-conflict.accept.all-current",
+    "g}": "merge-conflict.accept.all-incoming",
     "::doc::g|": {kind: "action", label: "all both", detail: "accept all both changes"},
     "g|": "merge-conflict.accept.all-both",
+    "::doc::,p": {kind: "action", label: "→ conflict", detail: "move to next merge conflict (merge editor)"},
+    ",p": "merge.goToNextConflict",
+    "::doc::,P": {kind: "action", label: "← conflict", detail: "move to previous merge conflict (merge editor)"},
+    ",P": "merge.goToPreviousConflict",
+    "::doc::,[": {kind: "action", label: "acpt current", detail: "accept current change (merge editor)"},
+    ",[": "merge.toggleActiveConflictInput1",
+    "::doc::,{": {kind: "action", label: "cmpr current", detail: "compare current change (merge editor)"},
+    ",{": "mergeEditor.compareInput1WithBase",
+    "::doc::,]": {kind: "action", label: "acpt current", detail: "accept current change (merge editor)"},
+    ",]": "merge.toggleActiveConflictInput2",
+    "::doc::,}": {kind: "action", label: "cmpr current", detail: "compare current change (merge editor)"},
+    ",}": "mergeEditor.compareInput2WithBase",
     "::doc::,e": {kind: "select", label: "error →", detail: "move to next error"},
     ",e": "editor.action.marker.next",
     "::doc::,E": {kind: "select", label: "error ←", detail: "move to previous error"},
@@ -1108,8 +1312,8 @@ keybindings: {
         "editor.action.selectHighlights",
         { "modalkeys.enterMode": { mode: "selectedit" } },
     ],
-    "::doc::'-": { kind: "modifier", label: "restore sel", detail: "restore the most recently cleared selection"},
-    "'-": [
+    "::doc::,-": { kind: "modifier", label: "restore sel", detail: "restore the most recently cleared selection"},
+    ",-": [
         { "selection-utilities.restoreAndClear": {register: "cancel"} },
         { if: "__selections.length > 1", then: { "modalkeys.enterMode": { mode: "selectedit" }}}
     ],

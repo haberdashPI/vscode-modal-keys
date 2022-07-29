@@ -7,7 +7,7 @@
         "url": "https://github.com/haberdashPI/vscode-modal-keys"
     },
     "icon": "logo.png",
-    "version": "0.10.4",
+    "version": "0.11.0",
     "engines": {
         "vscode": "^1.64.0"
     },
@@ -52,6 +52,14 @@
                     "icon": "icon.svg",
                     "visibility": "visible"
                 }
+            ],
+            "modalKeyTips": [
+                {
+                    "type": "tree",
+                    "id": "modalkeys.tipView",
+                    "name": "Tips",
+                    "visibility": "visible"
+                }
             ]
         },
         "viewsContainers": {
@@ -59,6 +67,13 @@
                 {
                     "id": "modalKeyBindingView",
                     "title": "Modal Key Bindings",
+                    "icon": "icon.svg"
+                }
+            ],
+            "activitybar": [
+                {
+                    "id": "modalKeyTips",
+                    "title": "Modal Key",
                     "icon": "icon.svg"
                 }
             ]
@@ -71,6 +86,11 @@
                     "type": "object",
                     "description": "A description of each kind of keybinding; determines keybinding color codes (order matters).",
                     "default": {}
+                },
+                "modalkeys.docTips": {
+                    "type": "array",
+                    "description": "A list of quick tips for selected keybindings",
+                    "default": []
                 },
                 "modalkeys.keybindings": {
                     "type": "object",
@@ -351,6 +371,14 @@
             {
                 "command": "modalkeys.replayMacro",
                 "title": "ModalKeys: Replay macro"
+            },
+            {
+                "command": "modalkeys.nextKeytip",
+                "title": "ModalKeys: Next Keytip"
+            },
+            {
+                "command": "modalkeys.previousKeytip",
+                "title": "ModalKeys: Previous Keytip"
             }
         ],
         "keybindings": [
@@ -358,6 +386,14 @@
                 "key": "ctrl+shift+/",
                 "mac": "ctrl+cmd+/",
                 "command": "modalkeys.toggleKeymap"
+            },
+            {
+                "key": "alt+;",
+                "command": "modalkeys.nextKeytip"
+            },
+            {
+                "key": "shift+alt+;",
+                "command": "modalkeys.previousKeytip"
             },
             {
                 "key": "Escape",
@@ -404,7 +440,7 @@
         "build-docs": "npm-run-all --serial build-html-docs parcel-build-docs",
         "build-dev-docs": "npm-run-all --serial build-html-docs parcel-build-dev-docs",
         "predebug": "rm -rf dist",
-        "debug": "npx tsc --outDir dist",
+        "debug": "npx webpack --mode development",
         "prepackage": "rm -rf dist",
         "lint": "eslint src --ext ts"
     },
@@ -439,7 +475,7 @@
     },
     "dependencies": {
         "vscode-uri": "^3.0.3",
-        "webpack": "^5.67.0",
+        "webpack": "^5.73.0",
         "webpack-cli": "^4.9.2"
     }
 }
