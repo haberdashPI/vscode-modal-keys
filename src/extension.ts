@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.workspace.onDidChangeConfiguration(e => {
 			actions.updateFromConfig()
 			keymap.updateFromConfig()
-			commands.enterMode('normal')
+			commands.enterMode(actions.getStartMode())
 		}),
 		vscode.window.onDidChangeActiveTextEditor(commands.restoreEditorMode),
 		vscode.window.onDidChangeTextEditorSelection(e => {
@@ -54,10 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 */
 	actions.updateFromConfig()
 	keymap.updateFromConfig()
-	if (actions.getStartInNormalMode())
-        commands.enterMode('normal')
-	else
-        commands.enterMode('insert')
+	commands.enterMode(actions.getStartMode())
 }
 /**
  * This method is called when your extension is deactivated
