@@ -44,7 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
 			actions.updateFromConfig()
 			keymap.updateFromConfig()
 			keytips.updateFromConfig()
-			commands.enterMode('normal')
+			commands.enterMode(actions.getStartMode())
 		}),
 		vscode.window.onDidChangeActiveTextEditor(commands.restoreEditorMode),
 		vscode.window.onDidChangeTextEditorSelection(e => {
@@ -58,7 +58,6 @@ export function activate(context: vscode.ExtensionContext) {
 	 */
 	actions.updateFromConfig()
 	keymap.updateFromConfig()
-	keytips.updateFromConfig()
 	if (actions.getStartInNormalMode())
         commands.enterMode('normal')
 	else

@@ -256,10 +256,10 @@
                     "type": "string",
                     "description": "Color of the status bar mode text when selection is active in normal mode (in HTML format)."
                 },
-                "modalkeys.startInNormalMode": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Is editor initially in normal mode?"
+                "modalkeys.startMode": {
+                    "type": "string",
+                    "default": "normal",
+                    "description": "The initial mode for the editor"
                 },
                 "modalkeys.searchMatchBackground": {
                     "type": "string",

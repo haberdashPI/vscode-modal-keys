@@ -125,10 +125,9 @@ let normalStatusColor: string | undefined
 let searchStatusColor: string | undefined
 let selectStatusColor: string | undefined
 /**
- * Another thing you can set in config, is whether ModalKeys starts in normal
- * mode.
+ * Another thing you can set in config, is what mode ModalKeys starts in.
  */
-let startInNormalMode: boolean
+let startMode: string
 /**
  * The root of the action configuration is keymap. This defines what key
  * sequences will be run when keys are pressed in normal mode.
@@ -172,8 +171,8 @@ export function getSelectStyles():
     return [ selectCursorStyle, selectStatusText, selectStatusColor ]
 }
 
-export function getStartInNormalMode(): boolean {
-    return startInNormalMode
+export function getStartMode(): string {
+    return startMode
 }
 
 /**
@@ -228,7 +227,7 @@ export function updateFromConfig(): void {
     normalStatusColor = config.get("normalStatusColor") || undefined
     searchStatusColor = config.get("searchStatusColor") || undefined
     selectStatusColor = config.get("selectStatusColor") || undefined
-    startInNormalMode = config.get<boolean>("startInNormalMode", true)
+    startMode = config.get("startMode", "normal")
 }
 /**
  * The following function updates base keymap and select-mode keymap.
