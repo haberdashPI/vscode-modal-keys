@@ -58,10 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 */
 	actions.updateFromConfig()
 	keymap.updateFromConfig()
-	if (actions.getStartInNormalMode())
-        commands.enterMode('normal')
-	else
-        commands.enterMode('insert')
+	commands.enterMode(actions.getStartMode())
 }
 /**
  * This method is called when your extension is deactivated
