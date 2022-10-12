@@ -295,7 +295,7 @@ function prefixMatches(prefix: string){
         if(node.prefixes.length === 0){
             return true
         }else{
-            return node.prefixes.some(x => x == prefix)
+            return prefix == "" || node.prefixes.some(x => x == prefix)
         }
     }
 }
