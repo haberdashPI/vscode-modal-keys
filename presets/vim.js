@@ -874,7 +874,7 @@ module.exports = {
         ],
         "visual::*": [
             { "modalkeys.search": {
-                text: "__selectstr",
+                text: "__selectionstr",
                 wrapAround: true,
                 register: "search"
             }}
@@ -890,7 +890,7 @@ module.exports = {
         ],
         "visual::#": [
             { "modalkeys.search": {
-                text: "__selectstr",
+                text: "__selectionstr",
                 wrapAround: true,
                 register: "search"
             }}
