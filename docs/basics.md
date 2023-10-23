@@ -68,13 +68,13 @@ when you are in "evil" mode.
 "modalkeys.keybinding": {
     "D": { "modalkeys.enterMode": { mode: "evil" } },
     "evil::D": { "modalkeys.enterMode": { mode: "normal" } },
-    "evil::j": "edit.action.clipbaordCutAction",
-    "evil::k": "edit.action.clipbaordCutAction",
-    "evil::h": "edit.action.clipbaordCutAction",
-    "evil::l": "edit.action.clipbaordCutAction"
+    "evil::j": "edit.action.clipboardCutAction",
+    "evil::k": "edit.action.clipboardCutAction",
+    "evil::h": "edit.action.clipboardCutAction",
+    "evil::l": "edit.action.clipboardCutAction"
 }
 ```
 
 ## Required Extensions
 
-If you wish to include commands in your keybindings that come from particular extensions it is a good idea to list those extensions as requried. Just add another property to the top-level object of your config file called `extensions`; it should be an array of strings. ModalKeys will check for these extensions and if they aren't available it will show a helpful error message with an option to install the extension. List each extension by it's identifier (you can find this on the column to the right of an extension's main page under the extensions panel).
+If you wish to include commands in your keybindings that come from particular extensions it is a good idea to list those extensions as required. Just add another property to the top-level object of your config file called `extensions`; it should be an array of strings. ModalKeys will check for these extensions and if they aren't available it will show a helpful error message with an option to install the extension. List each extension by its identifier (you can find this on the column to the right of an extension's main page under the extensions panel).

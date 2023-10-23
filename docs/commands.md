@@ -68,7 +68,7 @@ is bound to this command when ModalKeys is active and in search mode.
 
 ### `modalkeys.nextMatch`
 
-Moves to the next match and selectes it. Which way to search depends on the
+Moves to the next match and selects it. Which way to search depends on the
 search direction. Takes a single argument (`register`), which defaults to "default" if unspecified. (See `modalkeys.search` for details)
 
 ### `modalkeys.previousMatch`
@@ -179,8 +179,8 @@ commands occur with a single stroke, like below.
 
 | Argument                  | Type      | Default     | Description
 | ------------------------- | --------- | ----------- | ---------------------------------
-| `acceptAfter`             | `number`  | `undefined` | Accept search automatically after _x_ characters has been entered. 
-| `execuateAfter`           | &lt;command&gt; | `undefined` | The commands to run after capturing keys.
+| `acceptAfter`             | `number`  | `undefined` | Accept search automatically after _x_ characters have been entered. 
+| `executeAfter`           | &lt;command&gt; | `undefined` | The commands to run after capturing keys.
 
 For example, the following command selects all characters that fall between two instances of a given key; so, in the string "joe |bob| joe", with the cursor on the first "b", typing `uc|` would select "bob".
 
