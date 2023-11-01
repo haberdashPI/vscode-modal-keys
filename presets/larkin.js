@@ -445,7 +445,7 @@ keybindings: {
         docScope: true
     }},
 
-    "::doc::u[": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)'},    
+    "::doc::u]": {kind: 'select', label: 'around []', detail: 'around first character pair `[]` (non syntactical, useful inside comments)'},    
     "u]": { "modalkeys.selectBetween": {
         from: "[", to: "]",
         inclusive: true,
@@ -453,7 +453,7 @@ keybindings: {
         docScope: true
     }},
     
-    "::doc::u{": {kind: 'select', label: 'around {}', detail: 'around first character pair `{}` (non syntactical, useful inside comments)'},    
+    "::doc::u}": {kind: 'select', label: 'around {}', detail: 'around first character pair `{}` (non syntactical, useful inside comments)'},    
     "u}": { "modalkeys.selectBetween": {
         from: "{", to: "}",
         inclusive: true,
@@ -477,7 +477,7 @@ keybindings: {
         docScope: true
     }},
     "::doc::uC,": {kind: 'select', label: 'inside <>', detail: 'inside first character pair `<>` (non syntactical, useful inside comments)'},    
-    "uC.": { "modalkeys.selectBetween": {
+    "uC,": { "modalkeys.selectBetween": {
         from: "<", to: ">",
         inclusive: false,
         caseSensitive: true,
@@ -691,7 +691,7 @@ keybindings: {
     "::doc::gi": {kind: "action", label: 'insert pair', detail: "Insert a pairing (e.g. ()) around a selection"},
     "::doc::gi(": {kind: "action", label: 'paren', detail: "Insert parenthesis around selection"},
     "gi(": [ "modalkeys.enterInsert", { "type": { text: "(" }, }, "modalkeys.enterNormal" ],
-    "::doc::gi(": {kind: "action", label: 'paren', detail: "Insert parenthesis around selection"},
+    "::doc::gi<": {kind: "action", label: 'paren', detail: "Insert parenthesis around selection"},
     "gi<": [ "modalkeys.enterInsert", { "type": { text: "<" }, }, "modalkeys.enterNormal" ],
     "::doc::gi`": {kind: "action", label: 'ticks', detail: "Insert ticks (``) around selection"},
     "gi`": [ "modalkeys.enterInsert", { "type": { text: "`" }, }, "modalkeys.enterNormal" ],
@@ -813,7 +813,7 @@ keybindings: {
     O: [ "editor.action.insertLineBefore", "modalkeys.enterInsert" ],
     "::doc::gO": {kind: "action", label: "open above", detail: "open a line above current line"},
     gO: "editor.action.insertLineBefore",
-    "::doc::visual::o": {kind: "mode", label: "open before", detail: "open a line above current selection and enter insert"},
+    "::doc::visual::O": {kind: "mode", label: "open before", detail: "open a line above current selection and enter insert"},
     "visual::O": "selection-utilities.activeAtStart",
 
     // #### line indent
