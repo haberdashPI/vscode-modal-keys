@@ -12,6 +12,7 @@ import { mergeWith, merge, uniq, cloneDeep } from 'lodash'
 import { IHash } from './util'
 
 import * as vscode from 'vscode'
+import { KeytipProvider } from './keytips'
 /**
  * ## Action Definitions
  *
@@ -80,6 +81,7 @@ export interface Keyhelp{
     kind: string
     detail?: string,
     keys?: IHash<Keyhelp>
+    tip?: string,
 }
 
 export interface Keymodes {
@@ -193,6 +195,12 @@ export function setOutputChannel(channel: vscode.OutputChannel) {
 export function log(message: string) {
     outputChannel.appendLine(message)
 }
+
+let keyTipState: KeytipProvider
+export function registerKeytips(provider: KeytipProvider){
+    keyTipState = provider
+}
+
 /**
  * ## Updating Configuration from settings.json
  *
@@ -242,8 +250,10 @@ function UpdateKeybindings(config: vscode.WorkspaceConfiguration) {
     if (errors > 0)
         log(`Found ${errors} error${errors > 1 ? "s" : ""}. ` +
             "Keybindings might not work correctly.")
-    else
+    else{
         log("Validation completed successfully.")
+        keyTipState.setKeymodes(rootKeymodes!)
+    }
 }
 
 /**
@@ -400,7 +410,7 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
                     for(const mode of modes){
                         if(!keymodes.help) keymodes.help = {}
                         keymodes.help[mode] = keymodes.help[mode] === undefined ? obj :
-                            merge(keymodes.help[mode], obj)
+                            mergeWith(keymodes.help[mode], obj, overloadHelpEntries)
                     }
                 }else{
                     if(state.sequencesFor[mode]?.some((oldseq: string) => {
@@ -442,6 +452,12 @@ function expandEntryBindingsFn(state: { errors: number, sequencesFor: IHash<stri
 }
 
 const overloadCommands = (oldval: Action, newval: Action) => { if(isCommand(oldval)){ return newval } }
+const overloadHelpEntries  = (oldval: Keyhelp, newval: Keyhelp) => { 
+    if((oldval?.keys && isHelpEntry(newval)) || (newval?.keys && isHelpEntry(oldval))){
+        return undefined
+    }
+    if(isHelpEntry(oldval)){ return newval } 
+}
 
 function expandBindings(bindings: any): [Keymodes | undefined, number] {
     let state = {sequencesFor: <IHash<string[]>>{}, errors: 0}
@@ -451,20 +467,21 @@ function expandBindings(bindings: any): [Keymodes | undefined, number] {
     allModes.push('normal', 'visual')
     allModes = uniq(allModes)
     let result: any = {}
-    function resolveAll<T>(x?: IHash<T>){
+    function resolveAll<T>(x: IHash<T> | undefined, overload: any){
         if(!x) return x
         let result = x
         if(x.__all__){
             for(let mode of allModes){
                 if(mode !== '__all__')
-                    result[mode] = mergeWith(cloneDeep(x.__all__), result[mode], overloadCommands)
+                    result[mode] = mergeWith(cloneDeep(x.__all__), result[mode], overload)
+
             }
             delete result.__all__
         }
         return result
     }
-    keymodes.command = resolveAll(keymodes.command)
-    keymodes.help = resolveAll(keymodes.help)
+    keymodes.command = resolveAll(keymodes.command, overloadCommands)
+    keymodes.help = resolveAll(keymodes.help, overloadHelpEntries)
     return [keymodes, state.errors]
 }
 
@@ -496,6 +513,10 @@ function isNumber(x: any): x is number {
  */
 function isObject(x: any): boolean {
     return x && typeof x === "object"
+}
+
+function isHelpEntry(x: any){
+    return x && x?.label !== undefined && x?.kind !== undefined
 }
 /**
  * This checks if a value is a command.
