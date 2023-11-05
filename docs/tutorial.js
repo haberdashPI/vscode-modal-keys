@@ -19,9 +19,9 @@
 // to do something to, a.k.a. nouns) and others define operators (things you
 // want to actually do to the objects, a.k.a. verbs). Muscle memory makes these
 // combinations fast, and suddenly there is a large generative space of possible
-// commands that you emmit at the speed-of-thought. 
+// commands that you emit at the speed-of-thought. 
 
-// In particular the value added for ModalKeys's approach is is that it utilizes
+// In particular the value added for ModalKeys's approach is that it utilizes
 // VS Code's existing features and just adds the concept of modal editing to the
 // mix. This choice has two major benefits: (1) the commands can integrate
 // seamlessly with the ecosystem of packages already present in VSCode, providng
@@ -101,7 +101,7 @@ module.exports = {
 // In Vim, there is a separate "visual" mode that you activate when you want to
 // select text. Visual mode can be characterwise or linewise.
 
-// Visual mode is on whenver an additional flag is set (by issuing a `setMode` command) and whenver you select text in the usual way from VSCode (e.g. via `modealkeys.toggleSelection`).
+// Visual mode is on whenever an additional flag is set (by issuing a `setMode` command) and whenever you select text in the usual way from VSCode (e.g. via `modalkeys.toggleSelection`).
 
 // The end result is that selection mode works _almost_ like visual mode in Vim,
 // the main difference being that selections are not automatically turned off
@@ -133,7 +133,7 @@ module.exports = {
         "l": { to: 'right', select: '__mode == "visual"' },
     },
 
-// ModalKeys knows to re-write this, such that thet two forms are equivalent.
+// ModalKeys knows to re-write this, such that the two forms are equivalent.
 
 // We can also simulate linewise visual mode using VS Code's
 // `expandLineSelection` command. Note that we don't need to call
@@ -195,7 +195,7 @@ module.exports = {
 // <key>0</key>, to the first non-blank character <key>^</key>, and to the end of
 // line <key>$</key>.
 
-    "::using::curosrMove": {
+    "::using::cursorMove": {
         "0": { to: 'wrappedLineStart', select: '__mode == "visual"' },
         "^": { to: 'wrappedLineFirstNonWhitespaceCharacter', select: '__mode == "visual"' },
         "$": { to: 'wrappedLineEnd', select: '__mode == "visual"' },
@@ -310,12 +310,12 @@ module.exports = {
 // in arguments comes in handy: WE use the `__line` parameter to get the line where
 // the cursor is.
 
-        // "zz": { "revealLine": { lineNumber: '__line', at: 'center' } }
+        "zz": { "revealLine": { lineNumber: '__line', at: 'center' } }
 
 // Let's test some of the movement commands. We should be able to navigate now
 // without using arrow keys or <key>Home</key> and <key>End</key> keys.
 
-// We skipped commands that move cursor up and down on page at the time. The
+// We skipped commands that move cursor up and down one page at the time. The
 // reason for this is that these commands are bound to <key>Ctrl/Cmd</key>+<key>b</key>
 // and <key>Ctrl/Cmd</key>+<key>f</key> in Vim. Since these are "normal" VS Code
 // shortcuts we cannot remap them in ModalKeys. If you want to use these shortcuts,
@@ -371,7 +371,7 @@ module.exports = {
         "else": { "cursorWordEndRight": {}, repeat: '__count' },
     },
 
-// Many command, like those shown above, can internally repeat (e.g. `value` for `cursorMove`), and this is generally better, as it execute faster. If a command does not take a parameter like this however, you can make use of the `repeat` parameter, shown above for the word motions. This will simply call the command multiple times.
+// Many commands, like those shown above, can internally repeat (e.g. `value` for `cursorMove`), and this is generally better, as it executes faster. If a command does not take a parameter like this however, you can make use of the `repeat` parameter, shown above for the word motions. This will simply call the command multiple times.
 
 // ### Jumping to a Line
 
@@ -425,7 +425,7 @@ module.exports = {
 // ### Change Until/Around/Inside
 
 // Very useful variants of change commands are those which allow changing text
-// upto a given character or between given characters. For example,
+// up to a given character or between given characters. For example,
 // <key>c</key><key>t</key><key>_</key> changes the text until next underscore, and
 // <key>c</key><key>i</key><key>"</key> changes the text inside quotation
 // marks. The cursor can be anywhere inside the quotation marks and the command
@@ -526,9 +526,9 @@ module.exports = {
             "modalkeys.cancelSelection"
         ],
 
-/* <key>d</key> deletes (cuts) the selected text and puts it to clipboard. Capital
-<key>D</key> deletes the rest of the line. <key>x</key> deletes just the
-character under the cursor. */
+// <key>d</key> deletes (cuts) the selected text and puts it to clipboard. Capital
+// <key>D</key> deletes the rest of the line. <key>x</key> deletes just the
+// character under the cursor.
 
         "d": "editor.action.clipboardCutAction",
         "D": [

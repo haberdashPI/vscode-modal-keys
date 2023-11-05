@@ -117,7 +117,7 @@ in Vim.
 For even more complex scenarios, you can define commands that run different
 commands depending on a specified condition. The most common use case for this
 is to run a different command when selection is active. The format of a
-conditional commands is:
+conditional command is:
 
 ```js
 "<binding>":  {
@@ -157,7 +157,7 @@ You can find this output by opening **View - Output** and then choosing the
 
 ## Documenting a Keybinding
 
-If you wish your own keybindings to leverage the visual documentation feature of ModalKeys you will also need to add a `::doc::` entries for each command.
+If you wish your own keybindings to leverage the visual documentation feature of ModalKeys you will also need to add a `::doc::` entry for each command.
 These take the following form:
 
 ```js
