@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Modal Keys Documentation</title><meta charset="utf-8"><link rel="stylesheet" href="https://haberdashpi.github.io/vscode-modal-keys/stable/README.f14bba23.css"></head><body> <script type="module" src="https://haberdashpi.github.io/vscode-modal-keys/stable/README.ab2e5f5c.js"></script><script src="https://haberdashpi.github.io/vscode-modal-keys/stable/README.16885970.js" nomodule="" defer></script> <div class="content"> <h1 id="heading-#larkin-keybindings"><a class="header-anchor" id="larkin-keybindings" href="#larkin-keybindings"> </a>Larkin Keybindings</h1> <p>This set of keybindings provides a comprehensive and well tested set of bindings that I use in my daily work. It serves as an example of a fully customized set of keybindings, and demonstrates the full capabilities of ModalKeys.</p> <p>The basic logic of these commands follow that of Kakoune: motions generally cause some region of text to be selected, and then actions modify these selections. This is the inverse of vim's motions (<code>wd</code> instead of <code>dw</code>). This integrates well with many of the existing VSCode extesions which operate on selections.</p> <p>These bindings are named after the middle name of my first child.</p> <h2 id="heading-#counts-to-select-lines"><a class="header-anchor" id="counts-to-select-lines" href="#counts-to-select-lines"> </a>Counts to select lines</h2> <p>One common shortcut I use is that you can specify a range of lines for an action using just a number. E.g. 3d deletes three lines of text.</p> <pre><code class="language-js">/**
+<!DOCTYPE html><html><head><title>Modal Keys Documentation</title><meta charset="utf-8"><link rel="stylesheet" href="https://haberdashpi.github.io/vscode-modal-keys/stable/README.3283db0a.css"></head><body> <script type="module" src="https://haberdashpi.github.io/vscode-modal-keys/stable/README.341efe0b.js"></script><script src="https://haberdashpi.github.io/vscode-modal-keys/stable/README.5a9d8ddc.js" nomodule="" defer></script> <div class="content"> <h1 id="heading-#larkin-keybindings"><a class="header-anchor" id="larkin-keybindings" href="#larkin-keybindings"> </a>Larkin Keybindings</h1> <p>This set of keybindings provides a comprehensive and well tested set of bindings that I use in my daily work. It serves as an example of a fully customized set of keybindings, and demonstrates the full capabilities of ModalKeys.</p> <p>The basic logic of these commands follow that of Kakoune: motions generally cause some region of text to be selected, and then actions modify these selections. This is the inverse of vim's motions (<code>wd</code> instead of <code>dw</code>). This integrates well with many of the existing VSCode extesions which operate on selections.</p> <p>These bindings are named after the middle name of my first child.</p> <h2 id="heading-#counts-to-select-lines"><a class="header-anchor" id="counts-to-select-lines" href="#counts-to-select-lines"> </a>Counts to select lines</h2> <p>One common shortcut I use is that you can specify a range of lines for an action using just a number. E.g. 3d deletes three lines of text.</p> <pre><code class="language-js">/**
  * Extend <span class="hljs-keyword">a</span> <span class="hljs-keyword">command</span> <span class="hljs-keyword">to</span> support <span class="hljs-keyword">a</span> <span class="hljs-built_in">count</span> <span class="hljs-keyword">argument</span>. The <span class="hljs-keyword">command</span> <span class="hljs-keyword">is</span> assumed <span class="hljs-keyword">to</span> <span class="hljs-keyword">change</span> <span class="hljs-built_in">or</span> alter
  * selected text <span class="hljs-keyword">so</span> that when you specify <span class="hljs-keyword">a</span> <span class="hljs-built_in">count</span> <span class="hljs-keyword">for</span> that <span class="hljs-keyword">command</span> it can <span class="hljs-keyword">be</span> used <span class="hljs-keyword">to</span> select
  * nearby lines. This allows noun-less verbs. <span class="hljs-keyword">e</span>.g. <span class="hljs-number">4</span>d deletes the current <span class="hljs-built_in">line</span> <span class="hljs-built_in">and</span> the <span class="hljs-number">4</span>
@@ -32,9 +32,9 @@
 </code></pre> <p>I use quite a few extensions in my everday use, and all of them have commands set up in my keybindings:</p> <pre><code class="language-js">module.exports = {
 extensions: [
     &quot;dbankier.vscode-quick-<span class="hljs-keyword">select</span><span class="hljs-string">&quot;,
-    &quot;</span>haberdashpi.vscode-<span class="hljs-keyword">select</span>-<span class="hljs-keyword">by</span>-indent<span class="hljs-string">&quot;,
-    &quot;</span>haberdashpi.selection-utilities<span class="hljs-string">&quot;,
-    &quot;</span>haberdashpi.move-cursor-<span class="hljs-keyword">by</span>-argument<span class="hljs-string">&quot;,
+    &quot;</span>haberdashPI.vscode-<span class="hljs-keyword">select</span>-<span class="hljs-keyword">by</span>-indent<span class="hljs-string">&quot;,
+    &quot;</span>haberdashPI.selection-utilities<span class="hljs-string">&quot;,
+    &quot;</span>haberdashPI.move-cursor-<span class="hljs-keyword">by</span>-argument<span class="hljs-string">&quot;,
     &quot;</span>pustelto.bracketeer<span class="hljs-string">&quot;,
     &quot;</span>wmaurer.change-<span class="hljs-keyword">case</span><span class="hljs-string">&quot;,
     &quot;</span>pranshuagrawal.toggle-<span class="hljs-keyword">case</span><span class="hljs-string">&quot;,
@@ -42,7 +42,7 @@ extensions: [
     &quot;</span>pkief.markdown-checkbox<span class="hljs-string">&quot;,
     &quot;</span>edgardmessias.clipboard-manager<span class="hljs-string">&quot;,
     &quot;</span>stkb.rewrap<span class="hljs-string">&quot;,
-    &quot;</span>haberdashpi.terminal-polyglot<span class="hljs-string">&quot;,
+    &quot;</span>haberdashPI.terminal-polyglot<span class="hljs-string">&quot;,
     &quot;</span>jack89ita.open-file-<span class="hljs-keyword">from</span>-<span class="hljs-keyword">path</span><span class="hljs-string">&quot;,
     &quot;</span>koalamer.labeled-bookmarks<span class="hljs-string">&quot;,
 ],
@@ -139,6 +139,8 @@ keybindings: {
     <span class="hljs-string">&quot;::doc::#&quot;</span>: { kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;number →&quot;</span>, detail: <span class="hljs-string">&quot;previous number&quot;</span> },
     <span class="hljs-string">&quot;::doc::&#x27;;&quot;</span>: { kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;comment →&quot;</span>, detail: <span class="hljs-string">&quot;next commented region&quot;</span> },
     <span class="hljs-string">&quot;::doc::&#x27;:&quot;</span>: { kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;comment ←&quot;</span>, detail: <span class="hljs-string">&quot;previous commented region&quot;</span> },
+    <span class="hljs-string">&quot;::doc::,;&quot;</span>: { kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;blk commt →&quot;</span>, detail: <span class="hljs-string">&quot;next block commented region&quot;</span> },
+    <span class="hljs-string">&quot;::doc::,:&quot;</span>: { kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;blk commt ←&quot;</span>, detail: <span class="hljs-string">&quot;previous block commented region&quot;</span> },
     <span class="hljs-string">&quot;::doc::p&quot;</span>: { kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;pargrph →&quot;</span>, detail: <span class="hljs-string">&quot;next pagaraph&quot;</span> },
     <span class="hljs-string">&quot;::doc::P&quot;</span>: { kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;pargrph ←&quot;</span>, detail: <span class="hljs-string">&quot;previous paragraph&quot;</span> },
     <span class="hljs-string">&quot;::doc::&#x27;)&quot;</span>: { kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;sec →&quot;</span>, detail: <span class="hljs-string">&quot;next section&quot;</span> },
@@ -182,6 +184,8 @@ keybindings: {
 
 </code></pre> <p>comments</p> <pre><code class="language-js">        <span class="hljs-string">&quot;&#x27;;&quot;</span>: { <span class="hljs-keyword">unit</span>: <span class="hljs-string">&quot;comment&quot;</span>, <span class="hljs-keyword">boundary</span>: <span class="hljs-string">&quot;both&quot;</span>, selectWhole: true, value: <span class="hljs-string">&#x27;(__count || 1)&#x27;</span>},
         <span class="hljs-string">&quot;&#x27;:&quot;</span>: { <span class="hljs-keyword">unit</span>: <span class="hljs-string">&quot;comment&quot;</span>, <span class="hljs-keyword">boundary</span>: <span class="hljs-string">&quot;both&quot;</span>, selectWhole: true, value: <span class="hljs-string">&#x27;-(__count || 1)&#x27;</span>},
+        <span class="hljs-string">&quot;,;&quot;</span>: { <span class="hljs-keyword">unit</span>: <span class="hljs-string">&quot;block_comment&quot;</span>, <span class="hljs-keyword">boundary</span>: <span class="hljs-string">&quot;both&quot;</span>, selectWhole: true, value: <span class="hljs-string">&#x27;(__count || 1)&#x27;</span>},
+        <span class="hljs-string">&quot;,:&quot;</span>: { <span class="hljs-keyword">unit</span>: <span class="hljs-string">&quot;block_comment&quot;</span>, <span class="hljs-keyword">boundary</span>: <span class="hljs-string">&quot;both&quot;</span>, selectWhole: true, value: <span class="hljs-string">&#x27;-(__count || 1)&#x27;</span>},
 
 </code></pre> <p>paragraphs and sections</p> <pre><code class="language-js">        p:     { <span class="hljs-keyword">unit</span>: <span class="hljs-string">&quot;paragraph&quot;</span>,  <span class="hljs-keyword">boundary</span>: <span class="hljs-string">&quot;start&quot;</span>, <span class="hljs-keyword">select</span>:    true, value: <span class="hljs-string">&#x27;(__count || 1)&#x27;</span>  },
         P:     { <span class="hljs-keyword">unit</span>: <span class="hljs-string">&quot;paragraph&quot;</span>,  <span class="hljs-keyword">boundary</span>: <span class="hljs-string">&quot;start&quot;</span>, <span class="hljs-keyword">select</span>:    true, value: <span class="hljs-string">&#x27;-(__count || 1)&#x27;</span> },
@@ -399,7 +403,8 @@ keybindings: {
         docScope:<span class="hljs-built_in"> true</span>
     }},
 
-    <span class="hljs-string">&quot;::doc::u[&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;around []&#x27;</span>, detail: <span class="hljs-string">&#x27;around first character pair `[]` (non syntactical, useful inside comments)&#x27;</span>},    <span class="hljs-string">&quot;u]&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
+    <span class="hljs-string">&quot;::doc::u[&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;around []&#x27;</span>, detail: <span class="hljs-string">&#x27;around first character pair `[]` (non syntactical, useful inside comments)&#x27;</span>},    
+    <span class="hljs-string">&quot;u]&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
         from: <span class="hljs-string">&quot;[&quot;</span>, to: <span class="hljs-string">&quot;]&quot;</span>,
         inclusive:<span class="hljs-built_in"> true</span>,
         caseSensitive:<span class="hljs-built_in"> true</span>,
@@ -414,6 +419,7 @@ keybindings: {
         docScope:<span class="hljs-built_in"> true</span>
     }},
 
+    <span class="hljs-string">&quot;::doc::uC&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;between bracket pair&#x27;</span>, detail: <span class="hljs-string">&#x27;around/inside some bracket pairs&#x27;</span> },
     <span class="hljs-string">&quot;::doc::uC(&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;inside ()&#x27;</span>, detail: <span class="hljs-string">&#x27;inside first pair of `()` (non syntactical, useful inside comments)&#x27;</span> },  
     <span class="hljs-string">&quot;uC(&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
         from: <span class="hljs-string">&quot;(&quot;</span>, to: <span class="hljs-string">&quot;)&quot;</span>,
@@ -648,7 +654,7 @@ keybindings: {
 </code></pre> <h4>Clipboard</h4> <pre><code class="language-js">    &quot;::doc::d&quot;: {kind: &quot;action&quot;, label: &quot;<span class="hljs-keyword">delete</span><span class="hljs-string">&quot;, detail: &quot;</span><span class="hljs-keyword">Delete</span> selection <span class="hljs-keyword">and</span> save <span class="hljs-keyword">to</span> paste buffer<span class="hljs-string">&quot;},
     d: countSelectsLines(&#x27;down&#x27;, [
         &quot;</span>editor.action.clipboardCutAction<span class="hljs-string">&quot;,
-        &quot;</span>modalkeys.enterNormal<span class="hljs-string">&quot;
+        { &quot;</span>modalkeys.enterMode<span class="hljs-string">&quot;: { mode: &quot;</span>normal<span class="hljs-string">&quot; } }, // modalkeys.enterNormal has async issues that cause the entire line to be deleted here
     ]),
 
     &quot;</span>::doc::D<span class="hljs-string">&quot;: {kind: &quot;</span>action<span class="hljs-string">&quot;, label: &quot;</span><span class="hljs-keyword">delete</span> (eol/up)<span class="hljs-string">&quot;, detail: &quot;</span>without <span class="hljs-built_in">count</span>: <span class="hljs-keyword">Delete</span> <span class="hljs-keyword">from</span> cursor <span class="hljs-keyword">to</span> <span class="hljs-keyword">end</span> of line; with count: <span class="hljs-keyword">Delete</span> <span class="hljs-keyword">from</span> current line up <span class="hljs-symbol">`count`</span> <span class="hljs-keyword">number</span> of <span class="hljs-keyword">keys</span>.<span class="hljs-string">&quot;},
@@ -659,7 +665,7 @@ keybindings: {
     ],
     [
         &quot;</span>editor.action.clipboardCutAction<span class="hljs-string">&quot;,
-        &quot;</span>editor.action.enterNormal<span class="hljs-string">&quot;
+        { &quot;</span>modalkeys.enterMode<span class="hljs-string">&quot;: { mode: &quot;</span>normal<span class="hljs-string">&quot; } }, // modalkeys.enterNormal has async issues that cause the entire line to be deleted here
     ]),
 
     &quot;</span>::doc::x<span class="hljs-string">&quot;: {kind: &quot;</span>action<span class="hljs-string">&quot;, label: &quot;</span><span class="hljs-keyword">delete</span> char<span class="hljs-string">&quot;, detail: &quot;</span><span class="hljs-keyword">delete</span> the character <span class="hljs-keyword">under</span> the cursor<span class="hljs-string">&quot;},
@@ -859,6 +865,22 @@ keybindings: {
     gl: <span class="hljs-string">&quot;git.pull&quot;</span>,
     <span class="hljs-string">&quot;::doc::gp&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;git push&quot;</span>, detail: <span class="hljs-string">&quot;push changes to remote&quot;</span>},
     gp: <span class="hljs-string">&quot;git.push&quot;</span>,
+    <span class="hljs-string">&quot;::doc::gc&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;→ conflict&quot;</span>, detail: <span class="hljs-string">&quot;move to next merge conflict&quot;</span>},
+    gc: <span class="hljs-string">&quot;merge-conflict.next&quot;</span>,
+    <span class="hljs-string">&quot;::doc::gC&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;← conflict&quot;</span>, detail: <span class="hljs-string">&quot;move to previous merge conflict&quot;</span>},
+    gC: <span class="hljs-string">&quot;merge-conflict.previous&quot;</span>,
+    <span class="hljs-string">&quot;::doc::g[&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;current&quot;</span>, detail: <span class="hljs-string">&quot;accept current change&quot;</span>},
+    <span class="hljs-string">&quot;g[&quot;</span>: <span class="hljs-string">&quot;merge-conflict.accept.current&quot;</span>,
+    <span class="hljs-string">&quot;::doc::g]&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;incoming&quot;</span>, detail: <span class="hljs-string">&quot;accept incoming change&quot;</span>},
+    <span class="hljs-string">&quot;g]&quot;</span>: <span class="hljs-string">&quot;merge-conflict.accept.incoming&quot;</span>,
+    <span class="hljs-string">&quot;::doc::g\\&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;both&quot;</span>, detail: <span class="hljs-string">&quot;accept both changes&quot;</span>},
+    <span class="hljs-string">&quot;g\\&quot;</span>: <span class="hljs-string">&quot;merge-conflict.accept.both&quot;</span>,
+    <span class="hljs-string">&quot;::doc::g{&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;all current&quot;</span>, detail: <span class="hljs-string">&quot;accept all current changes&quot;</span>},
+    <span class="hljs-string">&quot;g{&quot;</span>: <span class="hljs-string">&quot;merge-conflict.accept.all-current&quot;</span>,
+    <span class="hljs-string">&quot;::doc::g}&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;all incoming&quot;</span>, detail: <span class="hljs-string">&quot;accept all incoming changes&quot;</span>},
+    <span class="hljs-string">&quot;g}&quot;</span>: <span class="hljs-string">&quot;merge-conflict.accept.all-current&quot;</span>,
+    <span class="hljs-string">&quot;::doc::g|&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;all both&quot;</span>, detail: <span class="hljs-string">&quot;accept all both changes&quot;</span>},
+    <span class="hljs-string">&quot;g|&quot;</span>: <span class="hljs-string">&quot;merge-conflict.accept.all-both&quot;</span>,
     <span class="hljs-string">&quot;::doc::,e&quot;</span>: {kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;error →&quot;</span>, detail: <span class="hljs-string">&quot;move to next error&quot;</span>},
     <span class="hljs-string">&quot;,e&quot;</span>: <span class="hljs-string">&quot;editor.action.marker.next&quot;</span>,
     <span class="hljs-string">&quot;::doc::,E&quot;</span>: {kind: <span class="hljs-string">&quot;select&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&quot;error ←&quot;</span>, detail: <span class="hljs-string">&quot;move to previous error&quot;</span>},

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><title>Modal Keys Documentation</title><meta charset="utf-8"><link rel="stylesheet" href="https://haberdashpi.github.io/vscode-modal-keys/stable/README.f14bba23.css"></head><body> <script type="module" src="https://haberdashpi.github.io/vscode-modal-keys/stable/README.ab2e5f5c.js"></script><script src="https://haberdashpi.github.io/vscode-modal-keys/stable/README.16885970.js" nomodule="" defer></script> <div class="content"> <h1 id="heading-#advanced-vim-presets"><a class="header-anchor" id="advanced-vim-presets" href="#advanced-vim-presets"> </a>Advanced vim presets</h1> <p>This document provides a more advanced set of vim keybindings than provided in the <a href="https://haberdashpi.github.io/vscode-modal-keys/stable/tutorial.html">tutorial</a>. The goal of these bindings is to lower the barrier to entry for Vim users who don't want to spend the time defining bindings from ground up. A secondary goal is to show off some of the more advanced features of ModalKeys that were not discussed in the tutorial. For instance, these keybindings use <a href="https://haberdashpi.github.io/vscode-modal-keys/stable/key_forms.html#documenting-a-keybinding"><code>::doc::</code> entries</a> to provide visual documentation for all commands.</p> <p>If you want to modify these presets you can export and modify them using the &quot;ModalKeys: Export a preset for keybindings&quot; command. After making any desired changes you can import them with the &quot;ModalKeys: Import preset keybindings&quot; command.</p> <p>If you are not interested in how the Vim keybindings are implemented and just want to use them, you can skip this discussion. Just import the presets by pressing <key>Ctrl/Cmd</key>+<key>Shift</key>+<key>P</key> and running command <code>ModalKeys: Import preset keybindings</code>. You will be presented a choice to import either Vim bindings or any presets that you have created yourself. If you are planning to customize the bindings, or create Vim-style commands from scratch, this document gives you pointers on how to go about doing that.</p> <p>Unlike the tutorial, the assumption throughout this documentation is that you are familiar with vim. All concepts discussed here are introduced, at least briefly, in the tutorial.</p> <h2 id="heading-#operator-definitions"><a class="header-anchor" id="operator-definitions" href="#operator-definitions"> </a>Operator Definitions</h2> <p>We start with the most important feature of a vim-like keymap: the verb-noun format allowing a combinatorial set of commands. The verbs are called operators and they do things to some portion of text. The nouns are called objects and they define some region of text the operators modify. For example delete a word you type <key>d</key> (for delete) and <key>w</key> (for word).</p> <h3 id="heading-#functions"><a class="header-anchor" id="functions" href="#functions"> </a>Functions</h3> <p>To begin with, we'll define some function to make creating the operators easier. Since imported keybindings can be defined using javascript, this can help generalize our bindings, allowing us to create many keybindings at once.</p> <pre><code class="language-js"><span class="hljs-comment">/**
+<!DOCTYPE html><html><head><title>Modal Keys Documentation</title><meta charset="utf-8"><link rel="stylesheet" href="https://haberdashpi.github.io/vscode-modal-keys/stable/README.3283db0a.css"></head><body> <script type="module" src="https://haberdashpi.github.io/vscode-modal-keys/stable/README.341efe0b.js"></script><script src="https://haberdashpi.github.io/vscode-modal-keys/stable/README.5a9d8ddc.js" nomodule="" defer></script> <div class="content"> <h1 id="heading-#advanced-vim-presets"><a class="header-anchor" id="advanced-vim-presets" href="#advanced-vim-presets"> </a>Advanced vim presets</h1> <p>This document provides a more advanced set of vim keybindings than provided in the <a href="https://haberdashpi.github.io/vscode-modal-keys/stable/tutorial.html">tutorial</a>. The goal of these bindings is to lower the barrier to entry for Vim users who don't want to spend the time defining bindings from ground up. A secondary goal is to show off some of the more advanced features of ModalKeys that were not discussed in the tutorial. For instance, these keybindings use <a href="https://haberdashpi.github.io/vscode-modal-keys/stable/key_forms.html#documenting-a-keybinding"><code>::doc::</code> entries</a> to provide visual documentation for all commands.</p> <p>If you want to modify these presets you can export and modify them using the &quot;ModalKeys: Export a preset for keybindings&quot; command. After making any desired changes you can import them with the &quot;ModalKeys: Import preset keybindings&quot; command.</p> <p>If you are not interested in how the Vim keybindings are implemented and just want to use them, you can skip this discussion. Just import the presets by pressing <key>Ctrl/Cmd</key>+<key>Shift</key>+<key>P</key> and running command <code>ModalKeys: Import preset keybindings</code>. You will be presented a choice to import either Vim bindings or any presets that you have created yourself. If you are planning to customize the bindings, or create Vim-style commands from scratch, this document gives you pointers on how to go about doing that.</p> <p>Unlike the tutorial, the assumption throughout this documentation is that you are familiar with vim. All concepts discussed here are introduced, at least briefly, in the tutorial.</p> <h2 id="heading-#operator-definitions"><a class="header-anchor" id="operator-definitions" href="#operator-definitions"> </a>Operator Definitions</h2> <p>We start with the most important feature of a vim-like keymap: the verb-noun format allowing a combinatorial set of commands. The verbs are called operators and they do things to some portion of text. The nouns are called objects and they define some region of text the operators modify. For example delete a word you type <key>d</key> (for delete) and <key>w</key> (for word).</p> <h3 id="heading-#functions"><a class="header-anchor" id="functions" href="#functions"> </a>Functions</h3> <p>To begin with, we'll define some function to make creating the operators easier. Since imported keybindings can be defined using javascript, this can help generalize our bindings, allowing us to create many keybindings at once.</p> <pre><code class="language-js"><span class="hljs-comment">/**
  * Creates a series of key mappings which select a region of text around
  * or within a given boundary (e.g. {from: &quot;(&quot;, to: &quot;)&quot;})
  * 
@@ -214,7 +214,9 @@
         acceptAfter: <span class="hljs-number">2</span>,
         backwards: <span class="hljs-literal">false</span>,
         offset: <span class="hljs-symbol">&#x27;start</span>&#x27;,
-        wrapAround: <span class="hljs-literal">true</span>
+        wrapAround: <span class="hljs-literal">true</span>,
+        selectTillMatch: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
+
     }},
     <span class="hljs-string">&quot;::doc::S&quot;</span>: { kind: <span class="hljs-string">&quot;motion&quot;</span>, label: <span class="hljs-string">&quot;char pair back&quot;</span>, detail: <span class="hljs-string">&quot;move/operate to previous character pair&quot;</span>},
     S: { <span class="hljs-string">&quot;modalkeys.search&quot;</span>: {
@@ -222,7 +224,8 @@
         acceptAfter: <span class="hljs-number">2</span>,
         backwards: <span class="hljs-literal">true</span>,
         offset: <span class="hljs-symbol">&#x27;start</span>&#x27;,
-        wrapAround: <span class="hljs-literal">true</span>
+        wrapAround: <span class="hljs-literal">true</span>,
+        selectTillMatch: <span class="hljs-string">&quot;__mode == &#x27;visual&#x27;&quot;</span>,
     }},
 }
 
@@ -605,7 +608,7 @@
                     <span class="hljs-comment">&quot;caseSensitive&quot;</span>: <span class="hljs-keyword">true</span>,
                     <span class="hljs-comment">&quot;wrapAround&quot;</span>: <span class="hljs-keyword">true</span>,
                     <span class="hljs-comment">&quot;register&quot;</span>: <span class="hljs-comment">&quot;search&quot;</span>,
-                    <span class="hljs-comment">&quot;selectTillMatch&quot;</span>: <span class="hljs-comment">&quot;mode == &#x27;visual&#x27;&quot;</span>
+                    <span class="hljs-comment">&quot;selectTillMatch&quot;</span>: <span class="hljs-comment">&quot;__mode == &#x27;visual&#x27;&quot;</span>
                 }
             }
         ],
@@ -616,13 +619,13 @@
                 <span class="hljs-comment">&quot;caseSensitive&quot;</span>: <span class="hljs-keyword">true</span>,
                 <span class="hljs-comment">&quot;wrapAround&quot;</span>: <span class="hljs-keyword">true</span>,
                 <span class="hljs-comment">&quot;register&quot;</span>: <span class="hljs-comment">&quot;search&quot;</span>,
-                <span class="hljs-comment">&quot;selectTillMatch&quot;</span>: <span class="hljs-comment">&quot;mode == &#x27;visual&#x27;&quot;</span>
+                <span class="hljs-comment">&quot;selectTillMatch&quot;</span>: <span class="hljs-comment">&quot;__mode == &#x27;visual&#x27;&quot;</span>
             }
         },
         <span class="hljs-comment">&quot;::doc::n&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;search →&quot;</span>, detail: <span class="hljs-comment">&quot;go to the next search match&quot;</span> },
-        n: { <span class="hljs-comment">&quot;modalkeys.nextMatch&quot;</span>: {register: <span class="hljs-comment">&quot;search&quot;</span>, selectTillMatch: <span class="hljs-comment">&quot;mode == &#x27;visual&#x27;&quot;</span>}},
+        n: { <span class="hljs-comment">&quot;modalkeys.nextMatch&quot;</span>: {register: <span class="hljs-comment">&quot;search&quot;</span>, selectTillMatch: <span class="hljs-comment">&quot;__mode == &#x27;visual&#x27;&quot;</span>}},
         <span class="hljs-comment">&quot;::doc::N&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;search ←&quot;</span>, detail: <span class="hljs-comment">&quot;go to the previous search match&quot;</span> },
-        <span class="hljs-type">N</span>: { <span class="hljs-comment">&quot;modalkeys.previousMatch&quot;</span>: {register: <span class="hljs-comment">&quot;search&quot;</span>, selectTillMatch: <span class="hljs-comment">&quot;mode == &#x27;visual&#x27;&quot;</span> } },
+        <span class="hljs-type">N</span>: { <span class="hljs-comment">&quot;modalkeys.previousMatch&quot;</span>: {register: <span class="hljs-comment">&quot;search&quot;</span>, selectTillMatch: <span class="hljs-comment">&quot;__mode == &#x27;visual&#x27;&quot;</span> } },
         <span class="hljs-comment">&quot;::doc::*&quot;</span>: { kind: <span class="hljs-comment">&quot;motion&quot;</span>, label: <span class="hljs-comment">&quot;match →&quot;</span>, detail: <span class="hljs-comment">&quot;go to next match of object under cursor (or current selection)&quot;</span>},
         <span class="hljs-comment">&quot;normal::*&quot;</span>: [
             { <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
@@ -633,7 +636,7 @@
         ],
         <span class="hljs-comment">&quot;visual::*&quot;</span>: [
             { <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
-                text: <span class="hljs-comment">&quot;__selectstr&quot;</span>,
+                text: <span class="hljs-comment">&quot;__selectionstr&quot;</span>,
                 wrapAround: <span class="hljs-keyword">true</span>,
                 register: <span class="hljs-comment">&quot;search&quot;</span>
             }}
@@ -649,7 +652,7 @@
         ],
         <span class="hljs-comment">&quot;visual::#&quot;</span>: [
             { <span class="hljs-comment">&quot;modalkeys.search&quot;</span>: {
-                text: <span class="hljs-comment">&quot;__selectstr&quot;</span>,
+                text: <span class="hljs-comment">&quot;__selectionstr&quot;</span>,
                 wrapAround: <span class="hljs-keyword">true</span>,
                 register: <span class="hljs-comment">&quot;search&quot;</span>
             }}
