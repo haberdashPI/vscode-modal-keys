@@ -1,1 +1,1 @@
-import 'highlight.js/styles/github'
+import 'highlight.js/styles/github.css'
