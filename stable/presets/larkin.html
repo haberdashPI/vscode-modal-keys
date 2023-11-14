@@ -403,7 +403,7 @@ keybindings: {
         docScope:<span class="hljs-built_in"> true</span>
     }},
 
-    <span class="hljs-string">&quot;::doc::u[&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;around []&#x27;</span>, detail: <span class="hljs-string">&#x27;around first character pair `[]` (non syntactical, useful inside comments)&#x27;</span>},    
+    <span class="hljs-string">&quot;::doc::u]&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;around []&#x27;</span>, detail: <span class="hljs-string">&#x27;around first character pair `[]` (non syntactical, useful inside comments)&#x27;</span>},    
     <span class="hljs-string">&quot;u]&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
         from: <span class="hljs-string">&quot;[&quot;</span>, to: <span class="hljs-string">&quot;]&quot;</span>,
         inclusive:<span class="hljs-built_in"> true</span>,
@@ -411,7 +411,7 @@ keybindings: {
         docScope:<span class="hljs-built_in"> true</span>
     }},
     
-    <span class="hljs-string">&quot;::doc::u{&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;around {}&#x27;</span>, detail: <span class="hljs-string">&#x27;around first character pair `{}` (non syntactical, useful inside comments)&#x27;</span>},    
+    <span class="hljs-string">&quot;::doc::u}&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;around {}&#x27;</span>, detail: <span class="hljs-string">&#x27;around first character pair `{}` (non syntactical, useful inside comments)&#x27;</span>},    
     <span class="hljs-string">&quot;u}&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
         from: <span class="hljs-string">&quot;{&quot;</span>, to: <span class="hljs-string">&quot;}&quot;</span>,
         inclusive:<span class="hljs-built_in"> true</span>,
@@ -435,7 +435,7 @@ keybindings: {
         docScope:<span class="hljs-built_in"> true</span>
     }},
     <span class="hljs-string">&quot;::doc::uC,&quot;</span>: {kind: <span class="hljs-string">&#x27;select&#x27;</span>, label: <span class="hljs-string">&#x27;inside &lt;&gt;&#x27;</span>, detail: <span class="hljs-string">&#x27;inside first character pair `&lt;&gt;` (non syntactical, useful inside comments)&#x27;</span>},    
-    <span class="hljs-string">&quot;uC.&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
+    <span class="hljs-string">&quot;uC,&quot;</span>: { <span class="hljs-string">&quot;modalkeys.selectBetween&quot;</span>: {
         from: <span class="hljs-string">&quot;&lt;&quot;</span>, to: <span class="hljs-string">&quot;&gt;&quot;</span>,
         inclusive:<span class="hljs-built_in"> false</span>,
         caseSensitive:<span class="hljs-built_in"> true</span>,
@@ -636,7 +636,7 @@ keybindings: {
     <span class="hljs-string">&quot;::doc::gi&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&#x27;insert pair&#x27;</span>, detail: <span class="hljs-string">&quot;Insert a pairing (e.g. ()) around a selection&quot;</span>},
     <span class="hljs-string">&quot;::doc::gi(&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&#x27;paren&#x27;</span>, detail: <span class="hljs-string">&quot;Insert parenthesis around selection&quot;</span>},
     <span class="hljs-string">&quot;gi(&quot;</span>: <span class="hljs-selector-attr">[ <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>, { <span class="hljs-string">&quot;type&quot;</span>: { text: <span class="hljs-string">&quot;(&quot;</span> }, }, <span class="hljs-string">&quot;modalkeys.enterNormal&quot;</span> ]</span>,
-    <span class="hljs-string">&quot;::doc::gi(&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&#x27;paren&#x27;</span>, detail: <span class="hljs-string">&quot;Insert parenthesis around selection&quot;</span>},
+    <span class="hljs-string">&quot;::doc::gi&lt;&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&#x27;paren&#x27;</span>, detail: <span class="hljs-string">&quot;Insert parenthesis around selection&quot;</span>},
     <span class="hljs-string">&quot;gi&lt;&quot;</span>: <span class="hljs-selector-attr">[ <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>, { <span class="hljs-string">&quot;type&quot;</span>: { text: <span class="hljs-string">&quot;&lt;&quot;</span> }, }, <span class="hljs-string">&quot;modalkeys.enterNormal&quot;</span> ]</span>,
     <span class="hljs-string">&quot;::doc::gi`&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-selector-tag">label</span>: <span class="hljs-string">&#x27;ticks&#x27;</span>, detail: <span class="hljs-string">&quot;Insert ticks (``) around selection&quot;</span>},
     <span class="hljs-string">&quot;gi`&quot;</span>: <span class="hljs-selector-attr">[ <span class="hljs-string">&quot;modalkeys.enterInsert&quot;</span>, { <span class="hljs-string">&quot;type&quot;</span>: { text: <span class="hljs-string">&quot;`&quot;</span> }, }, <span class="hljs-string">&quot;modalkeys.enterNormal&quot;</span> ]</span>,
@@ -755,7 +755,7 @@ keybindings: {
     <span class="hljs-type">O</span>: [ <span class="hljs-comment">&quot;editor.action.insertLineBefore&quot;</span>, <span class="hljs-comment">&quot;modalkeys.enterInsert&quot;</span> ],
     <span class="hljs-comment">&quot;::doc::gO&quot;</span>: {kind: <span class="hljs-comment">&quot;action&quot;</span>, label: <span class="hljs-comment">&quot;open above&quot;</span>, detail: <span class="hljs-comment">&quot;open a line above current line&quot;</span>},
     gO: <span class="hljs-comment">&quot;editor.action.insertLineBefore&quot;</span>,
-    <span class="hljs-comment">&quot;::doc::visual::o&quot;</span>: {kind: <span class="hljs-comment">&quot;mode&quot;</span>, label: <span class="hljs-comment">&quot;open before&quot;</span>, detail: <span class="hljs-comment">&quot;open a line above current selection and enter insert&quot;</span>},
+    <span class="hljs-comment">&quot;::doc::visual::O&quot;</span>: {kind: <span class="hljs-comment">&quot;mode&quot;</span>, label: <span class="hljs-comment">&quot;open before&quot;</span>, detail: <span class="hljs-comment">&quot;open a line above current selection and enter insert&quot;</span>},
     <span class="hljs-comment">&quot;visual::O&quot;</span>: <span class="hljs-comment">&quot;selection-utilities.activeAtStart&quot;</span>,
 
 </code></pre> <h4>line indent</h4> <pre><code class="language-js">    <span class="hljs-string">&quot;::doc::&gt;&quot;</span>: {kind: <span class="hljs-string">&quot;action&quot;</span>, <span class="hljs-keyword">label</span><span class="language-bash">: <span class="hljs-string">&quot;indent&quot;</span>, detail: <span class="hljs-string">&quot;Indent lines&quot;</span>},</span>
