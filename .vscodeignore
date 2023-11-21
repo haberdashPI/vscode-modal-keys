@@ -3,7 +3,6 @@
 docs/**
 doc_dist/**
 src/**
-.parcel-cache/*
 .gitignore
 **/*tsconfig.json
 **/*.map
@@ -11,7 +10,4 @@ src/**
 **/*.html
 **/*.less
 node_modules/**
-.nojekyll
-images/**
-!images/normal.jpg
 *.afdesign
