@@ -18,6 +18,42 @@ selections.
 These bindings are named after the middle name of my first child.
 """
 
+extensions = [
+    "dbankier.vscode-quick-select",
+    "haberdashPI.vscode-select-by-indent",
+    "haberdashPI.selection-utilities",
+    "haberdashPI.move-cursor-by-argument",
+    "pustelto.bracketeer",
+    "wmaurer.change-case",
+    "pranshuagrawal.toggle-case",
+    "albymor.increment-selection",
+    "pkief.markdown-checkbox",
+    "edgardmessias.clipboard-manager",
+    "stkb.rewrap",
+    "haberdashPI.terminal-polyglot",
+    "jack89ita.open-file-from-path",
+    "koalamer.labeled-bookmarks",
+]
+
+## Implementation notes:
+# when these get expanded into actual keybindings I need to:
+# 1. Expand all `default` keys into the individual keybindings
+# 2. replace any instances of {key} as appropriate, by iterating over `keys`
+# 3. For any entries that are duplicate bindings with distinct when clauses (before 
+#    the transformations applied below) make sure that `label` and `description`
+#    are identical or blank, and use the non-blank value in all instances
+# 4. Wrap all bare commands in `modalkeys.commands` (or should it be called something else)
+#   as this will record all actions and it will replace all instances of `{variable}`
+#   with the actual value (e.g. `{count}`) before running the command when the command
+#   is actually run. Don't do anything if the command already is `modalkeys.commands`.
+#   It will also clear the count.
+# 5. Transform "allowed_prefix": we need to create two
+#    commands, one with and one without the prefix
+# 6. take any multi-key bindings and turn them into single keybindings
+#   that call `modalkeys.prefix` and append a prefix to the modal keys state
+#   the prefix becomes part of the when clause for suffixes of the binding
+# 7. Any uses of `mode` get moved into the when clause, checking for `modalkeys.currentMode`
+
 [bind.motion]
 name = "Motions"
 kind = "select"
@@ -30,6 +66,16 @@ default.command = "modalkeys.cursorMove"
 default.args.value = "{count}"
 default.args.around = "{around_on}"
 default.args.select = "{select_on}"
+
+[bind.count]
+name = "count"
+description = """
+The number keys are used to update the count, which affects how many times the next 
+command is repeated, when relevant.
+"""
+keys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+command = "modalkeys.updateCount"
+args.value = "{key}"
 
 [[bind.motion.prim.keys]]
 key = "h"
@@ -372,8 +418,8 @@ args.mode = "normal"
 [[bind.actions.symmetric.keys]]
 keys = [":", ";", "'", '"', ",", ".", "/", "?", "|", "=", "+", "-", "_", "*", "&", "^", "%", 
         "$", "#", "@", "!", "`", "~"]
-description = "Insert the character {char} at both ends of each selection"
+description = "Insert the character {key} at both ends of each selection"
 command = "selection-utilities.insertAround"
-args = { before = "{char}", after = "{char}"}
+args = { before = "{key}", after = "{key}"}
 
 
