@@ -55,7 +55,7 @@ async function expandDefaults(bindings: any, defaults: any = {}){
     
     let keys: any = undefined;
     if(bindings.keys !== undefined){
-        keys = bindings.keys.map(k => {
+        keys = bindings.keys.map((k: any) => {
             return {...defaults, ...k};
         });
     }
@@ -147,9 +147,10 @@ async function requestToInsertBindings(file: vscode.Uri, config: any) {
                     new vscode.Position(old_bindings_start.start.line-1, 
                                         ed.document.lineAt(old_bindings_start.start.line-1).range.end.character),
                     new vscode.Position(old_bindings_end.end.line + 4, 0));
-                ed.edit(builder => {
+                await ed.edit(builder => {
                     builder.replace(range, bindings_to_insert);
                 });
+                vscode.commands.executeCommand('workbench.action.files.save');
                 vscode.window.showInformationMessage(`Your modal key bindings have
                     been updated in \`keybindings.json\`.`);
             } else if (old_bindings_end || old_bindings_start){
@@ -158,9 +159,10 @@ async function requestToInsertBindings(file: vscode.Uri, config: any) {
                     bindings manually and then re-run this command.`);
             }else {
                 // ...insert new bindings
-                ed.edit(builder => {
+                await ed.edit(builder => {
                     builder.insert(insert_at, "\n" + bindings_to_insert);
                 });
+                vscode.commands.executeCommand('workbench.action.files.save');
                 vscode.window.showInformationMessage(`Your modal key bindings have
                     been inserted into \`keybindings.json\`.`);
             }
