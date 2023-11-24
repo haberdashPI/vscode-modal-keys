@@ -402,7 +402,10 @@ default.mode = "syminsert"
 
 [[bind.actions.symmetric.keys]]
 name = "Symmetric Insert Mode"
-description = "In this mode all commands and character insertions happen at both ends of the selection"
+description = """
+In this mode all commands and character insertions happen at both ends of 
+the selection
+"""
 mode = "normal"
 key = "g '"
 command = "modalkeys.enterMode"
