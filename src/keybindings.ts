@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
+import { merge, cloneDeep } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
 import { builtinModules } from 'module';
@@ -44,27 +45,50 @@ async function validateHeader(bindings: any){
     return bindings;
 }
 
-async function expandDefaults(bindings: any, defaults: any = {}){
+// TODO: to check in unit tests:
+// - all arrays and primitive types get preserved
+// - defaults get expanded appropriately in deeply
+//   nested situations
+function expandDefaults(bindings: any, defaults: any = {}): any{
     if(typeof bindings === 'string') { return bindings; }
     if(typeof bindings === 'number') { return bindings; }
     if(typeof bindings === 'boolean') { return bindings; }
+    if(Array.isArray(bindings)){ return bindings.map(b => expandDefaults(b, defaults)); }
 
     if(bindings.default !== undefined){
         defaults = {...defaults, ...bindings.default};
     }
     
-    let keys: any = undefined;
-    if(bindings.keys !== undefined){
-        keys = bindings.keys.map((k: any) => {
-            return {...defaults, ...k};
+    let key: any = undefined;
+    if(bindings.key !== undefined){
+        key = bindings.key.map((k: any) => {
+            return merge(cloneDeep(defaults), k);
         });
     }
 
-    let non_keys = Object.entries(bindings).filter(([k, v]) => k !== 'keys');
-    let result: any = Object.fromEntries(non_keys.map(([k, v]) => 
+    let non_key = Object.entries(bindings).filter(([k, v]) => k !== 'key');
+    let result: any = Object.fromEntries(non_key.map(([k, v]) => 
         [k, expandDefaults(v, defaults)]
     ));
-    return {...result, keys};
+    if(key !== undefined){
+        return {...result, key};
+    }else{
+        return result;
+    }
+}
+
+function expandKeyLists(bindings: any): any {
+    if(typeof bindings === 'string') { return bindings; }
+    if(typeof bindings === 'number') { return bindings; }
+    if(typeof bindings === 'boolean') { return bindings; }
+    if(Array.isArray(bindings)){ return bindings.map(b => expandKeyLists(b)); }
+    
+    if(bindings.keys !== undefined && Array.isArray(bindings.keys)){
+        // TOOD: I need to think about whether `key` should have a different
+        // name (above in `expandDefualts`) (and fix the larkin.toml to match it)
+        // Then I need to consider exactly how to format the file in cases
+        // where I want to list many keys (e.g. for `bind.count`) and handle it here
+    }
 }
 
 function processBindings(bindings: any){

@@ -31,6 +31,7 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.202",
     "@types/mocha": "^10.0.3",
     "@types/node": "18.x",
     "@types/vscode": "^1.84.0",
@@ -47,6 +48,7 @@
   },
   "dependencies": {
     "js-toml": "^1.0.0",
+    "lodash": "^4.17.21",
     "semver": "^7.5.4"
   }
 }
