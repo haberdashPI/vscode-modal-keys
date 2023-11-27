@@ -78,6 +78,22 @@ function expandDefaults(bindings: any, defaults: any = {}): any{
     }
 }
 
+interface IRawBinding {
+    name?: string
+    description?: string
+    key?: string
+    keys?: string[]
+    args?: object
+    when?: string
+    mode?: string
+    allowed_prefixes?: string[]
+    command?: string
+    commands?: string[]
+    computedArgs?: object
+    default?: IRawBinding
+    items?: IRawBinding[]
+}
+
 // TODO: check in unit tests
 // invalid items (e.g. both key and keys defined) get detected
 function reifyItemKey(item: any, key: string): any {
@@ -93,7 +109,7 @@ function reifyItemKey(item: any, key: string): any {
     });
 }
 
-function expandBindingKeys(bindings: any): any {
+function expandBindingKeys(bindings: IRawBinding[]): IRawBinding[] {
     return flatMap(bindings, item => {
         if(item.keys !== undefined){
             return item.keys.map((key: any) => {return {key, ...reifyItemKey(item, key)};});
@@ -103,7 +119,7 @@ function expandBindingKeys(bindings: any): any {
     });
 }
 
-function listBindings(bindings: any): any{
+function listBindings(bindings: any): IRawBinding[] {
     return flatMap(Object.keys(bindings), key => {
         if(key === 'items'){
             return bindings.items;
@@ -118,7 +134,7 @@ function listBindings(bindings: any): any{
     });
 }
 
-function wrapBindingInDoCommand(item: any){
+function wrapBindingInDoCommand(item: IRawBinding): IRawBinding{
     return {
         key: item.key,
         name: item.name,
@@ -126,7 +142,8 @@ function wrapBindingInDoCommand(item: any){
         when: item.when,
         mode: item.mode,
         command: "modalkeys.do",
-        args: omit(item, ['key', 'name', 'description', 'when', 'mode'])
+        args: omit(item, ['key', 'name', 'description', 'when', 'mode', 'allowed_prefixes',
+                          'default', 'items'])
     };
 }
 
@@ -156,7 +173,7 @@ function validateUniqueForBinding(vals: (string | undefined)[], name: string, it
 // and blank documentation for some when clauses
 
 // TODO: debug this function
-function expandBindingDocsAcrossWhenClauses(items: any) {
+function expandBindingDocsAcrossWhenClauses(items: IRawBinding[]): IRawBinding[] {
     let sharedBindings: { [key: string]: any[] } = {};
     for (let item of items) {
         let k = hash({ key: item.key, mode: item.mode });
@@ -186,7 +203,7 @@ function expandBindingDocsAcrossWhenClauses(items: any) {
     return items.map((item: any) => {
         let k = hash({ key: item.key, mode: item.mode });
         if (sharedDocs[k] !== undefined) {
-            let docs = sharedDocs[k]
+            let docs = sharedDocs[k];
             return { ...item, name: docs.name, description: docs.description };
         } else {
             return item;
@@ -194,8 +211,30 @@ function expandBindingDocsAcrossWhenClauses(items: any) {
     });
 }
 
-function expandWhenWithAllowedPrefixes(bindings: any){
-    // note: if allowed_prefix is absent, no prefix should be allowed
+function expandWhenClause(binding: IRawBinding){
+    let finalWhen = "";
+    if(binding.when !== undefined){
+        finalWhen += `(${binding.when})`
+    }else{
+        finalWhen += `true`
+    }
+
+    if(binding.mode !== undefined){
+        if(binding.mode.startsWith("!")){
+            finalWhen += ` && (modalkeys.mode != '${binding.mode.slice(1)}')`;
+        }else{
+            finalWhen += ` && (modalkeys.mode == '${binding.mode}')`;
+        }
+    }
+
+    finalWhen += "&& ((modalkeys.prefix == '')";
+    if(binding.allowed_prefixes !== undefined){
+        for(let allowed of binding.allowed_prefixes){
+        finalWhen += ` || (modalkeys.prefix == '${allowed}')`;
+    }
+    finalWhen += ")";
+
+    return {...binding, when=finalWhen};
 }
 
 function processBindings(bindings: any){
@@ -203,11 +242,13 @@ function processBindings(bindings: any){
     bindings = listBindings(bindings);
     bindings = expandBindingKeys(bindings);
     bindings = expandBindingDocsAcrossWhenClauses(bindings);
-    bindings = expandAllowedPrefixes(bindings);
+    bindings = expandWhenClause(bindings);
     bindings = bindings.map((item: any) => {
         item = wrapBindingInDoCommand(item);
         return item;
     });
+    // TODO: expand multi-key bindings to multiple bindings
+    // using `modalkeys.prefix` and by expanding the whenClause
     return bindings;
     // TODO: add more steps here, as from implementation notes in larkin.toml
 }
@@ -254,6 +295,9 @@ function findText(doc: vscode.TextDocument, text: string) {
 }
 
 function formatBindings(file: vscode.Uri, config: any){
+    // TODO: for each item in `config` create a comment based on
+    // the `name` and `description` and then remove those fields from
+    // the item
     let json = JSON.stringify(config, null, 4);
     // remove closing and ending `[]`
     json = json.replace(/^\s*\[[\r\n]*/,"");

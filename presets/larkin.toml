@@ -53,11 +53,11 @@ extensions = [
 #   variables).
 # 5. Transform "allowed_prefix": we need to create two commands, one with and one without
 #    the prefix
+# 7. Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
+# 8. any non-prefix keys include the empty prefix check in their when clause
 # 6. take any multi-key bindings and turn them into single keybindings that call
 #   `modalkeys.prefix` and append a prefix to the modal keys state the prefix becomes part
 #   of the when clause for suffixes of the binding
-# 7. Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
-# 8. any non-prefix keys include the empty prefix check in their when clause
 # 9. translate the name and description into helpful comments in the bindings file (and
 #    remove them form the object)
 
@@ -160,7 +160,7 @@ selection commands that move by a predefined syntactic object (e.g. word, paragr
 """
 default.command = "selection-utilities.moveBy"
 default.args.boundary = "start"
-default.allowed_prefix = "u"
+default.allowed_prefixes = ["u"]
 default.computedArgs.select = "select_on && !around_on"
 default.computedArgs.selectWhole = "around_on"
 
@@ -184,7 +184,7 @@ key = "W"
 name = "word →"
 description = "next word"
 args.unit = "word"
-computedArgs.value = "couht"
+computedArgs.value = "count"
 
 [[bind.motion.obj.items]]
 key = "E"
