@@ -42,7 +42,7 @@ extensions = [
 # 1. DONE Expand all `default` keys into the individual keybindings
 # 2. DONE replace any instances of {key} as appropriate, by iterating over `keys`
 # 3. DONE flatten all bindings into a single sequence
-# 6. For any entries that are duplicate bindings with distinct when clauses (before the
+# 6. DONE For any entries that are duplicate bindings with distinct when clauses (before the
 #    transformations applied below) make sure that `name` and `description` are identical or
 #    blank, and use the non-blank value in all instances
 # 4. DONE Wrap all bare commands in `modalkeys.commands` (or should it be called something

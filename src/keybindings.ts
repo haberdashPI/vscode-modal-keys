@@ -194,11 +194,16 @@ function expandBindingDocsAcrossWhenClauses(items: any) {
     });
 }
 
+function expandWhenWithAllowedPrefixes(bindings: any){
+    // note: if allowed_prefix is absent, no prefix should be allowed
+}
+
 function processBindings(bindings: any){
     bindings = expandDefaults(bindings);
     bindings = listBindings(bindings);
     bindings = expandBindingKeys(bindings);
     bindings = expandBindingDocsAcrossWhenClauses(bindings);
+    bindings = expandAllowedPrefixes(bindings);
     bindings = bindings.map((item: any) => {
         item = wrapBindingInDoCommand(item);
         return item;
