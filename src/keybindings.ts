@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
-import { merge, cloneDeep, flatMap, mapValues } from 'lodash';
+import { omit, merge, cloneDeep, flatMap, mapValues } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
 import { builtinModules } from 'module';
@@ -92,29 +92,14 @@ function reifyItemKey(item: any, key: string): any {
     });
 }
 
-function expandItemKeys(item: any){
-    if(item.keys !== undefined){
-        return item.keys.map((key: any) => {return {key, ...reifyItemKey(item, key)};});
-    }else{
-        return [item];
-    }
-}
-
 function expandBindingKeys(bindings: any): any {
-    return flatMap(bindings, expandItemKeys);
-    // if(typeof bindings === 'string') { return bindings; }
-    // if(typeof bindings === 'number') { return bindings; }
-    // if(typeof bindings === 'boolean') { return bindings; }
-    // if(typeof bindings === 'undefined') { return bindings; }
-    // if(Array.isArray(bindings)){ return bindings.map(b => expandBindingKeys(b)); }
-    
-    // return mapValues(bindings, (val, key) => {
-    //     if(key === 'items' && Array.isArray(val)){
-    //         return flatMap(val, expandItemKeys);
-    //     }else{
-    //         return expandBindingKeys(val);
-    //     }
-    // });
+    return flatMap(bindings, item => {
+        if(item.keys !== undefined){
+            return item.keys.map((key: any) => {return {key, ...reifyItemKey(item, key)};});
+        }else{
+            return [item];
+        }
+    });
 }
 
 function listBindings(bindings: any): any{
@@ -132,10 +117,26 @@ function listBindings(bindings: any): any{
     });
 }
 
+function wrapBindingInDoCommand(item: any){
+    return {
+        key: item.key,
+        name: item.name,
+        description: item.description,
+        when: item.when,
+        mode: item.mode,
+        command: "modalkeys.do",
+        args: omit(item, ['key', 'name', 'description', 'when', 'mode'])
+    };
+}
+
 function processBindings(bindings: any){
     bindings = expandDefaults(bindings);
     bindings = listBindings(bindings);
     bindings = expandBindingKeys(bindings);
+    bindings = bindings.map((item: any) => {
+        item = wrapBindingInDoCommand(item);
+        return item;
+    });
     return bindings;
     // TODO: add more steps here, as from implementation notes in larkin.toml
 }
