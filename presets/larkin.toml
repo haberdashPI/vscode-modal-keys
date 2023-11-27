@@ -38,10 +38,13 @@ extensions = [
 ## Implementation notes:
 # when these get expanded into actual keybindings I need to:
 # 0. validate and expand all items to types
-# 1. Expand all `default` keys into the individual keybindings DONE
-# 2. replace any instances of {key} as appropriate, by iterating over `keys` DONE
-# 3. flatten all bindings into a single sequence
-# 4. Wrap all bare commands in `modalkeys.commands` (or should it be called something else)
+# 1. DONE Expand all `default` keys into the individual keybindings
+# 2. DONE replace any instances of {key} as appropriate, by iterating over `keys`
+# 3. DONE flatten all bindings into a single sequence
+# 6. For any entries that are duplicate bindings with distinct when clauses (before the
+#    transformations applied below) make sure that `name` and `description` are identical
+#    or blank, and use the non-blank value in all instances
+# 4. DONE Wrap all bare commands in `modalkeys.commands` (or should it be called something else)
 #   as this will record all actions and it will replace all instances of `{variable}` with
 #   the actual value (e.g. `{count}`) before running the command when the command is
 #   actually run. Don't do anything if the command already is `modalkeys.commands`. It will
@@ -49,18 +52,16 @@ extensions = [
 #   variables).
 # 5. Transform "allowed_prefix": we need to create two commands, one with and one without
 #    the prefix
-# 6. For any entries that are duplicate bindings with distinct when clauses (before the
-#    transformations applied below) make sure that `label` and `description` are identical
-#    or blank, and use the non-blank value in all instances
 # 6. take any multi-key bindings and turn them into single keybindings that call
 #   `modalkeys.prefix` and append a prefix to the modal keys state the prefix becomes part
 #   of the when clause for suffixes of the binding
 # 7. Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
 # 8. any non-prefix keys include the empty prefix check in their when clause
+# 9. translate the name and description into helpful comments 
+#    in the bindings file (and remove them form the object)
 
-# TODO: use arguments to `modalkeys.commands` (or whatever its new name is)
-# to inject arguments, rather than using "{count}" and the link, since
-# I think that will be more performant
+# TODO: when implementing `modalkeys.do` we can use JSEP to parse 
+# expressions for the `computedArgs` value: https://github.com/EricSmekens/jsep
 
 [bind.motion]
 name = "Motions"
@@ -84,9 +85,9 @@ mode = "!insert" # number keys apply in all modes but insert
 name = "Primitive Motions"
 description = "Motions fundamental to moving around in the editor."
 default.command = "modalkeys.cursorMove"
-default.variable_args.value = "count"
-default.variable_args.around = "around_on"
-default.variable_args.select = "select_on"
+default.computedArgs.value = "count"
+default.computedArgs.around = "around_on"
+default.computedArgs.select = "select_on"
 
 [[bind.motion.prim.items]]
 key = "h"
@@ -159,52 +160,52 @@ selection commands that move by a predefined syntactic object (e.g. word, paragr
 default.command = "selection-utilities.moveBy"
 default.args.boundary = "start"
 default.allowed_prefix = "u"
-default.variable_args.select = {and = ["select_on", {not = "around_on"}]}
-default.variable_args.selectWhole = "around_on"
+default.computedArgs.select = "select_on && !around_on"
+default.computedArgs.selectWhole = "around_on"
 
 [[bind.motion.obj.items]]
 key = "w"
 name = "subwrd →"
 description = "next subword (camel/snake case)"
 args.unit = "subword"
-variable_args.value = "count"
+computedArgs.value = "count"
 
 [[bind.motion.obj.items]]
 key = "e"
 name = "subwrd end"
 description = "next subword (camel/snake case) end"
 args.unit = "subword"
-variable_args.boundary = {if = "around_on", then = "both", else = "end"}
-variable_args.value = "count"
+computedArgs.boundary = "around_on ? 'both' : 'end'"
+computedArgs.value = "count"
 
 [[bind.motion.obj.items]]
 key = "W"
 name = "word →"
 description = "next word"
 args.unit = "word"
-variable_args.value = "couht"
+computedArgs.value = "couht"
 
 [[bind.motion.obj.items]]
 key = "E"
 name = "word end"
 description = "next word end"
 args.unit = "word"
-variable_args.boundary = {if = "around_on", then = "both", else = "end"}
-variable_args.value = "count"
+computedArgs.boundary = "around_on ? 'both' : 'end'"
+computedArgs.value = "count"
 
 [[bind.motion.obj.items]]
 key = "b"
 name = "subwrd ←"
 description = "previous subword (camel/snake case)"
 args.unit = "subword"
-variable_args.value = {"-" = "count"}
+computedArgs.value = "-count"
 
 [[bind.motion.obj.items]]
 key = "B"
 name = "word ←"
 description = "previous word"
 args.unit = "word"
-variable_args.value = {"-" = "count"}
+computedArgs.value = "-count"
 
 [[bind.motion.obj.items]]
 key = "u u"
@@ -237,7 +238,7 @@ key = "f"
 name = "find char"
 description = "Find the next char (include char in selection)"
 args.acceptAfter = 1
-variable_args.skip = {"-" = ["count", 1]}
+computedArgs.skip = "count-1"
 
 [[bind.motion.search.items]]
 key = "F"
@@ -245,7 +246,7 @@ name = "find char back"
 description = "Find the previous char (include char in selection)"
 args.acceptAfter = 1
 args.backwards = true
-variable_args.skip = {"-" = ["count", 1]}
+computedArgs.skip = "count-1"
 
 [[bind.motion.search.items]]
 key = "t"
@@ -253,7 +254,7 @@ name = "to char"
 description = "Find the next char (exclude char in selection)"
 args.acceptAfter = 1
 args.offset = "start"
-variable_args.skip = {"-" = ["count", 1]}
+computedArgs.skip = "count-1"
 
 [[bind.motion.search.items]]
 key = "T"
@@ -262,7 +263,7 @@ description = "Find the previous char (exclude char in selection)"
 args.acceptAfter = 1
 args.offset = "end"
 args.backwards = true
-variable_args.skip = {"-" = ["count", 1]}
+computedArgs.skip = "count-1"
 
 [[bind.motion.search.items]]
 key = "s"
@@ -283,14 +284,14 @@ key = ";"
 label = "→ match"
 description = "Repeat search motion forwards"
 command = "modalkeys.nextMatch"
-variable_args.repeat = "count"
+computedArgs.repeat = "count"
 
 [[bind.motion.search.items]]
 key = ":"
 label = "← match"
 description = "Repeat search motion backwards"
 command = "modalkeys.previousMatch"
-variable_args.repeat = "count"
+computedArgs.repeat = "count"
 
 [bind.motion.syntax]
 label = "Motions around syntactic objects (e.g. parentheses and quotes)"
@@ -357,7 +358,7 @@ commands = ["expandLineSelection", "deleteRight", "editor.action.insertLineBefor
 [[bind.actions.basic.items]]
 key = "c"
 when = "!editorHasSelection && modalkeys.count > 1"
-commands = [{command = "modalkeys.selectLines", variable_args = {value = "count"}},
+commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}},
             "deleteRight",
             "editor.action.insertLineBefore",
             "modalkeys.enterInsert"]
@@ -374,7 +375,7 @@ commands = ["modalkeys.shrinkSelections", "deleteAllRight", "modalkeys.enterInse
 [[bind.actions.basic.items]]
 key = "C"
 when = "!modalkeys.count > 1"
-commands = [{command = "modalkeys.selectLines", variable_args = {value = "count"}, dir = "up"}, 
+commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}, dir = "up"}, 
             "deleteRight", "editor.actions.insertLineBefore", "modalkeys.enterInsert"]
 
 [[bind.actions.basic.items]]
@@ -385,7 +386,7 @@ Without a count: delete selected text (and store to clipboard). With a
 count, delete up to the next `count` lines and store to clipboard.
 """
 when = "!editorHasSelection"
-commands = [{command = "modalkeys.selectLines", variable_args = {value = "count"}},
+commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}},
              "editor.action.clipboardCutAction",
             {command = "modalkeys.enterMode", value = "normal"}]
 
