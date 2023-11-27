@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
-import { omit, merge, cloneDeep, flatMap, mapValues } from 'lodash';
+import { uniq, omit, merge, cloneDeep, flatMap, mapValues } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
 import { builtinModules } from 'module';
@@ -129,10 +129,59 @@ function wrapBindingInDoCommand(item: any){
     };
 }
 
+// For any items that have duplicate bindings with distinct when clauses (before the
+// transformations applied below) make sure that `name` and `description` are identical or
+// blank, and use the non-blank value in all instances
+
+// TODO: the obvious unit test is to have non-unique documentation
+// and blank documentation for some when clauses
+
+// TODO: debug this function
+function expandBindingDocsAcrossWhenClauses(items: any){
+    let sharedBindings = new Map();
+    for(let item of items){
+        let k = {key: item.key, mode: item.mode};
+        if(sharedBindings.has(k)){
+            sharedBindings.set(k, [...sharedBindings.get(k), item]);
+        }else{
+            sharedBindings.set(k, [item]);
+        }
+    }
+
+    let sharedDocs = new Map();
+    for(let [key, item] of sharedBindings.entries()){
+        if(item.length <= 1) { continue; }
+        let names = uniq(item.name.filter((x: any) => x !== undefined));
+        let descriptions = uniq(item.description.filter((x: any) => x !== undefined));
+        if(names.length > 1){
+            vscode.window.showErrorMessage(`Multiple values for \`name\` for idenictal 
+                binding \`${item.key}\` in mode "${item.mode}". Update the bindings file
+                to use only one name for this binding regardless of its when clause.`);
+        }
+        if(descriptions.length > 1){
+            vscode.window.showErrorMessage(`Multiple values for \`description\` for idenictal 
+                binding \`${item.key}\` in mode "${item.mode}". Update the bindings file
+                to use only one name for this binding regardless of its when clause.`);
+        }
+        sharedDocs.set(key, {name: names[0], descriptions: descriptions[0]});
+    }
+
+    return items.map((item: any) => {
+        let k = {key: item.key, mode: item.mode};
+        if(sharedDocs.has(k)){
+            let docs = sharedDocs.get(k);
+            return {...item, name: docs.name, description: docs.description};
+        }else{
+            return item;
+        }
+    });
+}
+
 function processBindings(bindings: any){
     bindings = expandDefaults(bindings);
     bindings = listBindings(bindings);
     bindings = expandBindingKeys(bindings);
+    bindings = expandBindingDocsAcrossWhenClauses(bindings);
     bindings = bindings.map((item: any) => {
         item = wrapBindingInDoCommand(item);
         return item;
