@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
-import { merge, cloneDeep } from 'lodash';
+import { merge, cloneDeep, flatMap, mapValues } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
 import { builtinModules } from 'module';
@@ -59,40 +59,84 @@ function expandDefaults(bindings: any, defaults: any = {}): any{
         defaults = {...defaults, ...bindings.default};
     }
     
-    let key: any = undefined;
-    if(bindings.key !== undefined){
-        key = bindings.key.map((k: any) => {
+    let items: any = undefined;
+    if(bindings.items !== undefined){
+        items = bindings.items.map((k: any) => {
             return merge(cloneDeep(defaults), k);
         });
     }
 
-    let non_key = Object.entries(bindings).filter(([k, v]) => k !== 'key');
-    let result: any = Object.fromEntries(non_key.map(([k, v]) => 
+    let non_items = Object.entries(bindings).filter(([k, v]) => k !== 'items');
+    let result: any = Object.fromEntries(non_items.map(([k, v]) => 
         [k, expandDefaults(v, defaults)]
     ));
-    if(key !== undefined){
-        return {...result, key};
+    if(items !== undefined){
+        return {...result, items};
     }else{
         return result;
     }
 }
 
-function expandKeyLists(bindings: any): any {
-    if(typeof bindings === 'string') { return bindings; }
-    if(typeof bindings === 'number') { return bindings; }
-    if(typeof bindings === 'boolean') { return bindings; }
-    if(Array.isArray(bindings)){ return bindings.map(b => expandKeyLists(b)); }
-    
-    if(bindings.keys !== undefined && Array.isArray(bindings.keys)){
-        // TOOD: I need to think about whether `key` should have a different
-        // name (above in `expandDefualts`) (and fix the larkin.toml to match it)
-        // Then I need to consider exactly how to format the file in cases
-        // where I want to list many keys (e.g. for `bind.count`) and handle it here
+// TODO: check in unit tests
+// invalid items (e.g. both key and keys defined) get detected
+function reifyItemKey(item: any, key: string): any {
+    return mapValues(item, (val, prop) => {
+        if(val === "{key}"){ return key; }
+        if(prop === "keys"){ return undefined; }
+        if(typeof val === 'string'){ return val; }
+        if(typeof val === 'number'){ return val; }
+        if(typeof val === 'boolean'){ return val; }
+        if(typeof val === 'undefined'){ return val; }
+        if(Array.isArray(val)){ return val.map(x => reifyItemKey(x, key)); }
+        return reifyItemKey(val, key);
+    });
+}
+
+function expandItemKeys(item: any){
+    if(item.keys !== undefined){
+        return item.keys.map((key: any) => {return {key, ...reifyItemKey(item, key)};});
+    }else{
+        return [item];
     }
 }
 
+function expandBindingKeys(bindings: any): any {
+    return flatMap(bindings, expandItemKeys);
+    // if(typeof bindings === 'string') { return bindings; }
+    // if(typeof bindings === 'number') { return bindings; }
+    // if(typeof bindings === 'boolean') { return bindings; }
+    // if(typeof bindings === 'undefined') { return bindings; }
+    // if(Array.isArray(bindings)){ return bindings.map(b => expandBindingKeys(b)); }
+    
+    // return mapValues(bindings, (val, key) => {
+    //     if(key === 'items' && Array.isArray(val)){
+    //         return flatMap(val, expandItemKeys);
+    //     }else{
+    //         return expandBindingKeys(val);
+    //     }
+    // });
+}
+
+function listBindings(bindings: any): any{
+    return flatMap(Object.keys(bindings), key => {
+        if(key === 'items'){
+            return bindings.items;
+        }
+        let val = bindings[key];
+        if(typeof val === 'string'){ return []; }
+        if(typeof val === 'number'){ return []; }
+        if(typeof val === 'boolean'){ return []; }
+        if(typeof val === 'undefined'){ return []; }
+        if(typeof val === 'object'){ return listBindings(val); }
+        return [];
+    });
+}
+
 function processBindings(bindings: any){
-    return expandDefaults(bindings);
+    bindings = expandDefaults(bindings);
+    bindings = listBindings(bindings);
+    bindings = expandBindingKeys(bindings);
+    return bindings;
     // TODO: add more steps here, as from implementation notes in larkin.toml
 }
 
@@ -112,7 +156,7 @@ const AUTOMATED_COMMENT_START_PREFIX = `
     // These bindings were automatically inserted by the ModalKeys extension from the
     // following file: 
     //
-`
+`;
 
 const AUTOMATED_COMMENT_START_SUFFIX = `
     //
@@ -139,16 +183,20 @@ function findText(doc: vscode.TextDocument, text: string) {
 
 function formatBindings(file: vscode.Uri, config: any){
     let json = JSON.stringify(config, null, 4);
+    // remove closing and ending `[]`
+    json = json.replace(/^\s*\[[\r\n]*/,"");
+    json = json.replace(/\]\s*$/, "");
+
     return (
         AUTOMATED_COMMENT_START_PREFIX+
         "// `"+file.toString()+"`\n"+
         AUTOMATED_COMMENT_START_SUFFIX+
-        "\n" + json.replaceAll(/^/gm, "    ") + ",\n"+
+        "\n" + json + ",\n" +
         AUTOMATED_COMMENT_END
     );
 }
 
-async function requestToInsertBindings(file: vscode.Uri, config: any) {
+async function insertKeybindingsIntoConfig(file: vscode.Uri, config: any) {
     await vscode.commands.executeCommand('workbench.action.openGlobalKeybindingsFile');
     let ed = vscode.window.activeTextEditor;
     if (ed){
@@ -174,7 +222,8 @@ async function requestToInsertBindings(file: vscode.Uri, config: any) {
                 await ed.edit(builder => {
                     builder.replace(range, bindings_to_insert);
                 });
-                vscode.commands.executeCommand('workbench.action.files.save');
+                // TODO: uncomment after debugging
+                // vscode.commands.executeCommand('workbench.action.files.save');
                 vscode.window.showInformationMessage(`Your modal key bindings have
                     been updated in \`keybindings.json\`.`);
             } else if (old_bindings_end || old_bindings_start){
@@ -186,7 +235,8 @@ async function requestToInsertBindings(file: vscode.Uri, config: any) {
                 await ed.edit(builder => {
                     builder.insert(insert_at, "\n" + bindings_to_insert);
                 });
-                vscode.commands.executeCommand('workbench.action.files.save');
+                // TODO: uncomment after debugging
+                // vscode.commands.executeCommand('workbench.action.files.save');
                 vscode.window.showInformationMessage(`Your modal key bindings have
                     been inserted into \`keybindings.json\`.`);
             }
@@ -198,8 +248,8 @@ async function importBindings() {
     let file = await queryBindingFile();
     if (file === undefined) { return; }
     let raw_binding_file = await parseBindingFile(file);
-    let config = processBindings(raw_binding_file);
-    requestToInsertBindings(file, config);
+    let bindings = processBindings(raw_binding_file);
+    insertKeybindingsIntoConfig(file, bindings);
 }
 
 export function activate(context: vscode.ExtensionContext) {
