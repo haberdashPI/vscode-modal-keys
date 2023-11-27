@@ -26,7 +26,7 @@ async function queryBindingFile() {
 }
 
 async function validateHeader(bindings: any){
-    let versionStr = <string>bindings?.header?.version
+    let versionStr = <string>bindings?.header?.version;
     if(!versionStr){
         vscode.window.showErrorMessage(`Preset file is missing a version specifier in its 
             header.`);
@@ -35,7 +35,8 @@ async function validateHeader(bindings: any){
     
     let validVersion = semver.valid(versionStr);
     if(validVersion === null){
-        vscode.window.showErrorMessage(`Invalid version number ${versionStr} in preset header.`)
+        vscode.window.showErrorMessage(`Invalid version number ${versionStr} in preset 
+            header.`);
         return;
     }
 
@@ -140,7 +141,6 @@ function wrapBindingInDoCommand(item: IRawBinding): IRawBinding{
         name: item.name,
         description: item.description,
         when: item.when,
-        mode: item.mode,
         command: "modalkeys.do",
         args: omit(item, ['key', 'name', 'description', 'when', 'mode', 'allowed_prefixes',
                           'default', 'items'])
@@ -214,9 +214,9 @@ function expandBindingDocsAcrossWhenClauses(items: IRawBinding[]): IRawBinding[]
 function expandWhenClause(binding: IRawBinding){
     let finalWhen = "";
     if(binding.when !== undefined){
-        finalWhen += `(${binding.when})`
+        finalWhen += `(${binding.when})`;
     }else{
-        finalWhen += `true`
+        finalWhen += `true`;
     }
 
     if(binding.mode !== undefined){
@@ -230,11 +230,12 @@ function expandWhenClause(binding: IRawBinding){
     finalWhen += "&& ((modalkeys.prefix == '')";
     if(binding.allowed_prefixes !== undefined){
         for(let allowed of binding.allowed_prefixes){
-        finalWhen += ` || (modalkeys.prefix == '${allowed}')`;
+            finalWhen += ` || (modalkeys.prefix == '${allowed}')`;
+        }
     }
     finalWhen += ")";
 
-    return {...binding, when=finalWhen};
+    return {...binding, when: finalWhen};
 }
 
 function processBindings(bindings: any){
@@ -242,8 +243,8 @@ function processBindings(bindings: any){
     bindings = listBindings(bindings);
     bindings = expandBindingKeys(bindings);
     bindings = expandBindingDocsAcrossWhenClauses(bindings);
-    bindings = expandWhenClause(bindings);
-    bindings = bindings.map((item: any) => {
+    bindings = bindings.map((item: IRawBinding) => {
+        item = expandWhenClause(item);
         item = wrapBindingInDoCommand(item);
         return item;
     });
