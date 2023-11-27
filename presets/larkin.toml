@@ -37,16 +37,17 @@ extensions = [
 
 ## Implementation notes:
 # when these get expanded into actual keybindings I need to:
-# 0. validate and expand all items to types
+# 0. validate and expand all items to types (validation should also make sure no shifted
+#    characters are used, e.g. use `shift+[` instead of `{`
 # 1. DONE Expand all `default` keys into the individual keybindings
 # 2. DONE replace any instances of {key} as appropriate, by iterating over `keys`
 # 3. DONE flatten all bindings into a single sequence
 # 6. For any entries that are duplicate bindings with distinct when clauses (before the
-#    transformations applied below) make sure that `name` and `description` are identical
-#    or blank, and use the non-blank value in all instances
-# 4. DONE Wrap all bare commands in `modalkeys.commands` (or should it be called something else)
-#   as this will record all actions and it will replace all instances of `{variable}` with
-#   the actual value (e.g. `{count}`) before running the command when the command is
+#    transformations applied below) make sure that `name` and `description` are identical or
+#    blank, and use the non-blank value in all instances
+# 4. DONE Wrap all bare commands in `modalkeys.commands` (or should it be called something
+#   else) as this will record all actions and it will replace all instances of `{variable}`
+#   with the actual value (e.g. `{count}`) before running the command when the command is
 #   actually run. Don't do anything if the command already is `modalkeys.commands`. It will
 #   also clear the count. (OR could only wrap commands that include these special
 #   variables).
@@ -57,8 +58,8 @@ extensions = [
 #   of the when clause for suffixes of the binding
 # 7. Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
 # 8. any non-prefix keys include the empty prefix check in their when clause
-# 9. translate the name and description into helpful comments 
-#    in the bindings file (and remove them form the object)
+# 9. translate the name and description into helpful comments in the bindings file (and
+#    remove them form the object)
 
 # TODO: when implementing `modalkeys.do` we can use JSEP to parse 
 # expressions for the `computedArgs` value: https://github.com/EricSmekens/jsep
@@ -318,6 +319,7 @@ kind = "action"
 [bind.action.basic]
 label = "Basic Actions"
 description = "Essential actions required to edit text"
+default.mode = "normal"
 
 [[bind.action.basic.items]]
 # TODO: add documentation to these basic editor keys
@@ -344,18 +346,18 @@ name = "change"
 when = "modalkeys.editorHasMultilineSelection"
 commands = ["deleteRight", "editor.action.insertLineBefore", "modalkeys.enterInsert"]
 
-[[bind.actions.basic.items]]
+[[bind.action.basic.items]]
 key = "c"
 when = "!modalkeys.editorHasMultilineSelection && editorHasSelection"
 commands = ["deleteRight", "modalKeys.enterInsert"]
 
-[[bind.actions.basic.items]]
+[[bind.action.basic.items]]
 key = "c"
 when = "!editorHashSelection && modalkeys.count <= 1"
 commands = ["expandLineSelection", "deleteRight", "editor.action.insertLineBefore", 
             "modalkeys.enterInsert" ]
 
-[[bind.actions.basic.items]]
+[[bind.action.basic.items]]
 key = "c"
 when = "!editorHasSelection && modalkeys.count > 1"
 commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}},
@@ -363,7 +365,7 @@ commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}
             "editor.action.insertLineBefore",
             "modalkeys.enterInsert"]
 
-[[bind.actions.basic.items]]
+[[bind.action.basic.items]]
 key = "C"
 label = "change to/back"
 description = """Without a count: change from current char to end of line. With a count: 
@@ -372,13 +374,13 @@ change the previous `count` lines.
 when = "!modalkeys.count <= 1"
 commands = ["modalkeys.shrinkSelections", "deleteAllRight", "modalkeys.enterInsert"]
 
-[[bind.actions.basic.items]]
+[[bind.action.basic.items]]
 key = "C"
 when = "!modalkeys.count > 1"
 commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}, dir = "up"}, 
             "deleteRight", "editor.actions.insertLineBefore", "modalkeys.enterInsert"]
 
-[[bind.actions.basic.items]]
+[[bind.action.basic.items]]
 key = "d"
 label = "delete"
 description = """
@@ -390,19 +392,19 @@ commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}
              "editor.action.clipboardCutAction",
             {command = "modalkeys.enterMode", value = "normal"}]
 
-[[bind.actions.basic.items]]
+[[bind.action.basic.items]]
 key = "d"
 when = "editorHasSelection"
 commands = ["editor.action.clipboardCutAction",
             {command = "modalkeys.enterMode", value = "normal"}]
 
-[bind.actions.symmetric]
+[bind.action.symmetric]
 name = "Symmetric Operations"
 description = "Operations that occur at both ends of a selection"
 kind = "select"
 default.mode = "syminsert"
 
-[[bind.actions.symmetric.items]]
+[[bind.action.symmetric.items]]
 name = "Symmetric Insert Mode"
 description = """
 In this mode all commands and character insertions happen at both ends of 
@@ -413,14 +415,14 @@ key = "g '"
 command = "modalkeys.enterMode"
 args.mode = "syminsert"
 
-[[bind.actions.symmetric.items]]
+[[bind.action.symmetric.items]]
 name = "Normal"
 description = "Return to normal model"
 keys = ["enter", "g '"]
 command = "modalkeys.enterMode"
 args.mode = "normal"
 
-[[bind.actions.symmetric.items]]
+[[bind.action.symmetric.items]]
 keys = [":", ";", "'", '"', ",", ".", "/", "?", "|", "=", "+", "-", "_", "*", "&", "^", "%", 
         "$", "#", "@", "!", "`", "~"]
 description = "Insert the character {key} at both ends of each selection"
