@@ -211,31 +211,62 @@ function expandBindingDocsAcrossWhenClauses(items: IRawBinding[]): IRawBinding[]
     });
 }
 
-function expandWhenClause(binding: IRawBinding){
-    let finalWhen = "";
+function moveModeToWhenClause(binding: IRawBinding){
+    let expandedWhen = "";
     if(binding.when !== undefined){
-        finalWhen += `(${binding.when})`;
-    }else{
-        finalWhen += `true`;
+        expandedWhen += `(${binding.when})`;
     }
 
     if(binding.mode !== undefined){
+        if(expandedWhen.length > 0){ expandedWhen += ` && `; }
         if(binding.mode.startsWith("!")){
-            finalWhen += ` && (modalkeys.mode != '${binding.mode.slice(1)}')`;
+            expandedWhen += `(modalkeys.mode != '${binding.mode.slice(1)}')`;
         }else{
-            finalWhen += ` && (modalkeys.mode == '${binding.mode}')`;
+            expandedWhen += `(modalkeys.mode == '${binding.mode}')`;
         }
     }
 
-    finalWhen += "&& ((modalkeys.prefix == '')";
-    if(binding.allowed_prefixes !== undefined){
-        for(let allowed of binding.allowed_prefixes){
-            finalWhen += ` || (modalkeys.prefix == '${allowed}')`;
+    return {...binding, when: expandedWhen};
+}
+
+function expandAllowedPrefixes(expandedWhen: string, item: IRawBinding){
+    // add any optionally allowed prefixes
+    if(expandedWhen.length > 0){ expandedWhen += ` && `; }
+    expandedWhen += "((modalkeys.prefix == '')";
+    if(item.allowed_prefixes !== undefined){
+        for(let allowed of item.allowed_prefixes){
+            expandedWhen += ` || (modalkeys.prefix == '${allowed}')`;
         }
     }
-    finalWhen += ")";
+    expandedWhen += ")";
 
-    return {...binding, when: finalWhen};
+    return expandedWhen;
+}
+
+function multikeyToMultipleItems(item: IRawBinding){
+    if(item.key !== undefined){
+        let key_seq = item.key.trim().split(/\s+/);
+        let expandedWhen = "";
+        if(item.when !== undefined){ expandedWhen += `(${item.when})`; }
+
+        let cur_prefix = "";
+        let prefix_items = key_seq.slice(0, -1).map(key => {
+            let expandedWhen = "";
+            if(cur_prefix === ""){
+                expandedWhen = expandAllowedPrefixes("", item);
+            }else{
+                if(expandedWhen.length > 0) { expandedWhen += " && "; }
+                expandedWhen += `(modalkeys.prefix == '${cur_prefix}')`;
+            }
+            // track the current prefix for the next iteration of `map`
+            if(cur_prefix.length > 0){ cur_prefix += " "; }
+            cur_prefix += key;
+
+            return {key, command: "modalkeys.prefix", args: {key}}; 
+        });
+        return [{...item, key: key_seq[key_seq.length-1]}];
+    }
+    return [item];
 }
 
 function processBindings(bindings: any){
@@ -244,14 +275,12 @@ function processBindings(bindings: any){
     bindings = expandBindingKeys(bindings);
     bindings = expandBindingDocsAcrossWhenClauses(bindings);
     bindings = bindings.map((item: IRawBinding) => {
-        item = expandWhenClause(item);
+        item = moveModeToWhenClause(item);
         item = wrapBindingInDoCommand(item);
         return item;
     });
-    // TODO: expand multi-key bindings to multiple bindings
-    // using `modalkeys.prefix` and by expanding the whenClause
+    bindings = flatMap(bindings, multikeyToMultipleItems);
     return bindings;
-    // TODO: add more steps here, as from implementation notes in larkin.toml
 }
 
 async function parseBindingFile(file: vscode.Uri){

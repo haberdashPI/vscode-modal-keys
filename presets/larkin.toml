@@ -51,10 +51,10 @@ extensions = [
 #   actually run. Don't do anything if the command already is `modalkeys.commands`. It will
 #   also clear the count. (OR could only wrap commands that include these special
 #   variables).
-# 5. Transform "allowed_prefix": we need to create two commands, one with and one without
+# 5. DONE Transform "allowed_prefix": we need to create two commands, one with and one without
 #    the prefix
-# 7. Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
-# 8. any non-prefix keys include the empty prefix check in their when clause
+# 7. DONE Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
+# 8. DONE any non-prefix keys include the empty prefix check in their when clause
 # 6. take any multi-key bindings and turn them into single keybindings that call
 #   `modalkeys.prefix` and append a prefix to the modal keys state the prefix becomes part
 #   of the when clause for suffixes of the binding
@@ -141,7 +141,7 @@ selection commands are changed to both move start and end of a selection to surr
 entire object (rather than extending to specified start/end point)
 """
 command = "modalkeys.prefix"
-args = { key = "u", label = "around" }
+args = { key = "u", flag = "around_on" }
 
 [[bind.motion.mod.items]]
 key = "space"
