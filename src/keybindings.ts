@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
-import { uniq, omit, merge, cloneDeep, flatMap, mapValues } from 'lodash';
+import hash from 'object-hash';
+import { uniq, omit, merge, cloneDeep, flatMap, mapValues, entries } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
 import { builtinModules } from 'module';
@@ -32,7 +33,7 @@ async function validateHeader(bindings: any){
         return;
     }
     
-    let validVersion = semver.valid(versionStr)
+    let validVersion = semver.valid(versionStr);
     if(validVersion === null){
         vscode.window.showErrorMessage(`Invalid version number ${versionStr} in preset header.`)
         return;
@@ -129,6 +130,24 @@ function wrapBindingInDoCommand(item: any){
     };
 }
 
+function validateUniqueForBinding(vals: (string | undefined)[], name: string, item: any): string | undefined {
+    let uvals = uniq(vals.filter(v => v !== undefined));
+    if(uvals.length > 1){
+        vscode.window.showErrorMessage(`Multiple values of \`${name}\` for idenictal 
+            binding \`${item.key}\` in mode "${item.mode}". Update the bindings file
+            to use only one name for this binding regardless of its \`when\` clause
+            You can also safely leave all but one of these bindings with a \`${name}\`
+            field.`);
+        return;
+    }
+    if(uvals.length === 0){
+        vscode.window.showErrorMessage(`No \`${name}\` provided for binding \`${item.key}\`
+            in mode "${item.mode}".`);
+        return;
+    }
+    return uvals[0];
+}
+
 // For any items that have duplicate bindings with distinct when clauses (before the
 // transformations applied below) make sure that `name` and `description` are identical or
 // blank, and use the non-blank value in all instances
@@ -137,41 +156,39 @@ function wrapBindingInDoCommand(item: any){
 // and blank documentation for some when clauses
 
 // TODO: debug this function
-function expandBindingDocsAcrossWhenClauses(items: any){
-    let sharedBindings = new Map();
-    for(let item of items){
-        let k = {key: item.key, mode: item.mode};
-        if(sharedBindings.has(k)){
-            sharedBindings.set(k, [...sharedBindings.get(k), item]);
-        }else{
-            sharedBindings.set(k, [item]);
+function expandBindingDocsAcrossWhenClauses(items: any) {
+    let sharedBindings: { [key: string]: any[] } = {};
+    for (let item of items) {
+        let k = hash({ key: item.key, mode: item.mode });
+        if (sharedBindings[k] === undefined) {
+            sharedBindings[k] = [item];
+        } else {
+            sharedBindings[k] = [...sharedBindings[k], item];
         }
     }
 
-    let sharedDocs = new Map();
-    for(let [key, item] of sharedBindings.entries()){
-        if(item.length <= 1) { continue; }
-        let names = uniq(item.name.filter((x: any) => x !== undefined));
-        let descriptions = uniq(item.description.filter((x: any) => x !== undefined));
-        if(names.length > 1){
-            vscode.window.showErrorMessage(`Multiple values for \`name\` for idenictal 
-                binding \`${item.key}\` in mode "${item.mode}". Update the bindings file
-                to use only one name for this binding regardless of its when clause.`);
+    let sharedDocs: {
+        [key: string]: {
+            name: string | undefined,
+            description: string | undefined
         }
-        if(descriptions.length > 1){
-            vscode.window.showErrorMessage(`Multiple values for \`description\` for idenictal 
-                binding \`${item.key}\` in mode "${item.mode}". Update the bindings file
-                to use only one name for this binding regardless of its when clause.`);
-        }
-        sharedDocs.set(key, {name: names[0], descriptions: descriptions[0]});
+    } = {};
+    for (let [key, item] of entries(sharedBindings)) {
+        if (item.length <= 1) { continue; }
+        let name = validateUniqueForBinding(item.map(i => (<string | undefined>i.name)),
+            "name", item[0]);
+        let description = validateUniqueForBinding(item.map(i => (<string | undefined>i.description)),
+            "description", item[0]);
+
+        sharedDocs[key] = { name, description };
     }
 
     return items.map((item: any) => {
-        let k = {key: item.key, mode: item.mode};
-        if(sharedDocs.has(k)){
-            let docs = sharedDocs.get(k);
-            return {...item, name: docs.name, description: docs.description};
-        }else{
+        let k = hash({ key: item.key, mode: item.mode });
+        if (sharedDocs[k] !== undefined) {
+            let docs = sharedDocs[k]
+            return { ...item, name: docs.name, description: docs.description };
+        } else {
             return item;
         }
     });
@@ -263,7 +280,7 @@ async function insertKeybindingsIntoConfig(file: vscode.Uri, config: any) {
             // replace old bindings OR...
             let old_bindings_start = findText(ed.document, "AUTOMATED BINDINGS START");
             let old_bindings_end = findText(ed.document, "AUTOMATED BINDINGS END");
-            ed.document.getText(old_bindings_start)
+            ed.document.getText(old_bindings_start);
             if (old_bindings_start && old_bindings_end) {
                 let range = new vscode.Range(
                     new vscode.Position(old_bindings_start.start.line-1, 
@@ -285,7 +302,9 @@ async function insertKeybindingsIntoConfig(file: vscode.Uri, config: any) {
                 await ed.edit(builder => {
                     builder.insert(insert_at, "\n" + bindings_to_insert);
                 });
-                // TODO: uncomment after debugging
+                // TODO: uncomment after debugging 
+                // TODO: also have the cursor moved to the start of the 
+                // automated bindings
                 // vscode.commands.executeCommand('workbench.action.files.save');
                 vscode.window.showInformationMessage(`Your modal key bindings have
                     been inserted into \`keybindings.json\`.`);

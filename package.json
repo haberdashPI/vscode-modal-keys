@@ -34,6 +34,7 @@
     "@types/lodash": "^4.14.202",
     "@types/mocha": "^10.0.3",
     "@types/node": "18.x",
+    "@types/object-hash": "^3.0.6",
     "@types/vscode": "^1.84.0",
     "@typescript-eslint/eslint-plugin": "^6.9.0",
     "@typescript-eslint/parser": "^6.9.0",
@@ -49,6 +50,7 @@
   "dependencies": {
     "js-toml": "^1.0.0",
     "lodash": "^4.17.21",
+    "object-hash": "^3.0.0",
     "semver": "^7.5.4"
   }
 }
