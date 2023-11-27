@@ -37,11 +37,10 @@ extensions = [
 
 ## Implementation notes:
 # when these get expanded into actual keybindings I need to:
-# 1. Expand all `default` keys into the individual keybindings
-# 2. replace any instances of {key} as appropriate, by iterating over `keys`
-# 3. For any entries that are duplicate bindings with distinct when clauses (before the
-#    transformations applied below) make sure that `label` and `description` are identical
-#    or blank, and use the non-blank value in all instances
+# 0. validate and expand all items to types
+# 1. Expand all `default` keys into the individual keybindings DONE
+# 2. replace any instances of {key} as appropriate, by iterating over `keys` DONE
+# 3. flatten all bindings into a single sequence
 # 4. Wrap all bare commands in `modalkeys.commands` (or should it be called something else)
 #   as this will record all actions and it will replace all instances of `{variable}` with
 #   the actual value (e.g. `{count}`) before running the command when the command is
@@ -50,11 +49,18 @@ extensions = [
 #   variables).
 # 5. Transform "allowed_prefix": we need to create two commands, one with and one without
 #    the prefix
+# 6. For any entries that are duplicate bindings with distinct when clauses (before the
+#    transformations applied below) make sure that `label` and `description` are identical
+#    or blank, and use the non-blank value in all instances
 # 6. take any multi-key bindings and turn them into single keybindings that call
 #   `modalkeys.prefix` and append a prefix to the modal keys state the prefix becomes part
 #   of the when clause for suffixes of the binding
 # 7. Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
-# 8. flatten all nested bindings to a single array of bindings
+# 8. any non-prefix keys include the empty prefix check in their when clause
+
+# TODO: use arguments to `modalkeys.commands` (or whatever its new name is)
+# to inject arguments, rather than using "{count}" and the link, since
+# I think that will be more performant
 
 [bind.motion]
 name = "Motions"
@@ -67,6 +73,8 @@ description = """
 The number keys are used to update the count, which affects how many times the next 
 command is repeated, when relevant.
 """
+
+[[bind.count.items]]
 keys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 command = "modalkeys.updateCount"
 args.value = "{key}"
@@ -76,42 +84,42 @@ mode = "!insert" # number keys apply in all modes but insert
 name = "Primitive Motions"
 description = "Motions fundamental to moving around in the editor."
 default.command = "modalkeys.cursorMove"
-default.args.value = "{count}"
-default.args.around = "{around_on}"
-default.args.select = "{select_on}"
+default.variable_args.value = "count"
+default.variable_args.around = "around_on"
+default.variable_args.select = "select_on"
 
-[[bind.motion.prim.key]]
+[[bind.motion.prim.items]]
 key = "h"
 name = "←"
 description = "move left"
 args.to = "left"
 
-[[bind.motion.prim.key]]
+[[bind.motion.prim.items]]
 key = "j"
 name = "↓"
 description = "move down"
 args.to = "down"
 
-[[bind.motion.prim.key]]
+[[bind.motion.prim.items]]
 key = "k"
 name = "↑"
 description = "move up"
 args.to = "up"
 
-[[bind.motion.prim.key]]
+[[bind.motion.prim.items]]
 key = "l"
 name = "→"
 description = "move right"
 args.to = "right"
 
-[[bind.motion.prim.key]]
+[[bind.motion.prim.items]]
 key = "g j"
 name = "unwrp ↓"
 description = "down unwrapped line"
 args.to = "down" 
 args.by = "line"
 
-[[bind.motion.prim.key]]
+[[bind.motion.prim.items]]
 key = "g k"
 name = "unwrp ↑"
 description = "up unwrapped line"
@@ -123,7 +131,7 @@ name = "Modify Motion Effects"
 description = "Keys that change how other motions work"
 kind = "select"
 
-[[bind.motion.mod.key]]
+[[bind.motion.mod.items]]
 key = "u"
 name = "around"
 description = """
@@ -133,7 +141,7 @@ entire object (rather than extending to specified start/end point)
 command = "modalkeys.prefix"
 args = { key = "u", label = "around" }
 
-[[bind.motion.mod.key]]
+[[bind.motion.mod.items]]
 key = "space"
 name = "hold selection"
 description = """
@@ -141,7 +149,7 @@ selection commands extend the selection
 """
 command = "modalkeys.flag"
 args.flag = "select_on"
-args.value = "{select_on: false, !select_on: true}" # toggle
+args.value = "toggle"
 
 [bind.motion.obj]
 name = "Motions around various regex-like objects"
@@ -150,55 +158,55 @@ selection commands that move by a predefined syntactic object (e.g. word, paragr
 """
 default.command = "selection-utilities.moveBy"
 default.args.boundary = "start"
-default.args.select = "{select_on and !around_on}"
-default.args.selectWhole = "{around_on}"
 default.allowed_prefix = "u"
+default.variable_args.select = {and = ["select_on", {not = "around_on"}]}
+default.variable_args.selectWhole = "around_on"
 
-[[bind.motion.obj.key]]
+[[bind.motion.obj.items]]
 key = "w"
 name = "subwrd →"
 description = "next subword (camel/snake case)"
 args.unit = "subword"
-args.value = "{count}"
+variable_args.value = "count"
 
-[[bind.motion.obj.key]]
+[[bind.motion.obj.items]]
 key = "e"
 name = "subwrd end"
 description = "next subword (camel/snake case) end"
 args.unit = "subword"
-args.boundary = "{!around_on: end, around_on: both}"
-args.value = "{count}"
+variable_args.boundary = {if = "around_on", then = "both", else = "end"}
+variable_args.value = "count"
 
-[[bind.motion.obj.key]]
+[[bind.motion.obj.items]]
 key = "W"
 name = "word →"
 description = "next word"
 args.unit = "word"
-args.value = "{count}"
+variable_args.value = "couht"
 
-[[bind.motion.obj.key]]
+[[bind.motion.obj.items]]
 key = "E"
 name = "word end"
 description = "next word end"
 args.unit = "word"
-args.boundary = "{!around_on: end, around_on: both}"
-args.value = "{count}"
+variable_args.boundary = {if = "around_on", then = "both", else = "end"}
+variable_args.value = "count"
 
-[[bind.motion.obj.key]]
+[[bind.motion.obj.items]]
 key = "b"
 name = "subwrd ←"
 description = "previous subword (camel/snake case)"
 args.unit = "subword"
-args.value = "{-count}"
+variable_args.value = {"-" = "count"}
 
-[[bind.motion.obj.key]]
+[[bind.motion.obj.items]]
 key = "B"
 name = "word ←"
 description = "previous word"
 args.unit = "word"
-args.value = "{-count}"
+variable_args.value = {"-" = "count"}
 
-[[bind.motion.obj.key]]
+[[bind.motion.obj.items]]
 key = "u u"
 name = "smart expand"
 description = "Use VSCode's built-in smart expansion command"
@@ -213,76 +221,76 @@ default.args.backwards = false
 default.args.selectTillMatch = true
 default.args.wrapAround = true
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = "/"
 name = "search"
 description = "search forwards"
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = "?"
 name = "search bk"
 description = "search backwards"
 args.wrapAround = true
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = "f"
 name = "find char"
 description = "Find the next char (include char in selection)"
 args.acceptAfter = 1
-args.skip = "{count-1}"
+variable_args.skip = {"-" = ["count", 1]}
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = "F"
 name = "find char back"
 description = "Find the previous char (include char in selection)"
 args.acceptAfter = 1
-args.skip = "{count-1}"
 args.backwards = true
+variable_args.skip = {"-" = ["count", 1]}
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = "t"
 name = "to char"
 description = "Find the next char (exclude char in selection)"
 args.acceptAfter = 1
 args.offset = "start"
-args.skip = "{count-1}"
+variable_args.skip = {"-" = ["count", 1]}
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = "T"
 name = "to char back"
 description = "Find the previous char (exclude char in selection)"
 args.acceptAfter = 1
 args.offset = "end"
-args.skip = "{count-1}"
 args.backwards = true
+variable_args.skip = {"-" = ["count", 1]}
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = "s"
 name = "find char pair"
 description = "To next character pair"
 args.acceptAfter = 2
 args.offset = "start"
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = "S"
 name = "char pair back"
 description = "To previous character pair"
 args.acceptAfter = 2
 args.offset = "start"
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = ";"
 label = "→ match"
 description = "Repeat search motion forwards"
 command = "modalkeys.nextMatch"
-args.repeat = "{count}"
+variable_args.repeat = "count"
 
-[[bind.motion.search.key]]
+[[bind.motion.search.items]]
 key = ":"
 label = "← match"
 description = "Repeat search motion backwards"
 command = "modalkeys.previousMatch"
-args.repeat = "{count}"
+variable_args.repeat = "count"
 
 [bind.motion.syntax]
 label = "Motions around syntactic objects (e.g. parentheses and quotes)"
@@ -290,13 +298,13 @@ description = """
 selection commands that move by a predefined syntactic object like brackets and quotes
 """
 
-[[bind.motion.syntax.key]]
+[[bind.motion.syntax.items]]
 key = "{"
 label = "arnd parens"
 description = "parens/brackets/braces and their contents"
 command = "selection-utilities.expandAroundBrackets"
 
-[[bind.motion.syntax.key]]
+[[bind.motion.syntax.items]]
 key = "["
 label = "in parens"
 description = "text inside parens/brackets/braces"
@@ -310,76 +318,66 @@ kind = "action"
 label = "Basic Actions"
 description = "Essential actions required to edit text"
 
-[[bind.action.basic.key]]
+[[bind.action.basic.items]]
 # TODO: add documentation to these basic editor keys
 key = "i"
 name = "insert"
 description = "Switch to insert mode (right before character)"
-command = "modalkeys.commands"
-args.seq = ["modalkeys.shrinkSelections", "modalkeys.enterInsert"]
+commands = ["modalkeys.shrinkSelections", "modalkeys.enterInsert"]
 
-[[bind.action.basic.key]]
+[[bind.action.basic.items]]
 key = "a"
 name = "append"
 description = "Switch to insert mode (right after character)"
-command = "modalkeys.commands"
-args.seq = ["modalkeys.shrinkSelections", "modalkeys.enterInsert"]
+commands = ["modalkeys.shrinkSelections", "modalkeys.enterInsert"]
 when = "editorHasSelection"
 
-[[bind.action.basic.key]]
+[[bind.action.basic.items]]
 key = "a"
-command = "modalkeys.commands"
-args.seq = ["modalkeys.shrinkSelections", "cursorRight", "modalkeys.enterInsert"]
+commands = ["modalkeys.shrinkSelections", "cursorRight", "modalkeys.enterInsert"]
 when = "!editorHasSelection"
 
-[[bind.action.basic.key]]
+[[bind.action.basic.items]]
 key = "c"
 name = "change"
-description = "Without a count: delete selected text and switch to insert mode. Delete up to the next `count` lines and switch to insert mode."
 when = "modalkeys.editorHasMultilineSelection"
-command = "modalkeys.commands"
-args.seq = ["deleteRight", "editor.action.insertLineBefore", "modalkeys.enterInsert"]
+commands = ["deleteRight", "editor.action.insertLineBefore", "modalkeys.enterInsert"]
 
-[[bind.actions.basic.key]]
+[[bind.actions.basic.items]]
 key = "c"
 when = "!modalkeys.editorHasMultilineSelection && editorHasSelection"
-command = "modalkeys.commands"
-args.seq = ["deleteRight", "modalKeys.enterInsert"]
+commands = ["deleteRight", "modalKeys.enterInsert"]
 
-[[bind.actions.basic.key]]
+[[bind.actions.basic.items]]
 key = "c"
 when = "!editorHashSelection && modalkeys.count <= 1"
-command = "modalkeys.commands"
-args.seq = ["expandLineSelection", "deleteRight", "editor.action.insertLineBefore", 
+commands = ["expandLineSelection", "deleteRight", "editor.action.insertLineBefore", 
             "modalkeys.enterInsert" ]
 
-[[bind.actions.basic.key]]
+[[bind.actions.basic.items]]
 key = "c"
 when = "!editorHasSelection && modalkeys.count > 1"
-command = "modalkeys.commands"
-args.seq = [{command = "modalkeys.selectLines", value = "{count}"},
+commands = [{command = "modalkeys.selectLines", variable_args = {value = "count"}},
             "deleteRight",
             "editor.action.insertLineBefore",
             "modalkeys.enterInsert"]
 
-[[bind.actions.basic.key]]
+[[bind.actions.basic.items]]
 key = "C"
 label = "change to/back"
 description = """Without a count: change from current char to end of line. With a count: 
 change the previous `count` lines.
 """
 when = "!modalkeys.count <= 1"
-command = "modalkeys.commands"
-args.seq = ["modalkeys.shrinkSelections", "deleteAllRight", "modalkeys.enterInsert"]
+commands = ["modalkeys.shrinkSelections", "deleteAllRight", "modalkeys.enterInsert"]
 
-[[bind.actions.basic.key]]
+[[bind.actions.basic.items]]
 key = "C"
 when = "!modalkeys.count > 1"
-command = "modalkeys.commands"
-args.seq = [{command = "modalkeys.selectLines", value = "{count}", dir = "up"}, 
+commands = [{command = "modalkeys.selectLines", variable_args = {value = "count"}, dir = "up"}, 
             "deleteRight", "editor.actions.insertLineBefore", "modalkeys.enterInsert"]
 
-[[bind.actions.basic.key]]
+[[bind.actions.basic.items]]
 key = "d"
 label = "delete"
 description = """
@@ -387,16 +385,14 @@ Without a count: delete selected text (and store to clipboard). With a
 count, delete up to the next `count` lines and store to clipboard.
 """
 when = "!editorHasSelection"
-command = "modalkeys.commands"
-args.seq = [{command = "modalkeys.selectLines", value = "{count}"},
+commands = [{command = "modalkeys.selectLines", variable_args = {value = "count"}},
              "editor.action.clipboardCutAction",
             {command = "modalkeys.enterMode", value = "normal"}]
 
-[[bind.actions.basic.key]]
+[[bind.actions.basic.items]]
 key = "d"
 when = "editorHasSelection"
-command = "modalkeys.commands"
-args.seq = ["editor.action.clipboardCutAction",
+commands = ["editor.action.clipboardCutAction",
             {command = "modalkeys.enterMode", value = "normal"}]
 
 [bind.actions.symmetric]
@@ -405,7 +401,7 @@ description = "Operations that occur at both ends of a selection"
 kind = "select"
 default.mode = "syminsert"
 
-[[bind.actions.symmetric.key]]
+[[bind.actions.symmetric.items]]
 name = "Symmetric Insert Mode"
 description = """
 In this mode all commands and character insertions happen at both ends of 
@@ -416,14 +412,14 @@ key = "g '"
 command = "modalkeys.enterMode"
 args.mode = "syminsert"
 
-[[bind.actions.symmetric.key]]
+[[bind.actions.symmetric.items]]
 name = "Normal"
 description = "Return to normal model"
 keys = ["enter", "g '"]
 command = "modalkeys.enterMode"
 args.mode = "normal"
 
-[[bind.actions.symmetric.key]]
+[[bind.actions.symmetric.items]]
 keys = [":", ";", "'", '"', ",", ".", "/", "?", "|", "=", "+", "-", "_", "*", "&", "^", "%", 
         "$", "#", "@", "!", "`", "~"]
 description = "Insert the character {key} at both ends of each selection"
