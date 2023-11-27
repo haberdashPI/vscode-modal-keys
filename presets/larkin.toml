@@ -85,7 +85,7 @@ mode = "!insert" # number keys apply in all modes but insert
 [bind.motion.prim]
 name = "Primitive Motions"
 description = "Motions fundamental to moving around in the editor."
-default.command = "modalkeys.cursorMove"
+default.command = "cursorMove"
 default.computedArgs.value = "count"
 default.computedArgs.around = "around_on"
 default.computedArgs.select = "select_on"

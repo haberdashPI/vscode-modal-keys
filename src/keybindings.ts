@@ -244,27 +244,35 @@ function expandAllowedPrefixes(expandedWhen: string, item: IRawBinding){
 }
 
 function multikeyToMultipleItems(item: IRawBinding){
+    let items: IRawBinding[] = [];
+    let when = "";
+    let prefix = "";
+    if(item.when !== undefined){ when += `(${item.when})`; }
+
     if(item.key !== undefined){
         let key_seq = item.key.trim().split(/\s+/);
-        let expandedWhen = "";
-        if(item.when !== undefined){ expandedWhen += `(${item.when})`; }
 
-        let cur_prefix = "";
-        let prefix_items = key_seq.slice(0, -1).map(key => {
+        items = key_seq.slice(0, -1).map(key => {
             let expandedWhen = "";
-            if(cur_prefix === ""){
-                expandedWhen = expandAllowedPrefixes("", item);
+            if(prefix === ""){
+                expandedWhen = expandAllowedPrefixes(when, item);
             }else{
                 if(expandedWhen.length > 0) { expandedWhen += " && "; }
-                expandedWhen += `(modalkeys.prefix == '${cur_prefix}')`;
+                expandedWhen += `(modalkeys.prefix == '${prefix}')`;
             }
             // track the current prefix for the next iteration of `map`
-            if(cur_prefix.length > 0){ cur_prefix += " "; }
-            cur_prefix += key;
+            if(prefix.length > 0){ prefix += " "; }
+            prefix += key;
 
-            return {key, command: "modalkeys.prefix", args: {key}}; 
+            return {key, command: "modalkeys.prefix", when: expandedWhen, args: {key}}; 
         });
-        return [{...item, key: key_seq[key_seq.length-1]}];
+
+        let expandedWhen = when;
+        if(expandedWhen.length > 0) { expandedWhen += " && "; }
+        expandedWhen += `(modalkeys.prefix == '${prefix}')`;
+        items.push({...item, when: expandedWhen, key: key_seq[key_seq.length-1]});
+
+        return items;
     }
     return [item];
 }
@@ -279,6 +287,7 @@ function processBindings(bindings: any){
         item = wrapBindingInDoCommand(item);
         return item;
     });
+    // TODO: how to make prefix bindings unique?
     bindings = flatMap(bindings, multikeyToMultipleItems);
     return bindings;
 }
