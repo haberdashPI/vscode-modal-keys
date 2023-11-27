@@ -287,7 +287,9 @@ function processBindings(bindings: any){
         item = wrapBindingInDoCommand(item);
         return item;
     });
-    // TODO: how to make prefix bindings unique?
+    // TODO: how to make prefix bindings unique? (probably we just create some sort of set
+    // that the below function accumualtes into instead of flatMapping since that will
+    // create lots of duplicates)
     bindings = flatMap(bindings, multikeyToMultipleItems);
     return bindings;
 }
