@@ -2,10 +2,9 @@ import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
 import hash from 'object-hash';
-import { uniq, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
+import { uniq, pick, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
-import { builtinModules } from 'module';
 
 let decoder = new TextDecoder("utf-8");
 
@@ -140,10 +139,10 @@ function wrapBindingInDoCommand(item: IRawBinding): IRawBinding{
         key: item.key,
         name: item.name,
         description: item.description,
+        mode: item.mode,
         when: item.when,
         command: "modalkeys.do",
-        args: omit(item, ['key', 'name', 'description', 'when', 'mode', 'allowed_prefixes',
-                          'default', 'items'])
+        args: pick(item, ['command', 'commands', 'args', 'computedArgs'])
     };
 }
 
@@ -287,9 +286,6 @@ function processBindings(bindings: any){
         item = wrapBindingInDoCommand(item);
         return item;
     });
-    // TODO: how to make prefix bindings unique? (probably we just create some sort of set
-    // that the below function accumualtes into instead of flatMapping since that will
-    // create lots of duplicates)
     let prefixBindings: BindingMap = {};
     bindings = bindings.map((b: any) => extractPrefixBindings(b, prefixBindings));
     return bindings.concat(values(prefixBindings));
@@ -316,7 +312,7 @@ const AUTOMATED_COMMENT_START_PREFIX = `
 const AUTOMATED_COMMENT_START_SUFFIX = `
     //
     // Leave this comment (and the one denoting the end) unmodified to ensure the automated
-    // bindings are properly updated if/when you insert another preset Add any additional
+    // bindings are properly updated if/when you insert another preset. Add any additional
     // bindings you want *outside* of the automated bindings region as it will be modified
     // when new presets are imported.
 `;
@@ -336,20 +332,29 @@ function findText(doc: vscode.TextDocument, text: string) {
     return first_match_result.value;
 }
 
-function formatBindings(file: vscode.Uri, config: any){
-    // TODO: for each item in `config` create a comment based on
-    // the `name` and `description` and then remove those fields from
-    // the item
-    let json = JSON.stringify(config, null, 4);
-    // remove closing and ending `[]`
-    json = json.replace(/^\s*\[[\r\n]*/,"");
-    json = json.replace(/\]\s*$/, "");
+function formatBindings(file: vscode.Uri, items: IRawBinding[]){
+    let json = "";
+    for(let item of items){
+        let comment = "";
+        if(item.name !== undefined && item.description !== undefined){
+            comment += `${item.name}: ${item.description}`;
+        }else if(item.name !== undefined){
+            comment += item.name;
+        }else if(item.description !== undefined){
+            comment += item.description;
+        }
 
+        // TODO: fix find replace
+        json += comment.replaceAll(/^\s*(?=\S+)/mg, "    // ")+"\n";
+        json += JSON.stringify(pick(item, ['key', 'when', 'command', 'args']), 
+            null, 4).replaceAll(/^/mg, "    ");
+        json += ",\n\n";
+    }
     return (
         AUTOMATED_COMMENT_START_PREFIX+
-        "// `"+file.toString()+"`\n"+
+        "    // `"+file.toString()+"`"+
         AUTOMATED_COMMENT_START_SUFFIX+
-        "\n" + json + ",\n" +
+        "\n" + json +
         AUTOMATED_COMMENT_END
     );
 }
