@@ -55,7 +55,7 @@ extensions = [
 #    the prefix
 # 7. DONE Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
 # 8. DONE any non-prefix keys include the empty prefix check in their when clause
-# 6. WIP take any multi-key bindings and turn them into single keybindings that call
+# 6. DONE take any multi-key bindings and turn them into single keybindings that call
 #   `modalkeys.prefix` and append a prefix to the modal keys state the prefix becomes part
 #   of the when clause for suffixes of the binding
 # 9. translate the name and description into helpful comments in the bindings file (and
