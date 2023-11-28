@@ -15,17 +15,18 @@ interface IBindingSpec {
 
 interface IBindingHeader {
     version: "1.0" 
-    name: string
-    description: string
-    extensions: string[]
+    required_extensions: string[]
 }
 
 interface IBindingTree {
-    [key: string]: IBindingTree | IBindingItem[] | string | undefined
-    // additional runtime constraint to verify: 
+    [key: string]: IBindingTree | IBindingItem | IBindingItem[] | string | undefined
+    // additional runtime constraint to verify: the keys above
+    // (that do not match those below) following IBindingTree
+    // and the keys below always following the specs below
     name: string
     kind?: string
     description: string
+    default?: IBindingItem
     items?: IBindingItem[]
 }
 
@@ -51,7 +52,7 @@ interface IBindingItem {
     computedArgs?: object
 }
 
-// TODO: compute a JSON validation spec
+// TODO: compute a JSON validation spec (using `npx typescript-json-schema tsconfig.json IBindingSpec`)
 // and then validate both that
 // and the various runtime constraints expressed above
 
@@ -104,7 +105,7 @@ async function validateHeader(bindings: any){
 // - all arrays and primitive types get preserved
 // - defaults get expanded appropriately in deeply
 //   nested situations
-function expandDefaults(bindings: IBindingTree, default_item: IBindingItem = {}): IBindingTree {
+function expandDefaults(bindings: IBindingTree, prefix: string = "", default_item: IBindingItem = {}): IBindingTree {
     if (bindings.default !== undefined) {
         default_item = <IBindingItem>{ ...default_item, ...<IBindingItem>bindings.default };
     }
@@ -116,10 +117,20 @@ function expandDefaults(bindings: IBindingTree, default_item: IBindingItem = {})
         });
     }
 
-    let non_items = Object.entries(omit(bindings, ['name', 'description', 'kind', 'items']));
-    let result: { [key: string]: IBindingTree } = Object.fromEntries(non_items.map(([k, v]) =>
-        [k, expandDefaults(<IBindingTree>v, default_item)]
-    ));
+    let non_items = Object.entries(omit(bindings, ['name', 'description', 'kind', 'items', 'default']));
+    let result: { [key: string]: IBindingTree } = Object.fromEntries(non_items.map(([k, v]) => {
+        let entry = (prefix === "" ? "" : prefix+".")
+        if(typeof v !== 'object'){
+            vscode.window.showErrorMessage(`binding.${prefix} has unexpected field ${k}`)
+            return [];
+        }
+        if((<IBindingTree>v).name !== undefined){
+            return [k, expandDefaults(<IBindingTree>v, entry, default_item)];
+        }else{
+            vscode.window.showErrorMessage(`binding.${entry} has no "name" field.`)
+            return [];
+        }
+    }));
 
     return {
         ...result,

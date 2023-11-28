@@ -1,24 +1,6 @@
 [header]
 version = "1.0"
-name = "Larkin"
-description = """
-# Larkin Keybindings
-
-This set of keybindings provides a comprehensive and well tested set of
-bindings that I use in my daily work. It serves as an example of a fully
-customized set of keybindings, and demonstrates the full capabilities of
-ModalKeys.
-
-The basic logic of these commands follow that of Kakoune: motions generally
-cause some region of text to be selected, and then actions modify these
-selections. This is the inverse of vim's motions (`wd` instead of `dw`). This
-integrates well with many of the existing VSCode extensions which operate on
-selections. 
-
-These bindings are named after the middle name of my first child.
-"""
-
-extensions = [
+required_extensions = [
     "dbankier.vscode-quick-select",
     "haberdashPI.vscode-select-by-indent",
     "haberdashPI.selection-utilities",
@@ -37,13 +19,24 @@ extensions = [
 
 # TODO: when implementing `modalkeys.do` we can use JSEP to parse 
 # expressions for the `computedArgs` value: https://github.com/EricSmekens/jsep
+[bind]
+name = "Larkin Key Bindings"
+description = """
+This set of keybindings provides a comprehensive and well tested set of
+bindings that I use in my daily work. It serves as an example of a fully
+customized set of keybindings, and demonstrates the full capabilities of
+ModalKeys.
 
-[bind.motion.header]
-name = "Motions"
-kind = "select"
-default.mode = "normal"
+The basic logic of these commands follow that of Kakoune: motions generally
+cause some region of text to be selected, and then actions modify these
+selections. This is the inverse of vim's motions (`wd` instead of `dw`). This
+integrates well with many of the existing VSCode extensions which operate on
+selections. 
 
-[bind.count.header]
+These bindings are named after the middle name of my first child.
+"""
+
+[bind.count]
 name = "count"
 description = """
 The number keys are used to update the count, which affects how many times the next 
@@ -56,7 +49,12 @@ command = "modalkeys.updateCount"
 args.value = "{key}"
 mode = "!insert" # number keys apply in all modes but insert
 
-[bind.motion.prim.header]
+[bind.motion]
+name = "Motions"
+kind = "select"
+default.mode = "normal"
+
+[bind.motion.prim]
 name = "Primitive Motions"
 description = "Motions fundamental to moving around in the editor."
 default.command = "cursorMove"
@@ -102,7 +100,7 @@ description = "up unwrapped line"
 args.to = "down" 
 args.by = "line"
 
-[bind.motion.mod.header]
+[bind.motion.mod]
 name = "Modify Motion Effects"
 description = "Keys that change how other motions work"
 kind = "select"
@@ -127,7 +125,7 @@ command = "modalkeys.flag"
 args.flag = "select_on"
 args.value = "toggle"
 
-[bind.motion.obj.header]
+[bind.motion.obj]
 name = "Motions around various regex-like objects"
 description = """
 selection commands that move by a predefined syntactic object (e.g. word, paragraph, etc...)
@@ -188,7 +186,7 @@ name = "smart expand"
 description = "Use VSCode's built-in smart expansion command"
 command = "editor.action.smartSelect.expand"
 
-[bind.motion.search.header]
+[bind.motion.search]
 name = "Search Related Motions"
 description = "Motions related to searching for text in a document"
 default.command = "modalkeys.search"
@@ -268,7 +266,7 @@ description = "Repeat search motion backwards"
 command = "modalkeys.previousMatch"
 computedArgs.repeat = "count"
 
-[bind.motion.syntax.header]
+[bind.motion.syntax]
 label = "Motions around syntactic objects (e.g. parentheses and quotes)"
 description = """
 selection commands that move by a predefined syntactic object like brackets and quotes
@@ -286,11 +284,11 @@ label = "in parens"
 description = "text inside parens/brackets/braces"
 command = "selection-utilities.expandInBrackets"
 
-[bind.action.header]
+[bind.action]
 label = "Actions"
 kind = "action"
 
-[bind.action.basic.header]
+[bind.action.basic]
 label = "Basic Actions"
 description = "Essential actions required to edit text"
 default.mode = "normal"
@@ -372,7 +370,7 @@ when = "editorHasSelection"
 commands = ["editor.action.clipboardCutAction",
             {command = "modalkeys.enterMode", args = {value = "normal"}}]
 
-[bind.action.symmetric.header]
+[bind.action.symmetric]
 name = "Symmetric Operations"
 description = "Operations that occur at both ends of a selection"
 kind = "select"
