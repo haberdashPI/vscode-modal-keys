@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
 import hash from 'object-hash';
-import { uniq, omit, merge, cloneDeep, flatMap, mapValues, entries } from 'lodash';
+import { uniq, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
 import { builtinModules } from 'module';
@@ -243,8 +243,8 @@ function expandAllowedPrefixes(expandedWhen: string, item: IRawBinding){
     return expandedWhen;
 }
 
-function multikeyToMultipleItems(item: IRawBinding){
-    let items: IRawBinding[] = [];
+type BindingMap = { [key: string]: IRawBinding };
+function extractPrefixBindings(item: IRawBinding, prefixItems: BindingMap = {}){
     let when = "";
     let prefix = "";
     if(item.when !== undefined){ when += `(${item.when})`; }
@@ -252,7 +252,7 @@ function multikeyToMultipleItems(item: IRawBinding){
     if(item.key !== undefined){
         let key_seq = item.key.trim().split(/\s+/);
 
-        items = key_seq.slice(0, -1).map(key => {
+        for(let key of key_seq.slice(0, -1)){
             let expandedWhen = "";
             if(prefix === ""){
                 expandedWhen = expandAllowedPrefixes(when, item);
@@ -264,17 +264,17 @@ function multikeyToMultipleItems(item: IRawBinding){
             if(prefix.length > 0){ prefix += " "; }
             prefix += key;
 
-            return {key, command: "modalkeys.prefix", when: expandedWhen, args: {key}}; 
-        });
+            let prefixItem = {key, command: "modalkeys.prefix", when: expandedWhen, args: {key}}; 
+            let prefixKey = hash({key, mode: item.mode, when: item.when});
+            prefixItems[prefixKey] = prefixItem;
+        }
 
         let expandedWhen = when;
         if(expandedWhen.length > 0) { expandedWhen += " && "; }
         expandedWhen += `(modalkeys.prefix == '${prefix}')`;
-        items.push({...item, when: expandedWhen, key: key_seq[key_seq.length-1]});
-
-        return items;
+        return {...item, when: expandedWhen, key: key_seq[key_seq.length-1]};
     }
-    return [item];
+    return item;
 }
 
 function processBindings(bindings: any){
@@ -290,8 +290,9 @@ function processBindings(bindings: any){
     // TODO: how to make prefix bindings unique? (probably we just create some sort of set
     // that the below function accumualtes into instead of flatMapping since that will
     // create lots of duplicates)
-    bindings = flatMap(bindings, multikeyToMultipleItems);
-    return bindings;
+    let prefixBindings: BindingMap = {};
+    bindings = bindings.map((b: any) => extractPrefixBindings(b, prefixBindings));
+    return bindings.concat(values(prefixBindings));
 }
 
 async function parseBindingFile(file: vscode.Uri){
