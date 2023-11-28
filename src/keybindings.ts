@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
 import hash from 'object-hash';
-import { uniq, pick, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
+import { uniq, pick, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
 
@@ -22,32 +22,38 @@ interface IBindingHeader {
 
 interface IBindingTree {
     [key: string]: IBindingTree | IBindingItem[] | string | undefined
+    // additional runtime constraint to verify: 
     name: string
-    description: string
     kind?: string
+    description: string
     items?: IBindingItem[]
 }
 
-interface IBindingItemHeader {
-    name: string
-    kind?: string
-    description: string
-    default?: IBindingItem
-}
-
 interface IBindingItem {
+    // additional runtime constraint to verify: name and description must be defined
+    // after expanding defaults
     name?: string
     description?: string
+    // additional runtime constraint to verify: keys or key must be defined
+    // after expanding defaults
     key?: string
     keys?: string[]
     args?: object
     when?: string
+    // additional runtime constraint to verify: mode must be defined after
+    // expanding defaults
     mode?: string
     allowed_prefixes?: string[]
+    // additional runtime constraint to verify: command or commands must be defined
+    // after expanding defaults
     command?: string
     commands?: BindingCommand[]
     computedArgs?: object
 }
+
+// TODO: compute a JSON validation spec
+// and then validate both that
+// and the various runtime constraints expressed above
 
 type BindingCommand = string | IBindingCommand
 interface IBindingCommand {
@@ -98,32 +104,30 @@ async function validateHeader(bindings: any){
 // - all arrays and primitive types get preserved
 // - defaults get expanded appropriately in deeply
 //   nested situations
-function expandDefaults(bindings: IBindingTree, defaults: IBindingItem = {}): any{
-    if(typeof bindings === 'string') { return bindings; }
-    if(typeof bindings === 'number') { return bindings; }
-    if(typeof bindings === 'boolean') { return bindings; }
-    if(Array.isArray(bindings)){ return bindings.map(b => expandDefaults(b, defaults)); }
-
-    if(bindings.default !== undefined){
-        defaults = {...defaults, ...bindings.default};
+function expandDefaults(bindings: IBindingTree, default_item: IBindingItem = {}): IBindingTree {
+    if (bindings.default !== undefined) {
+        default_item = <IBindingItem>{ ...default_item, ...<IBindingItem>bindings.default };
     }
-    
-    let items: any = undefined;
-    if(bindings.items !== undefined){
-        items = bindings.items.map((k: any) => {
-            return merge(cloneDeep(defaults), k);
+
+    let items: IBindingItem[] | undefined = undefined;
+    if (bindings.items !== undefined) {
+        items = bindings.items.map((i: IBindingItem) => {
+            return merge(cloneDeep(default_item), i);
         });
     }
 
-    let non_items = Object.entries(bindings).filter(([k, v]) => k !== 'items');
-    let result: any = Object.fromEntries(non_items.map(([k, v]) => 
-        [k, expandDefaults(v, defaults)]
+    let non_items = Object.entries(omit(bindings, ['name', 'description', 'kind', 'items']));
+    let result: { [key: string]: IBindingTree } = Object.fromEntries(non_items.map(([k, v]) =>
+        [k, expandDefaults(<IBindingTree>v, default_item)]
     ));
-    if(items !== undefined){
-        return {...result, items};
-    }else{
-        return result;
-    }
+
+    return {
+        ...result,
+        name: bindings.name,
+        description: bindings.description,
+        kind: bindings.kind,
+        items
+    };
 }
 
 // TODO: check in unit tests
@@ -151,17 +155,15 @@ function expandBindingKeys(bindings: IBindingItem[]): IBindingItem[] {
     });
 }
 
-function listBindings(bindings: any): IBindingItem[] {
+function listBindings(bindings: IBindingTree): IBindingItem[] {
     return flatMap(Object.keys(bindings), key => {
-        if(key === 'items'){
-            return bindings.items;
-        }
+        if(key === 'items' && bindings.items){ return bindings.items; }
         let val = bindings[key];
         if(typeof val === 'string'){ return []; }
         if(typeof val === 'number'){ return []; }
         if(typeof val === 'boolean'){ return []; }
         if(typeof val === 'undefined'){ return []; }
-        if(typeof val === 'object'){ return listBindings(val); }
+        if(typeof val === 'object'){ return listBindings(<IBindingTree>val); }
         return [];
     });
 }
@@ -308,19 +310,19 @@ function extractPrefixBindings(item: IBindingItem, prefixItems: BindingMap = {})
     return item;
 }
 
-function processBindings(bindings: any){
-    bindings = expandDefaults(<IBindingSpec>bindings);
-    bindings = listBindings(bindings);
-    bindings = expandBindingKeys(bindings);
-    bindings = expandBindingDocsAcrossWhenClauses(bindings);
-    bindings = bindings.map((item: IBindingItem) => {
+function processBindings(spec: IBindingSpec){
+    let bindingTree = expandDefaults((spec).bind);
+    let items = listBindings(bindingTree);
+    items = expandBindingKeys(items);
+    items = expandBindingDocsAcrossWhenClauses(items);
+    items = items.map((item: IBindingItem) => {
         item = moveModeToWhenClause(item);
         item = wrapBindingInDoCommand(item);
         return item;
     });
     let prefixBindings: BindingMap = {};
-    bindings = bindings.map((b: any) => extractPrefixBindings(b, prefixBindings));
-    return bindings.concat(values(prefixBindings));
+    items = items.map((b: any) => extractPrefixBindings(b, prefixBindings));
+    return items.concat(values(prefixBindings));
 }
 
 async function parseBindingFile(file: vscode.Uri){
