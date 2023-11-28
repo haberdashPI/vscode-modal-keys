@@ -5,6 +5,9 @@ import hash from 'object-hash';
 import { uniq, pick, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
+import Ajv from 'ajv';
+// TODO: get this import working
+import bindingSchema from '../json_specs/binding_specs.json';
 
 let decoder = new TextDecoder("utf-8");
 
@@ -52,11 +55,10 @@ interface IBindingItem {
     computedArgs?: object
 }
 
-// TODO: compute a JSON validation spec (using `npx typescript-json-schema tsconfig.json IBindingSpec`)
-// and then validate both that
-// and the various runtime constraints expressed above
+// TODO: cleanup so we aren't using non-working watch setup
+// TODO: for now just require user to manually regenerate the spec
 
-type BindingCommand = string | IBindingCommand
+type BindingCommand = string | IBindingCommand;
 interface IBindingCommand {
     command: string
     args: object
@@ -458,6 +460,8 @@ async function importBindings() {
     let file = await queryBindingFile();
     if (file === undefined) { return; }
     let raw_binding_file = await parseBindingFile(file);
+    let ajv = Ajv();
+    ajv.addSchema()
     let bindings = processBindings(raw_binding_file);
     insertKeybindingsIntoConfig(file, bindings);
 }

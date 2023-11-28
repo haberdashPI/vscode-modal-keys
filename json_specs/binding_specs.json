@@ -1,0 +1,151 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "BindingCommand": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/IBindingCommand"
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "IBindingCommand": {
+            "properties": {
+                "args": {
+                    "additionalProperties": true,
+                    "properties": {},
+                    "type": "object"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "computedArgs": {
+                    "additionalProperties": true,
+                    "properties": {},
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "IBindingHeader": {
+            "properties": {
+                "required_extensions": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "version": {
+                    "const": "1.0",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "IBindingItem": {
+            "properties": {
+                "allowed_prefixes": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "args": {
+                    "additionalProperties": true,
+                    "properties": {},
+                    "type": "object"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "commands": {
+                    "items": {
+                        "$ref": "#/definitions/BindingCommand"
+                    },
+                    "type": "array"
+                },
+                "computedArgs": {
+                    "additionalProperties": true,
+                    "properties": {},
+                    "type": "object"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "keys": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "when": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "IBindingTree": {
+            "additionalProperties": {
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/IBindingTree"
+                    },
+                    {
+                        "$ref": "#/definitions/IBindingItem"
+                    },
+                    {
+                        "items": {
+                            "$ref": "#/definitions/IBindingItem"
+                        },
+                        "type": "array"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            },
+            "properties": {
+                "default": {
+                    "$ref": "#/definitions/IBindingItem"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "items": {
+                    "items": {
+                        "$ref": "#/definitions/IBindingItem"
+                    },
+                    "type": "array"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "properties": {
+        "bind": {
+            "$ref": "#/definitions/IBindingTree"
+        },
+        "header": {
+            "$ref": "#/definitions/IBindingHeader"
+        }
+    },
+    "type": "object"
+}
+
