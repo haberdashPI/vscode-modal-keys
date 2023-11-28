@@ -35,41 +35,15 @@ extensions = [
     "koalamer.labeled-bookmarks",
 ]
 
-## Implementation notes:
-# when these get expanded into actual keybindings I need to:
-# 0. validate and expand all items to types (validation should also make sure no shifted
-#    characters are used, e.g. use `shift+[` instead of `{`
-# 1. DONE Expand all `default` keys into the individual keybindings
-# 2. DONE replace any instances of {key} as appropriate, by iterating over `keys`
-# 3. DONE flatten all bindings into a single sequence
-# 6. DONE For any entries that are duplicate bindings with distinct when clauses (before the
-#    transformations applied below) make sure that `name` and `description` are identical or
-#    blank, and use the non-blank value in all instances
-# 4. DONE Wrap all bare commands in `modalkeys.commands` (or should it be called something
-#   else) as this will record all actions and it will replace all instances of `{variable}`
-#   with the actual value (e.g. `{count}`) before running the command when the command is
-#   actually run. Don't do anything if the command already is `modalkeys.commands`. It will
-#   also clear the count. (OR could only wrap commands that include these special
-#   variables).
-# 5. DONE Transform "allowed_prefix": we need to create two commands, one with and one without
-#    the prefix
-# 7. DONE Any uses of `mode` get moved into the when clause, checking for `modalkeys.mode`
-# 8. DONE any non-prefix keys include the empty prefix check in their when clause
-# 6. DONE take any multi-key bindings and turn them into single keybindings that call
-#   `modalkeys.prefix` and append a prefix to the modal keys state the prefix becomes part
-#   of the when clause for suffixes of the binding
-# 9. translate the name and description into helpful comments in the bindings file (and
-#    remove them form the object)
-
 # TODO: when implementing `modalkeys.do` we can use JSEP to parse 
 # expressions for the `computedArgs` value: https://github.com/EricSmekens/jsep
 
-[bind.motion]
+[bind.motion.header]
 name = "Motions"
 kind = "select"
 default.mode = "normal"
 
-[bind.count]
+[bind.count.header]
 name = "count"
 description = """
 The number keys are used to update the count, which affects how many times the next 
@@ -82,7 +56,7 @@ command = "modalkeys.updateCount"
 args.value = "{key}"
 mode = "!insert" # number keys apply in all modes but insert
 
-[bind.motion.prim]
+[bind.motion.prim.header]
 name = "Primitive Motions"
 description = "Motions fundamental to moving around in the editor."
 default.command = "cursorMove"
@@ -128,7 +102,7 @@ description = "up unwrapped line"
 args.to = "down" 
 args.by = "line"
 
-[bind.motion.mod]
+[bind.motion.mod.header]
 name = "Modify Motion Effects"
 description = "Keys that change how other motions work"
 kind = "select"
@@ -153,7 +127,7 @@ command = "modalkeys.flag"
 args.flag = "select_on"
 args.value = "toggle"
 
-[bind.motion.obj]
+[bind.motion.obj.header]
 name = "Motions around various regex-like objects"
 description = """
 selection commands that move by a predefined syntactic object (e.g. word, paragraph, etc...)
@@ -214,7 +188,7 @@ name = "smart expand"
 description = "Use VSCode's built-in smart expansion command"
 command = "editor.action.smartSelect.expand"
 
-[bind.motion.search]
+[bind.motion.search.header]
 name = "Search Related Motions"
 description = "Motions related to searching for text in a document"
 default.command = "modalkeys.search"
@@ -294,7 +268,7 @@ description = "Repeat search motion backwards"
 command = "modalkeys.previousMatch"
 computedArgs.repeat = "count"
 
-[bind.motion.syntax]
+[bind.motion.syntax.header]
 label = "Motions around syntactic objects (e.g. parentheses and quotes)"
 description = """
 selection commands that move by a predefined syntactic object like brackets and quotes
@@ -312,11 +286,11 @@ label = "in parens"
 description = "text inside parens/brackets/braces"
 command = "selection-utilities.expandInBrackets"
 
-[bind.action]
+[bind.action.header]
 label = "Actions"
 kind = "action"
 
-[bind.action.basic]
+[bind.action.basic.header]
 label = "Basic Actions"
 description = "Essential actions required to edit text"
 default.mode = "normal"
@@ -390,15 +364,15 @@ count, delete up to the next `count` lines and store to clipboard.
 when = "!editorHasSelection"
 commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}},
              "editor.action.clipboardCutAction",
-            {command = "modalkeys.enterMode", value = "normal"}]
+            {command = "modalkeys.enterMode", args = {value = "normal"}}]
 
 [[bind.action.basic.items]]
 key = "d"
 when = "editorHasSelection"
 commands = ["editor.action.clipboardCutAction",
-            {command = "modalkeys.enterMode", value = "normal"}]
+            {command = "modalkeys.enterMode", args = {value = "normal"}}]
 
-[bind.action.symmetric]
+[bind.action.symmetric.header]
 name = "Symmetric Operations"
 description = "Operations that occur at both ends of a selection"
 kind = "select"

@@ -8,6 +8,54 @@ import { searchMatches } from './searching';
 
 let decoder = new TextDecoder("utf-8");
 
+interface IBindingSpec {
+    header: IBindingHeader
+    bind: IBindingTree
+}
+
+interface IBindingHeader {
+    version: "1.0" 
+    name: string
+    description: string
+    extensions: string[]
+}
+
+interface IBindingTree {
+    [key: string]: IBindingTree | IBindingItem[] | string | undefined
+    name: string
+    description: string
+    kind?: string
+    items?: IBindingItem[]
+}
+
+interface IBindingItemHeader {
+    name: string
+    kind?: string
+    description: string
+    default?: IBindingItem
+}
+
+interface IBindingItem {
+    name?: string
+    description?: string
+    key?: string
+    keys?: string[]
+    args?: object
+    when?: string
+    mode?: string
+    allowed_prefixes?: string[]
+    command?: string
+    commands?: BindingCommand[]
+    computedArgs?: object
+}
+
+type BindingCommand = string | IBindingCommand
+interface IBindingCommand {
+    command: string
+    args: object
+    computedArgs?: object
+}
+
 async function queryBindingFile() {
     // TODO: improve this interface; there should be some predefined set of presets and you
     // can add your own to the list (these might all get added to some config in the user's
@@ -50,7 +98,7 @@ async function validateHeader(bindings: any){
 // - all arrays and primitive types get preserved
 // - defaults get expanded appropriately in deeply
 //   nested situations
-function expandDefaults(bindings: any, defaults: any = {}): any{
+function expandDefaults(bindings: IBindingTree, defaults: IBindingItem = {}): any{
     if(typeof bindings === 'string') { return bindings; }
     if(typeof bindings === 'number') { return bindings; }
     if(typeof bindings === 'boolean') { return bindings; }
@@ -78,22 +126,6 @@ function expandDefaults(bindings: any, defaults: any = {}): any{
     }
 }
 
-interface IRawBinding {
-    name?: string
-    description?: string
-    key?: string
-    keys?: string[]
-    args?: object
-    when?: string
-    mode?: string
-    allowed_prefixes?: string[]
-    command?: string
-    commands?: string[]
-    computedArgs?: object
-    default?: IRawBinding
-    items?: IRawBinding[]
-}
-
 // TODO: check in unit tests
 // invalid items (e.g. both key and keys defined) get detected
 function reifyItemKey(item: any, key: string): any {
@@ -109,7 +141,7 @@ function reifyItemKey(item: any, key: string): any {
     });
 }
 
-function expandBindingKeys(bindings: IRawBinding[]): IRawBinding[] {
+function expandBindingKeys(bindings: IBindingItem[]): IBindingItem[] {
     return flatMap(bindings, item => {
         if(item.keys !== undefined){
             return item.keys.map((key: any) => {return {key, ...reifyItemKey(item, key)};});
@@ -119,7 +151,7 @@ function expandBindingKeys(bindings: IRawBinding[]): IRawBinding[] {
     });
 }
 
-function listBindings(bindings: any): IRawBinding[] {
+function listBindings(bindings: any): IBindingItem[] {
     return flatMap(Object.keys(bindings), key => {
         if(key === 'items'){
             return bindings.items;
@@ -134,7 +166,7 @@ function listBindings(bindings: any): IRawBinding[] {
     });
 }
 
-function wrapBindingInDoCommand(item: IRawBinding): IRawBinding{
+function wrapBindingInDoCommand(item: IBindingItem): IBindingItem{
     return {
         key: item.key,
         name: item.name,
@@ -172,7 +204,7 @@ function validateUniqueForBinding(vals: (string | undefined)[], name: string, it
 // and blank documentation for some when clauses
 
 // TODO: debug this function
-function expandBindingDocsAcrossWhenClauses(items: IRawBinding[]): IRawBinding[] {
+function expandBindingDocsAcrossWhenClauses(items: IBindingItem[]): IBindingItem[] {
     let sharedBindings: { [key: string]: any[] } = {};
     for (let item of items) {
         let k = hash({ key: item.key, mode: item.mode });
@@ -210,7 +242,7 @@ function expandBindingDocsAcrossWhenClauses(items: IRawBinding[]): IRawBinding[]
     });
 }
 
-function moveModeToWhenClause(binding: IRawBinding){
+function moveModeToWhenClause(binding: IBindingItem){
     let expandedWhen = "";
     if(binding.when !== undefined){
         expandedWhen += `(${binding.when})`;
@@ -228,7 +260,7 @@ function moveModeToWhenClause(binding: IRawBinding){
     return {...binding, when: expandedWhen};
 }
 
-function expandAllowedPrefixes(expandedWhen: string, item: IRawBinding){
+function expandAllowedPrefixes(expandedWhen: string, item: IBindingItem){
     // add any optionally allowed prefixes
     if(expandedWhen.length > 0){ expandedWhen += ` && `; }
     expandedWhen += "((modalkeys.prefix == '')";
@@ -242,8 +274,8 @@ function expandAllowedPrefixes(expandedWhen: string, item: IRawBinding){
     return expandedWhen;
 }
 
-type BindingMap = { [key: string]: IRawBinding };
-function extractPrefixBindings(item: IRawBinding, prefixItems: BindingMap = {}){
+type BindingMap = { [key: string]: IBindingItem };
+function extractPrefixBindings(item: IBindingItem, prefixItems: BindingMap = {}){
     let when = "";
     let prefix = "";
     if(item.when !== undefined){ when += `(${item.when})`; }
@@ -277,11 +309,11 @@ function extractPrefixBindings(item: IRawBinding, prefixItems: BindingMap = {}){
 }
 
 function processBindings(bindings: any){
-    bindings = expandDefaults(bindings);
+    bindings = expandDefaults(<IBindingSpec>bindings);
     bindings = listBindings(bindings);
     bindings = expandBindingKeys(bindings);
     bindings = expandBindingDocsAcrossWhenClauses(bindings);
-    bindings = bindings.map((item: IRawBinding) => {
+    bindings = bindings.map((item: IBindingItem) => {
         item = moveModeToWhenClause(item);
         item = wrapBindingInDoCommand(item);
         return item;
@@ -332,7 +364,7 @@ function findText(doc: vscode.TextDocument, text: string) {
     return first_match_result.value;
 }
 
-function formatBindings(file: vscode.Uri, items: IRawBinding[]){
+function formatBindings(file: vscode.Uri, items: IBindingItem[]){
     let json = "";
     for(let item of items){
         let comment = "";
