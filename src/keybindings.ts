@@ -5,65 +5,62 @@ import hash from 'object-hash';
 import { uniq, pick, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
-import Ajv from 'ajv';
-// TODO: get this import working
-import bindingSchema from '../json_specs/binding_specs.json';
+import zod from "zod";
 
 let decoder = new TextDecoder("utf-8");
 
-interface IBindingSpec {
-    header: IBindingHeader
-    bind: IBindingTree
-}
+const bindingHeader = zod.object({
+    version: zod.string().regex(/[0-9]+((\.[0-9]+)?\.[0-9]+)?/),
+    required_extensions: zod.string().array()
+});
+type BindingHeader = zod.infer<typeof bindingHeader>;
 
-interface IBindingHeader {
-    version: "1.0" 
-    required_extensions: string[]
-}
-
-interface IBindingTree {
-    [key: string]: IBindingTree | IBindingItem | IBindingItem[] | string | undefined
-    // additional runtime constraint to verify: the keys above
-    // (that do not match those below) following IBindingTree
-    // and the keys below always following the specs below
-    name: string
-    kind?: string
-    description: string
-    default?: IBindingItem
-    items?: IBindingItem[]
-}
-
-interface IBindingItem {
+const bindingItem = zod.object({
     // additional runtime constraint to verify: name and description must be defined
     // after expanding defaults
-    name?: string
-    description?: string
+    namespace: zod.string().optional(),
+    description: zod.string().optional(),
     // additional runtime constraint to verify: keys or key must be defined
     // after expanding defaults
-    key?: string
-    keys?: string[]
-    args?: object
-    when?: string
+    key: zod.string().optional(),
+    keys: zod.string().array().optional(),
+    when: zod.string().optional(),
     // additional runtime constraint to verify: mode must be defined after
     // expanding defaults
-    mode?: string
-    allowed_prefixes?: string[]
+    mode: zod.string().optional(),
+    allowed_prefixes: zod.string().array().optional(),
     // additional runtime constraint to verify: command or commands must be defined
     // after expanding defaults
-    command?: string
-    commands?: BindingCommand[]
-    computedArgs?: object
-}
+    command: zod.string().optional(),
+    args: zod.object({}).passthrough().optional(),
+    computedArgs: zod.object({}).passthrough().optional(),
+    commands: zod.union([zod.string(), zod.object({
+        command: zod.string(),
+        args: zod.object({}).passthrough().optional(),
+        computedArgs: zod.object({}).passthrough().optional(),
+    }).array()]).optional()
+});
+type BindingItem = zod.infer<typeof bindingItem>;
 
-// TODO: cleanup so we aren't using non-working watch setup
-// TODO: for now just require user to manually regenerate the spec
+const bindingTreeElement = zod.object({
+    name: zod.string(),
+    kind: zod.string().optional(),
+    description: zod.string(),
+    default: bindingItem.optional(),
+    items: bindingItem.array().optional()
+});
+// BindingTree is a recursive type, keys that aren't defined above are
+// nested BindingTree objects
+type BindingTree = zod.infer<typeof bindingTreeElement> & {
+    [key: string]: BindingTree | BindingItem | BindingItem | string | undefined
+};
+const bindingTree: zod.ZodType<BindingTree> = bindingTreeElement.catchall(zod.lazy(() => bindingTree));
 
-type BindingCommand = string | IBindingCommand;
-interface IBindingCommand {
-    command: string
-    args: object
-    computedArgs?: object
-}
+const bindingSpec = zod.object({
+    header: bindingHeader,
+    bind: bindingTree
+});
+type BindingSpec = zod.infer<typeof bindingSpec>;
 
 async function queryBindingFile() {
     // TODO: improve this interface; there should be some predefined set of presets and you
@@ -107,27 +104,27 @@ async function validateHeader(bindings: any){
 // - all arrays and primitive types get preserved
 // - defaults get expanded appropriately in deeply
 //   nested situations
-function expandDefaults(bindings: IBindingTree, prefix: string = "", default_item: IBindingItem = {}): IBindingTree {
+function expandDefaults(bindings: BindingTree, prefix: string = "", default_item: BindingItem = {}): BindingTree {
     if (bindings.default !== undefined) {
-        default_item = <IBindingItem>{ ...default_item, ...<IBindingItem>bindings.default };
+        default_item = <BindingItem>{ ...default_item, ...<BindingItem>bindings.default };
     }
 
-    let items: IBindingItem[] | undefined = undefined;
+    let items: BindingItem[] | undefined = undefined;
     if (bindings.items !== undefined) {
-        items = bindings.items.map((i: IBindingItem) => {
+        items = bindings.items.map((i: BindingItem) => {
             return merge(cloneDeep(default_item), i);
         });
     }
 
     let non_items = Object.entries(omit(bindings, ['name', 'description', 'kind', 'items', 'default']));
-    let result: { [key: string]: IBindingTree } = Object.fromEntries(non_items.map(([k, v]) => {
+    let result: { [key: string]: BindingTree } = Object.fromEntries(non_items.map(([k, v]) => {
         let entry = (prefix === "" ? "" : prefix+".")
         if(typeof v !== 'object'){
             vscode.window.showErrorMessage(`binding.${prefix} has unexpected field ${k}`)
             return [];
         }
-        if((<IBindingTree>v).name !== undefined){
-            return [k, expandDefaults(<IBindingTree>v, entry, default_item)];
+        if((<BindingTree>v).name !== undefined){
+            return [k, expandDefaults(<BindingTree>v, entry, default_item)];
         }else{
             vscode.window.showErrorMessage(`binding.${entry} has no "name" field.`)
             return [];
@@ -158,7 +155,7 @@ function reifyItemKey(item: any, key: string): any {
     });
 }
 
-function expandBindingKeys(bindings: IBindingItem[]): IBindingItem[] {
+function expandBindingKeys(bindings: BindingItem[]): BindingItem[] {
     return flatMap(bindings, item => {
         if(item.keys !== undefined){
             return item.keys.map((key: any) => {return {key, ...reifyItemKey(item, key)};});
@@ -168,7 +165,7 @@ function expandBindingKeys(bindings: IBindingItem[]): IBindingItem[] {
     });
 }
 
-function listBindings(bindings: IBindingTree): IBindingItem[] {
+function listBindings(bindings: BindingTree): BindingItem[] {
     return flatMap(Object.keys(bindings), key => {
         if(key === 'items' && bindings.items){ return bindings.items; }
         let val = bindings[key];
@@ -176,12 +173,12 @@ function listBindings(bindings: IBindingTree): IBindingItem[] {
         if(typeof val === 'number'){ return []; }
         if(typeof val === 'boolean'){ return []; }
         if(typeof val === 'undefined'){ return []; }
-        if(typeof val === 'object'){ return listBindings(<IBindingTree>val); }
+        if(typeof val === 'object'){ return listBindings(<BindingTree>val); }
         return [];
     });
 }
 
-function wrapBindingInDoCommand(item: IBindingItem): IBindingItem{
+function wrapBindingInDoCommand(item: BindingItem): BindingItem{
     return {
         key: item.key,
         name: item.name,
@@ -219,7 +216,7 @@ function validateUniqueForBinding(vals: (string | undefined)[], name: string, it
 // and blank documentation for some when clauses
 
 // TODO: debug this function
-function expandBindingDocsAcrossWhenClauses(items: IBindingItem[]): IBindingItem[] {
+function expandBindingDocsAcrossWhenClauses(items: BindingItem[]): BindingItem[] {
     let sharedBindings: { [key: string]: any[] } = {};
     for (let item of items) {
         let k = hash({ key: item.key, mode: item.mode });
@@ -257,7 +254,7 @@ function expandBindingDocsAcrossWhenClauses(items: IBindingItem[]): IBindingItem
     });
 }
 
-function moveModeToWhenClause(binding: IBindingItem){
+function moveModeToWhenClause(binding: BindingItem){
     let expandedWhen = "";
     if(binding.when !== undefined){
         expandedWhen += `(${binding.when})`;
@@ -275,7 +272,7 @@ function moveModeToWhenClause(binding: IBindingItem){
     return {...binding, when: expandedWhen};
 }
 
-function expandAllowedPrefixes(expandedWhen: string, item: IBindingItem){
+function expandAllowedPrefixes(expandedWhen: string, item: BindingItem){
     // add any optionally allowed prefixes
     if(expandedWhen.length > 0){ expandedWhen += ` && `; }
     expandedWhen += "((modalkeys.prefix == '')";
@@ -289,8 +286,8 @@ function expandAllowedPrefixes(expandedWhen: string, item: IBindingItem){
     return expandedWhen;
 }
 
-type BindingMap = { [key: string]: IBindingItem };
-function extractPrefixBindings(item: IBindingItem, prefixItems: BindingMap = {}){
+type BindingMap = { [key: string]: BindingItem };
+function extractPrefixBindings(item: BindingItem, prefixItems: BindingMap = {}){
     let when = "";
     let prefix = "";
     if(item.when !== undefined){ when += `(${item.when})`; }
@@ -323,12 +320,12 @@ function extractPrefixBindings(item: IBindingItem, prefixItems: BindingMap = {})
     return item;
 }
 
-function processBindings(spec: IBindingSpec){
+function processBindings(spec: BindingSpec){
     let bindingTree = expandDefaults((spec).bind);
     let items = listBindings(bindingTree);
     items = expandBindingKeys(items);
     items = expandBindingDocsAcrossWhenClauses(items);
-    items = items.map((item: IBindingItem) => {
+    items = items.map((item: BindingItem) => {
         item = moveModeToWhenClause(item);
         item = wrapBindingInDoCommand(item);
         return item;
@@ -379,7 +376,7 @@ function findText(doc: vscode.TextDocument, text: string) {
     return first_match_result.value;
 }
 
-function formatBindings(file: vscode.Uri, items: IBindingItem[]){
+function formatBindings(file: vscode.Uri, items: BindingItem[]){
     let json = "";
     for(let item of items){
         let comment = "";
