@@ -44,7 +44,8 @@ command is repeated, when relevant.
 """
 
 [[bind.count.items]]
-keys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+name = "Update number with {key}"
+key = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 do.command = "modalkeys.updateCount"
 do.args.value = "{key}"
 mode = "!insert" # number keys apply in all modes but insert
@@ -317,6 +318,10 @@ when = "!editorHasSelection"
 [[bind.action.basic.items]]
 key = "c"
 name = "change"
+description = """
+Without a count: change selected region of text. With a count:
+change up to `count` lines.
+"""
 when = "modalkeys.editorHasMultilineSelection"
 do = ["deleteRight", "editor.action.insertLineBefore", "modalkeys.enterInsert"]
 
@@ -392,13 +397,13 @@ do.args.mode = "syminsert"
 [[bind.action.symmetric.items]]
 name = "Normal"
 description = "Return to normal model"
-keys = ["enter", "g '"]
+key = ["enter", "g '"]
 do.command = "modalkeys.enterMode"
 do.args.mode = "normal"
 
 [[bind.action.symmetric.items]]
-keys = [":", ";", "'", '"', ",", ".", "/", "?", "|", "=", "+", "-", "_", "*", "&", "^", "%", 
-        "$", "#", "@", "!", "`", "~"]
+key = [":", ";", "'", '"', ",", ".", "/", "?", "|", "=", "+", "-", "_", "*", "&", "^", "%", 
+       "$", "#", "@", "!", "`", "~"]
 description = "Insert the character {key} at both ends of each selection"
 do.command = "selection-utilities.insertAround"
 do.args = { before = "{key}", after = "{key}"}
