@@ -51,6 +51,7 @@ mode = "!insert" # number keys apply in all modes but insert
 
 [bind.motion]
 name = "Motions"
+description = "Commands that move the cursors and/or selections"
 kind = "select"
 default.mode = "normal"
 
@@ -254,42 +255,43 @@ args.offset = "start"
 
 [[bind.motion.search.items]]
 key = ";"
-label = "→ match"
+name = "→ match"
 description = "Repeat search motion forwards"
 command = "modalkeys.nextMatch"
 computedArgs.repeat = "count"
 
 [[bind.motion.search.items]]
 key = ":"
-label = "← match"
+name = "← match"
 description = "Repeat search motion backwards"
 command = "modalkeys.previousMatch"
 computedArgs.repeat = "count"
 
 [bind.motion.syntax]
-label = "Motions around syntactic objects (e.g. parentheses and quotes)"
+name = "Motions around syntactic objects (e.g. parentheses and quotes)"
 description = """
 selection commands that move by a predefined syntactic object like brackets and quotes
 """
 
 [[bind.motion.syntax.items]]
 key = "{"
-label = "arnd parens"
+name = "arnd parens"
 description = "parens/brackets/braces and their contents"
 command = "selection-utilities.expandAroundBrackets"
 
 [[bind.motion.syntax.items]]
 key = "["
-label = "in parens"
+name = "in parens"
 description = "text inside parens/brackets/braces"
 command = "selection-utilities.expandInBrackets"
 
 [bind.action]
-label = "Actions"
+name = "Actions"
+description = "Commands that modify the document or UI"
 kind = "action"
 
 [bind.action.basic]
-label = "Basic Actions"
+name = "Basic Actions"
 description = "Essential actions required to edit text"
 default.mode = "normal"
 
@@ -339,7 +341,7 @@ commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}
 
 [[bind.action.basic.items]]
 key = "C"
-label = "change to/back"
+name = "change to/back"
 description = """Without a count: change from current char to end of line. With a count: 
 change the previous `count` lines.
 """
@@ -354,7 +356,7 @@ commands = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}
 
 [[bind.action.basic.items]]
 key = "d"
-label = "delete"
+name = "delete"
 description = """
 Without a count: delete selected text (and store to clipboard). With a 
 count, delete up to the next `count` lines and store to clipboard.

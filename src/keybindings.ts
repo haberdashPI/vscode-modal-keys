@@ -15,10 +15,11 @@ const bindingHeader = zod.object({
 });
 type BindingHeader = zod.infer<typeof bindingHeader>;
 
+// TODO: define a function to for the post-default expansion checks
 const bindingItem = zod.object({
     // additional runtime constraint to verify: name and description must be defined
     // after expanding defaults
-    namespace: zod.string().optional(),
+    name: zod.string().optional(),
     description: zod.string().optional(),
     // additional runtime constraint to verify: keys or key must be defined
     // after expanding defaults
@@ -38,7 +39,7 @@ const bindingItem = zod.object({
         command: zod.string(),
         args: zod.object({}).passthrough().optional(),
         computedArgs: zod.object({}).passthrough().optional(),
-    }).array()]).optional()
+    })]).array().optional()
 });
 type BindingItem = zod.infer<typeof bindingItem>;
 
@@ -55,6 +56,9 @@ type BindingTree = zod.infer<typeof bindingTreeElement> & {
     [key: string]: BindingTree | BindingItem | BindingItem | string | undefined
 };
 const bindingTree: zod.ZodType<BindingTree> = bindingTreeElement.catchall(zod.lazy(() => bindingTree));
+
+// TODO: unit test - verify that zod recursively validates all 
+// elements of the binding tree
 
 const bindingSpec = zod.object({
     header: bindingHeader,
@@ -106,7 +110,7 @@ async function validateHeader(bindings: any){
 //   nested situations
 function expandDefaults(bindings: BindingTree, prefix: string = "", default_item: BindingItem = {}): BindingTree {
     if (bindings.default !== undefined) {
-        default_item = <BindingItem>{ ...default_item, ...<BindingItem>bindings.default };
+        default_item = { ...default_item, ...<BindingItem>bindings.default };
     }
 
     let items: BindingItem[] | undefined = undefined;
@@ -118,26 +122,31 @@ function expandDefaults(bindings: BindingTree, prefix: string = "", default_item
 
     let non_items = Object.entries(omit(bindings, ['name', 'description', 'kind', 'items', 'default']));
     let result: { [key: string]: BindingTree } = Object.fromEntries(non_items.map(([k, v]) => {
-        let entry = (prefix === "" ? "" : prefix+".")
+        let entry = (prefix === "" ? "" : prefix+".");
         if(typeof v !== 'object'){
             vscode.window.showErrorMessage(`binding.${prefix} has unexpected field ${k}`)
             return [];
         }
-        if((<BindingTree>v).name !== undefined){
+        if(v.name !== undefined){
+            // though type script can't enforce it statically, if v has a `name`
+            // it is a binding tree
             return [k, expandDefaults(<BindingTree>v, entry, default_item)];
         }else{
-            vscode.window.showErrorMessage(`binding.${entry} has no "name" field.`)
+            vscode.window.showErrorMessage(`binding.${entry} has no "name" field.`);
             return [];
         }
     }));
 
-    return {
+    let returnValue = {
         ...result,
         name: bindings.name,
         description: bindings.description,
         kind: bindings.kind,
         items
     };
+
+    // some whacky-ness with the recursive types requires a cast here 🤔
+    return <BindingTree>returnValue;
 }
 
 // TODO: check in unit tests
@@ -321,8 +330,8 @@ function extractPrefixBindings(item: BindingItem, prefixItems: BindingMap = {}){
 }
 
 function processBindings(spec: BindingSpec){
-    let bindingTree = expandDefaults((spec).bind);
-    let items = listBindings(bindingTree);
+    let expandedSpec = expandDefaults(spec.bind);
+    let items = listBindings(expandedSpec);
     items = expandBindingKeys(items);
     items = expandBindingDocsAcrossWhenClauses(items);
     items = items.map((item: BindingItem) => {
@@ -339,9 +348,9 @@ async function parseBindingFile(file: vscode.Uri){
     let file_data = await vscode.workspace.fs.readFile(file);
     let file_text = decoder.decode(file_data);
     if(file.fsPath.endsWith(".json")){
-        return <any>JSON.parse(file_text);
+        return bindingSpec.safeParse(JSON.parse(file_text));
     }else{
-        return <any>TOML.load(file_text);
+        return bindingSpec.safeParse(TOML.load(file_text));
     }
 }
 
@@ -456,11 +465,16 @@ async function insertKeybindingsIntoConfig(file: vscode.Uri, config: any) {
 async function importBindings() {
     let file = await queryBindingFile();
     if (file === undefined) { return; }
-    let raw_binding_file = await parseBindingFile(file);
-    let ajv = Ajv();
-    ajv.addSchema()
-    let bindings = processBindings(raw_binding_file);
-    insertKeybindingsIntoConfig(file, bindings);
+    let parsedBindings = await parseBindingFile(file);
+    if(parsedBindings.success){
+        let bindings = processBindings(parsedBindings.data);
+        insertKeybindingsIntoConfig(file, bindings);
+    }else{
+        for (let issue of parsedBindings.error.issues.slice(0, 5)) {
+            vscode.window.showErrorMessage(`Parsing of bindings failed: code ${issue.code} 
+                near ${issue.path.join(".")} (${issue.message})`);
+        }
+    }
 }
 
 export function activate(context: vscode.ExtensionContext) {
