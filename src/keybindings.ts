@@ -13,6 +13,8 @@ let decoder = new TextDecoder("utf-8");
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Keybinding File Format Specification
 
+// TODO: replace shifted characters with shift+[unshifted]
+
 const bindingHeader = zod.object({
     version: zod.string().
         refine(x => semver.coerce(x), { message: "header.version is not a valid version number" }).
