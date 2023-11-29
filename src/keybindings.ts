@@ -13,40 +13,41 @@ let decoder = new TextDecoder("utf-8");
 // Keybinding File Format Specification
 
 const bindingHeader = zod.object({
-    version: zod.string().regex(/[0-9]+((\.[0-9]+)?\.[0-9]+)?/),
+    version: zod.string().
+        refine(semver.valid, { message: "header.version is not a valid version number" }).
+        refine(x => semver.satisfies(semver.coerce(x)!, '1'), 
+               { message: "header.version is not a supported version number (must a compatible with 1.0)"}),
     required_extensions: zod.string().array()
 });
 type BindingHeader = zod.infer<typeof bindingHeader>;
 
-// TODO: define a function to for the post-default expansion checks
+const bindingCommand = zod.union([zod.string(), zod.object({
+    command: zod.string(),
+    arg: zod.object({}).passthrough().optional(),
+    computedArgs: zod.object({}).passthrough().optional(),
+})]);
+
 const bindingItem = zod.object({
-    // additional runtime constraint to verify: name and description must be defined
-    // after expanding defaults
     name: zod.string().optional(),
     description: zod.string().optional(),
-    // additional runtime constraint to verify: keys or key must be defined
-    // after expanding defaults
-    key: zod.string().optional(),
-    keys: zod.string().array().optional(),
+    key: zod.union([zod.string(), zod.string().array()]).optional(),
     when: zod.string().optional(),
-    // additional runtime constraint to verify: mode must be defined after
-    // expanding defaults
     mode: zod.string().optional(),
     allowed_prefixes: zod.string().array().optional(),
-    // additional runtime constraint to verify: command or commands must be defined
-    // after expanding defaults
-    command: zod.string().optional(),
-    args: zod.object({}).passthrough().optional(),
-    computedArgs: zod.object({}).passthrough().optional(),
-    commands: zod.union([zod.string(), zod.object({
-        command: zod.string(),
-        args: zod.object({}).passthrough().optional(),
-        computedArgs: zod.object({}).passthrough().optional(),
-    })]).array().optional()
-});
+    do: zod.union([bindingCommand, bindingCommand.array()]).optional()
+}).strict();
 type BindingItem = zod.infer<typeof bindingItem>;
 
-const bindingTreeElement = zod.object({
+const strictBindingItem = bindingItem.required({
+    key: true,
+    name: true,
+    description: true,
+    mode: true,
+    do: true
+});
+type StrictBindingItem = zod.infer<typeof strictBindingItem>;
+
+const bindingTreeBase = zod.object({
     name: zod.string(),
     kind: zod.string().optional(),
     description: zod.string(),
@@ -55,10 +56,10 @@ const bindingTreeElement = zod.object({
 });
 // BindingTree is a recursive type, keys that aren't defined above are
 // nested BindingTree objects
-type BindingTree = zod.infer<typeof bindingTreeElement> & {
+type BindingTree = zod.infer<typeof bindingTreeBase> & {
     [key: string]: BindingTree | BindingItem | BindingItem | string | undefined
 };
-const bindingTree: zod.ZodType<BindingTree> = bindingTreeElement.catchall(zod.lazy(() => bindingTree));
+const bindingTree: zod.ZodType<BindingTree> = bindingTreeBase.catchall(zod.lazy(() => bindingTree));
 
 // TODO: unit test - verify that zod recursively validates all 
 // elements of the binding tree
@@ -135,10 +136,10 @@ function reifyItemKey(item: any, key: string): any {
     });
 }
 
-function expandBindingKeys(bindings: BindingItem[]): BindingItem[] {
+function expandBindingKeys(bindings: StrictBindingItem[]): StrictBindingItem[] {
     return flatMap(bindings, item => {
-        if(item.keys !== undefined){
-            return item.keys.map((key: any) => {return {key, ...reifyItemKey(item, key)};});
+        if(Array.isArray(item.key)){
+            return item.key.map((key: any) => {return {key, ...reifyItemKey(item, key)};});
         }else{
             return [item];
         }
@@ -158,7 +159,16 @@ function listBindings(bindings: BindingTree): BindingItem[] {
     });
 }
 
-function wrapBindingInDoCommand(item: BindingItem): BindingItem{
+interface IConfigKeyBinding {
+    key: string,
+    name: string,
+    description: string,
+    mode: string,
+    command: "modalkeys.do",
+    args: string | object
+}
+
+function itemToConfigBinding(item: StrictBindingItem): IConfigKeyBinding {
     return {
         key: item.key,
         name: item.name,
@@ -166,7 +176,7 @@ function wrapBindingInDoCommand(item: BindingItem): BindingItem{
         mode: item.mode,
         when: item.when,
         command: "modalkeys.do",
-        args: pick(item, ['command', 'commands', 'args', 'computedArgs'])
+        args: item.do
     };
 }
 
@@ -303,16 +313,21 @@ function extractPrefixBindings(item: BindingItem, prefixItems: BindingMap = {}){
 function processBindings(spec: BindingSpec){
     let expandedSpec = expandDefaults(spec.bind);
     let items = listBindings(expandedSpec);
-    items = expandBindingKeys(items);
-    items = expandBindingDocsAcrossWhenClauses(items);
-    items = items.map((item: BindingItem) => {
+    let parsedStrictItems = strictBindingItem.array().safeParse(items);
+    if(!parsedStrictItems.success){
+        vscode.window.showErrorMessage("Bad stuf...")
+    }else{
+        let strictItems = parsedStrictItems.data
+    strictItems = expandBindingKeys(strictItems);
+    strictItems = expandBindingDocsAcrossWhenClauses(strictItems);
+    strictItems = strictItems.map((item: BindingItem) => {
         item = moveModeToWhenClause(item);
         item = wrapBindingInDoCommand(item);
         return item;
     });
     let prefixBindings: BindingMap = {};
-    items = items.map((b: any) => extractPrefixBindings(b, prefixBindings));
-    return items.concat(values(prefixBindings));
+    strictItems = strictItems.map((b: any) => extractPrefixBindings(b, prefixBindings));
+    return strictItems.concat(values(prefixBindings));
 }
 
 async function parseBindingFile(file: vscode.Uri){
