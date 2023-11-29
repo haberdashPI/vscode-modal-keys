@@ -9,6 +9,9 @@ import zod from "zod";
 
 let decoder = new TextDecoder("utf-8");
 
+////////////////////////////////////////////////////////////////////////////////////////////
+// Keybinding File Format Specification
+
 const bindingHeader = zod.object({
     version: zod.string().regex(/[0-9]+((\.[0-9]+)?\.[0-9]+)?/),
     required_extensions: zod.string().array()
@@ -66,43 +69,11 @@ const bindingSpec = zod.object({
 });
 type BindingSpec = zod.infer<typeof bindingSpec>;
 
-async function queryBindingFile() {
-    // TODO: improve this interface; there should be some predefined set of presets and you
-    // can add your own to the list (these might all get added to some config in the user's
-    // settings??)
-    // Idea: there could be two commands; add preset and apply preset
-    let file = await vscode.window.showOpenDialog({
-        openLabel: "Import Modal-Key-Binding Spec",
-        filters: { Preset: ["json", "toml"] },
-        canSelectFiles: true,
-        canSelectFolders: false,
-        canSelectMany: false
-    });
-    if(!file || file.length !== 1) { return undefined; }
-    return file[0];
-}
+////////////////////////////////////////////////////////////////////////////////////////////
+// Keybinding Interpretation
 
-async function validateHeader(bindings: any){
-    let versionStr = <string>bindings?.header?.version;
-    if(!versionStr){
-        vscode.window.showErrorMessage(`Preset file is missing a version specifier in its 
-            header.`);
-        return;
-    }
-    
-    let validVersion = semver.valid(versionStr);
-    if(validVersion === null){
-        vscode.window.showErrorMessage(`Invalid version number ${versionStr} in preset 
-            header.`);
-        return;
-    }
-
-    if(!semver.satisfies(validVersion, '1.x')){
-        vscode.window.showErrorMessage(`Preset file version ${validVersion} is not 
-            supported.`);
-    }
-    return bindings;
-}
+// This is the core logic that actually translates a keybinding file into vscode compatible
+// keybinding json objects
 
 // TODO: to check in unit tests:
 // - all arrays and primitive types get preserved
@@ -426,7 +397,7 @@ async function insertKeybindingsIntoConfig(file: vscode.Uri, config: any) {
             let insert_at = bracket.end;
             let bindings_to_insert = formatBindings(file, config);
 
-            // replace old bindings OR...
+            // try and replace the old bindings
             let old_bindings_start = findText(ed.document, "AUTOMATED BINDINGS START");
             let old_bindings_end = findText(ed.document, "AUTOMATED BINDINGS END");
             ed.document.getText(old_bindings_start);
@@ -447,7 +418,7 @@ async function insertKeybindingsIntoConfig(file: vscode.Uri, config: any) {
                     around the automated bindings. Please delete the old, automated
                     bindings manually and then re-run this command.`);
             }else {
-                // ...insert new bindings
+                // if there are no old bindings, insert new ones
                 await ed.edit(builder => {
                     builder.insert(insert_at, "\n" + bindings_to_insert);
                 });
@@ -460,6 +431,24 @@ async function insertKeybindingsIntoConfig(file: vscode.Uri, config: any) {
             }
         }
     }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// User-facing commands and helpers
+
+async function queryBindingFile() {
+    // TODO: improve this interface; there should be some predefined set of presets and you
+    // can add your own to the list (these can get saved using globalStorageUri)
+    let file = await vscode.window.showOpenDialog({
+        openLabel: "Import Modal-Key-Binding Spec",
+        filters: { Preset: ["json", "toml"] },
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: false
+    });
+    if(!file || file.length !== 1) { return undefined; }
+    return file[0];
 }
 
 async function importBindings() {
@@ -476,6 +465,11 @@ async function importBindings() {
         }
     }
 }
+
+// TODO: we also evenutally want to have a way to customize presets
+// without having to modify it (for small tweaks)
+// TODO: we want to be able to export a preset to a file
+// TODO: we should be able to delete user defined presets
 
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand(
