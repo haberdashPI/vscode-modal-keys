@@ -6,6 +6,7 @@ import { uniq, pick, omit, merge, cloneDeep, flatMap, values, mapValues, entries
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
 import zod from "zod";
+import { strict } from 'assert';
 
 let decoder = new TextDecoder("utf-8");
 
@@ -56,10 +57,16 @@ const bindingTreeBase = zod.object({
 });
 // BindingTree is a recursive type, keys that aren't defined above are
 // nested BindingTree objects
-type BindingTree = zod.infer<typeof bindingTreeBase> & {
+type OtherKeys = {
     [key: string]: BindingTree | BindingItem | BindingItem | string | undefined
-};
+}
+type BindingTree = zod.infer<typeof bindingTreeBase> & OtherKeys;
 const bindingTree: zod.ZodType<BindingTree> = bindingTreeBase.catchall(zod.lazy(() => bindingTree));
+
+const strictBindingTree = bindingTreeBase.extend({
+    items: strictBindingItem.array().optional()
+})
+type StrictBindingTree = zod.infer<typeof strictBindingTree> & OtherKeys;
 
 // TODO: unit test - verify that zod recursively validates all 
 // elements of the binding tree
@@ -80,16 +87,26 @@ type BindingSpec = zod.infer<typeof bindingSpec>;
 // - all arrays and primitive types get preserved
 // - defaults get expanded appropriately in deeply
 //   nested situations
-function expandDefaults(bindings: BindingTree, prefix: string = "", default_item: BindingItem = {}): BindingTree {
+function expandDefaults(bindings: BindingTree, prefix: string = "", default_item: BindingItem = {}): StrictBindingTree {
     if (bindings.default !== undefined) {
         default_item = { ...default_item, ...<BindingItem>bindings.default };
     }
 
-    let items: BindingItem[] | undefined = undefined;
+    let items: StrictBindingItem[] | undefined = undefined;
     if (bindings.items !== undefined) {
-        items = bindings.items.map((i: BindingItem) => {
-            return merge(cloneDeep(default_item), i);
-        });
+        let validated_items = bindings.items.map((item: BindingItem, ) => {
+            let expandedItem = merge(cloneDeep(default_item), item);
+            let parsing = strictBindingItem.safeParse(expandedItem);
+            if(!parsing.success){
+                let issue = parsing.error.issues[0]
+                vscode.window.showErrorMessage(`Problem with item ${i} under ${prefix}: 
+                    ${issue.message} ${issue.path}`)
+                return undefined;
+            }else{
+                return parsing.data
+            }
+        })
+        items = <StrictBindingItem[]>validated_items.filter(x => x !== undefined);
     }
 
     let non_items = Object.entries(omit(bindings, ['name', 'description', 'kind', 'items', 'default']));
@@ -117,8 +134,9 @@ function expandDefaults(bindings: BindingTree, prefix: string = "", default_item
         items
     };
 
-    // some whacky-ness with the recursive types requires a cast here 🤔
-    return <BindingTree>returnValue;
+    // I'm not sure exactly why this case is required, I think it is about the weirdness of
+    // indexed keys in the type definition
+    return <StrictBindingTree>returnValue;
 }
 
 // TODO: check in unit tests
@@ -146,7 +164,7 @@ function expandBindingKeys(bindings: StrictBindingItem[]): StrictBindingItem[] {
     });
 }
 
-function listBindings(bindings: BindingTree): BindingItem[] {
+function listBindings(bindings: StrictBindingTree): StrictBindingItem[] {
     return flatMap(Object.keys(bindings), key => {
         if(key === 'items' && bindings.items){ return bindings.items; }
         let val = bindings[key];
@@ -154,7 +172,7 @@ function listBindings(bindings: BindingTree): BindingItem[] {
         if(typeof val === 'number'){ return []; }
         if(typeof val === 'boolean'){ return []; }
         if(typeof val === 'undefined'){ return []; }
-        if(typeof val === 'object'){ return listBindings(<BindingTree>val); }
+        if(typeof val === 'object'){ return listBindings(<StrictBindingTree>val); }
         return [];
     });
 }
@@ -164,13 +182,14 @@ interface IConfigKeyBinding {
     name: string,
     description: string,
     mode: string,
+    when?: string,
     command: "modalkeys.do",
     args: string | object
 }
 
 function itemToConfigBinding(item: StrictBindingItem): IConfigKeyBinding {
     return {
-        key: item.key,
+        key: <string>item.key,
         name: item.name,
         description: item.description,
         mode: item.mode,
@@ -206,7 +225,7 @@ function validateUniqueForBinding(vals: (string | undefined)[], name: string, it
 // and blank documentation for some when clauses
 
 // TODO: debug this function
-function expandBindingDocsAcrossWhenClauses(items: BindingItem[]): BindingItem[] {
+function expandBindingDocsAcrossWhenClauses(items: StrictBindingItem[]): StrictBindingItem[] {
     let sharedBindings: { [key: string]: any[] } = {};
     for (let item of items) {
         let k = hash({ key: item.key, mode: item.mode });
@@ -244,7 +263,7 @@ function expandBindingDocsAcrossWhenClauses(items: BindingItem[]): BindingItem[]
     });
 }
 
-function moveModeToWhenClause(binding: BindingItem){
+function moveModeToWhenClause(binding: StrictBindingItem){
     let expandedWhen = "";
     if(binding.when !== undefined){
         expandedWhen += `(${binding.when})`;
@@ -276,8 +295,8 @@ function expandAllowedPrefixes(expandedWhen: string, item: BindingItem){
     return expandedWhen;
 }
 
-type BindingMap = { [key: string]: BindingItem };
-function extractPrefixBindings(item: BindingItem, prefixItems: BindingMap = {}){
+type BindingMap = { [key: string]: IConfigKeyBinding };
+function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap = {}){
     let when = "";
     let prefix = "";
     if(item.when !== undefined){ when += `(${item.when})`; }
@@ -313,21 +332,15 @@ function extractPrefixBindings(item: BindingItem, prefixItems: BindingMap = {}){
 function processBindings(spec: BindingSpec){
     let expandedSpec = expandDefaults(spec.bind);
     let items = listBindings(expandedSpec);
-    let parsedStrictItems = strictBindingItem.array().safeParse(items);
-    if(!parsedStrictItems.success){
-        vscode.window.showErrorMessage("Bad stuf...")
-    }else{
-        let strictItems = parsedStrictItems.data
-    strictItems = expandBindingKeys(strictItems);
-    strictItems = expandBindingDocsAcrossWhenClauses(strictItems);
-    strictItems = strictItems.map((item: BindingItem) => {
+    items = expandBindingKeys(items);
+    items = expandBindingDocsAcrossWhenClauses(items);
+    let bindings = items.map(item => {
         item = moveModeToWhenClause(item);
-        item = wrapBindingInDoCommand(item);
-        return item;
+        return itemToConfigBinding(item);
     });
     let prefixBindings: BindingMap = {};
-    strictItems = strictItems.map((b: any) => extractPrefixBindings(b, prefixBindings));
-    return strictItems.concat(values(prefixBindings));
+    bindings = bindings.map(b => extractPrefixBindings(b, prefixBindings));
+    return items.concat(values(prefixBindings));
 }
 
 async function parseBindingFile(file: vscode.Uri){
