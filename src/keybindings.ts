@@ -30,10 +30,10 @@ const bindingCommand = zod.object({
     computedArgs: zod.object({}).passthrough().optional(),
 });
 
-const ALLOWED_MODIFIERS = [ /Ctrl/i, /Shift/i, /Alt/i, /Cmd/i, /Win/i, /Meta/i ];
+const ALLOWED_MODIFIERS = /Ctrl|Shift|Alt|Cmd|Win|Meta/i;
 const ALLOWED_KEYS = [
     /(f[1-9])|(f1[0-9])/i, /a-z/, /0-9/,
-    "`", "-", "=", "[", "]", "\\", ";", "'", ",", ".", "/",
+    /`/, /-/, /=/, /\[/, /\]/, /\\/, /;/, /'/, /,/, /./, /\//,
     /left/i, /up/i, /right/i, /down/i, /pageup/i, /pagedown/i, /end/i, /home/i,
     /tab/i, /enter/i, /escape/i, /space/i, /backspace/i, /delete/i,
     /pausebreak/i, /capslock/i, /insert/i,
@@ -51,13 +51,23 @@ const ALLOWED_KEYS = [
 ];
 
 function isAllowedKeybinding(key: string){
-    
+    for(let press of key.split(/\s+/)){
+        let mods_and_press = press.split("+");
+        for(let mod of mods_and_press.slice(0, -1)){
+            if(mod.match(ALLOWED_MODIFIERS) === null){ return false; }
+        }
+        let unmod_press = mods_and_press[mods_and_press.length-1]
+        if(ALLOWED_KEYS.every(a => unmod_press.match(a) === null)){ return false; }
+    }
+    return true;
 }
+
+const bindingKey = zod.string().refine(isAllowedKeybinding)
 
 const bindingItem = zod.object({
     name: zod.string().optional(),
     description: zod.string().optional(),
-    key: zod.union([zod.string(), zod.string().array()]).optional(),
+    key: zod.union([bindingKey, bindingKey.array()]).optional(),
     when: zod.string().optional(),
     mode: zod.string().optional(),
     allowed_prefixes: zod.string().array().optional(),
