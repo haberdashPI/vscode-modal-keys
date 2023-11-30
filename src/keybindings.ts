@@ -5,30 +5,30 @@ import hash from 'object-hash';
 import { uniq, pick, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
 import { TextDecoder } from 'util';
 import { searchMatches } from './searching';
-import zod from "zod";
-import { strict } from 'assert';
+import { z } from "zod";
+import { fromZodIssue } from 'zod-validation-error';
+import jsep, { Identifier, Literal, MemberExpression } from "jsep";
+import { Expression } from "jsep";
 
 let decoder = new TextDecoder("utf-8");
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Keybinding File Format Specification
 
-// TODO: replace shifted characters with shift+[unshifted]
-
-const bindingHeader = zod.object({
-    version: zod.string().
+const bindingHeader = z.object({
+    version: z.string().
         refine(x => semver.coerce(x), { message: "header.version is not a valid version number" }).
         refine(x => semver.satisfies(semver.coerce(x)!, '1'), 
                { message: "header.version is not a supported version number (must a compatible with 1.0)"}),
-    required_extensions: zod.string().array()
+    required_extensions: z.string().array()
 });
-type BindingHeader = zod.infer<typeof bindingHeader>;
+type BindingHeader = z.infer<typeof bindingHeader>;
 
-const bindingCommand = zod.object({
-    command: zod.string().optional(), // only optional before default expansion
-    arg: zod.object({}).passthrough().optional(),
-    computedArgs: zod.object({}).passthrough().optional(),
-});
+const bindingCommand = z.object({
+    command: z.string().optional(), // only optional before default expansion
+    args: z.object({}).passthrough().optional(),
+    computedArgs: z.object({}).passthrough().optional(),
+}).strict();
 
 const ALLOWED_MODIFIERS = /Ctrl|Shift|Alt|Cmd|Win|Meta/i;
 const ALLOWED_KEYS = [
@@ -54,27 +54,28 @@ function isAllowedKeybinding(key: string){
     for(let press of key.split(/\s+/)){
         let mods_and_press = press.split("+");
         for(let mod of mods_and_press.slice(0, -1)){
-            if(mod.match(ALLOWED_MODIFIERS) === null){ return false; }
+            if(!ALLOWED_MODIFIERS.test(mod)){ return false; }
         }
         let unmod_press = mods_and_press[mods_and_press.length-1]
-        if(ALLOWED_KEYS.every(a => unmod_press.match(a) === null)){ return false; }
+        if(ALLOWED_KEYS.every(a => !a.test(unmod_press))){ return false; }
     }
     return true;
 }
 
-const bindingKey = zod.string().refine(isAllowedKeybinding)
+const bindingKey = z.string().refine(isAllowedKeybinding, arg =>
+    { return { message: `Invalid keybinding '${arg}'` }})
 
-const bindingItem = zod.object({
-    name: zod.string().optional(),
-    description: zod.string().optional(),
-    key: zod.union([bindingKey, bindingKey.array()]).optional(),
-    when: zod.string().optional(),
-    mode: zod.string().optional(),
-    allowed_prefixes: zod.string().array().optional(),
-    do: zod.union([zod.string(), bindingCommand, 
-        zod.array(zod.union([zod.string(), bindingCommand]))]).optional()
+const bindingItem = z.object({
+    name: z.string().optional(),
+    description: z.string().optional(),
+    key: z.union([bindingKey, bindingKey.array()]).optional(),
+    when: z.string().optional(),
+    mode: z.string().optional(),
+    allowed_prefixes: z.string().array().optional(),
+    do: z.union([z.string(), bindingCommand, 
+        z.array(z.union([z.string(), bindingCommand]))]).optional()
 }).strict();
-type BindingItem = zod.infer<typeof bindingItem>;
+type BindingItem = z.infer<typeof bindingItem>;
 
 // a strictBindingItem is satisfied after expanding all default fields
 const strictBindingItem = bindingItem.required({
@@ -82,15 +83,15 @@ const strictBindingItem = bindingItem.required({
     mode: true,
 }).extend({
     // do now requires `command` to be present when using the object form
-    do: zod.union([zod.string(), bindingCommand.required({command: true}),
-        zod.array(zod.union([zod.string(), bindingCommand.required({command: true})]))]);
+    do: z.union([z.string(), bindingCommand.required({command: true}),
+                 z.array(z.union([z.string(), bindingCommand.required({command: true})]))])
 });
-type StrictBindingItem = zod.infer<typeof strictBindingItem>;
+type StrictBindingItem = z.infer<typeof strictBindingItem>;
 
-const bindingTreeBase = zod.object({
-    name: zod.string(),
-    kind: zod.string().optional(),
-    description: zod.string(),
+const bindingTreeBase = z.object({
+    name: z.string(),
+    kind: z.string().optional(),
+    description: z.string(),
     default: bindingItem.optional(),
     items: bindingItem.array().optional()
 });
@@ -99,22 +100,23 @@ const bindingTreeBase = zod.object({
 type OtherKeys = {
     [key: string]: BindingTree | BindingItem | BindingItem | string | undefined
 };
-type BindingTree = zod.infer<typeof bindingTreeBase> & OtherKeys;
-const bindingTree: zod.ZodType<BindingTree> = bindingTreeBase.catchall(zod.lazy(() => bindingTree));
+type BindingTree = z.infer<typeof bindingTreeBase> & OtherKeys;
+const bindingTree: z.ZodType<BindingTree> = bindingTreeBase.catchall(z.lazy(() => bindingTree));
 
 const strictBindingTree = bindingTreeBase.extend({
     items: strictBindingItem.array().optional()
 });
-type StrictBindingTree = zod.infer<typeof strictBindingTree> & OtherKeys;
+type StrictBindingTree = z.infer<typeof strictBindingTree> & OtherKeys;
 
 // TODO: unit test - verify that zod recursively validates all 
 // elements of the binding tree
 
-const bindingSpec = zod.object({
+const bindingSpec = z.object({
     header: bindingHeader,
-    bind: bindingTree
+    bind: bindingTree,
+    define: z.object({}).passthrough()
 });
-type BindingSpec = zod.infer<typeof bindingSpec>;
+type BindingSpec = z.infer<typeof bindingSpec>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Keybinding Interpretation
@@ -178,25 +180,97 @@ function expandDefaults(bindings: BindingTree, prefix: string = "bind", default_
     return <StrictBindingTree>returnValue;
 }
 
+function evalKeyExpressions(str: string, key: string, definitions: any){
+    let result = ""
+    let r = /\{.*?key.*?\}/g
+    let match = r.exec(str);
+    let start_i = 0
+    while(match !== null){
+        let prefix = str.slice(start_i, match.index)
+        let evaled;
+        try{
+            // slice to remove `{` and `}`
+            evaled = evalKeyStr(match[0].slice(1,-1), key, definitions);
+        }catch(e){
+            evaled = undefined;
+        }
+        if(evaled === undefined){
+            vscode.window.showErrorMessage(`Don't know how to interpret the expression 
+                ${match[0]} in ${str}}`)
+            evaled = match[0]
+        }
+        result += prefix + evaled
+        start_i += prefix.length + match[0].length; 
+        match = r.exec(str.slice(start_i));
+    }
+    result += str.slice(start_i);
+    return result
+}
+
+function evalKeyStr(str: string, key: string, definitions: any){
+    let parsed: Expression;
+    try{
+        parsed = jsep(str);
+    }catch(e: any){
+        vscode.window.showErrorMessage(`${e.description} at offset ${e.index} in ${str}`)
+        return str
+    }
+    return evalKeyExpression(str, parsed, key, definitions)
+}
+
+function evalKeyExpression(stre: string, exp: Expression, key: string, definitions: any): any {
+    if(exp.type == "MemberExpression"){
+        let mem = <MemberExpression>exp;
+        let obj = evalKeyExpression(stre, mem.object, key, definitions);
+        if(mem.computed){
+            let prop = evalKeyExpression(stre, mem.property, key, definitions);
+            let val = obj[prop]
+            if(val === undefined){
+                vscode.window.showErrorMessage(`Undefined property ${prop} in expression ${stre}.`)
+                throw new Error();
+            }
+            else{ return val; }
+        }else{
+            if(mem.property.type == "Identifier"){
+                let propertyId = <Identifier>mem.property;
+                return obj[propertyId.name];
+            }else{
+                return undefined;
+            }
+        }
+    }else if(exp.type == "Literal"){
+        let lit = <Literal>exp;
+        return lit.value;
+    }else if(exp.type == "Identifier"){
+        let id = <Identifier>exp;
+        if(id.name === 'key'){ return key; }
+        let val = definitions[id.name]
+        if(val === undefined){
+            vscode.window.showErrorMessage(`Undefined identifier '${id.name}'`)
+            throw new Error();
+        }
+        else{ return val; }
+    }
+}
+
 // TODO: check in unit tests
 // invalid items (e.g. both key and keys defined) get detected
-function reifyItemKey(obj: any, k: string): any {
+function reifyItemKey(obj: any, k: string, definitions: any): any {
     return mapValues(obj, (val, prop) => {
-        if(val === "{key}"){ return k; }
         if(prop === "keys"){ return undefined; }
-        if(typeof val === 'string'){ return val.replace("{key}", k); }
+        if(typeof val === 'string'){ return evalKeyExpressions(val, k, definitions); }
         if(typeof val === 'number'){ return val; }
         if(typeof val === 'boolean'){ return val; }
         if(typeof val === 'undefined'){ return val; }
-        if(Array.isArray(val)){ return val.map(x => reifyItemKey(x, k)); }
-        return reifyItemKey(val, k);
+        if(Array.isArray(val)){ return val.map(x => reifyItemKey(x, k, definitions)); }
+        return reifyItemKey(val, k, definitions);
     });
 }
 
-function expandBindingKeys(bindings: StrictBindingItem[]): StrictBindingItem[] {
+function expandBindingKeys(bindings: StrictBindingItem[], definitions: any): StrictBindingItem[] {
     return flatMap(bindings, item => {
         if(Array.isArray(item.key)){
-            return item.key.map(k => {return {...reifyItemKey(omit(item, 'key'), k), key: k};});
+            return item.key.map(k => {return {...reifyItemKey(omit(item, 'key'), k, definitions), key: k};});
         }else{
             return [item];
         }
@@ -375,7 +449,7 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
 function processBindings(spec: BindingSpec){
     let expandedSpec = expandDefaults(spec.bind);
     let items = listBindings(expandedSpec);
-    items = expandBindingKeys(items);
+    items = expandBindingKeys(items, spec.define);
     items = expandBindingDocsAcrossWhenClauses(items);
     let bindings = items.map(item => {
         item = moveModeToWhenClause(item);
@@ -533,8 +607,8 @@ async function importBindings() {
         let v = bindingHeader.shape.version;
         let d = bindingItem.shape.do;
         for (let issue of parsedBindings.error.issues.slice(0, 3)) {
-            vscode.window.showErrorMessage(`Parsing of bindings failed: code ${issue.code} 
-                near ${issue.path.join(".")} (${issue.message})`);
+            vscode.window.showErrorMessage(`Parsing of bindings failed. 
+                ${fromZodIssue(issue)}`);
         }
     }
 }

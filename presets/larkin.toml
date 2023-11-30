@@ -356,8 +356,20 @@ do = ["modalkeys.shrinkSelections", "deleteAllRight", "modalkeys.enterInsert"]
 [[bind.action.basic.items]]
 key = "C"
 when = "!modalkeys.count > 1"
-do = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}, dir = "up"}, 
-            "deleteRight", "editor.actions.insertLineBefore", "modalkeys.enterInsert"]
+
+[[bind.action.basic.items.do]]
+command = "modalkeys.selectLines"
+computedArgs.value = "count"
+args.dir = "up"
+
+[[bind.action.basic.items.do]]
+command = "deleteRight"
+
+[[bind.action.basic.items.do]]
+command = "editor.actions.insertLineBefore"
+
+[[bind.action.basic.items.do]]
+command = "modalkeys.enterInsert"
 
 [[bind.action.basic.items]]
 key = "d"
@@ -401,11 +413,38 @@ key = ["enter", "g '"]
 do.command = "modalkeys.enterMode"
 do.args.mode = "normal"
 
+[define.symmetric_key_map]
+"shift+;" = ":"
+"shift+'" = "\""
+"shift+/" = "?"
+"shift+\\" = "|"
+"shift+=" = "+"
+"shift+-" = "-"
+"shift+8" = "*"
+"shift+7" = "&"
+"shift+6" = "^"
+"shift+5" = "%"
+"shift+4" = "$"
+"shift+3" = "#"
+"shift+2" = "@"
+"shift+1" = "!"
+"shift+`" = "~"
+";" = ";"
+"'" = "'"
+"," = ","
+"." = "."
+"/" = "/"
+"=" = "="
+"-" = "-"
+"`" = "`"
+
 [[bind.action.symmetric.items]]
-key = [":", ";", "'", '"', ",", ".", "/", "?", "|", "=", "+", "-", "_", "*", "&", "^", "%", 
-       "$", "#", "@", "!", "`", "~"]
-description = "Insert the character {key} at both ends of each selection"
+key = ["shift+;", ";", "'", "shift+'", ",", ".", "/", "shift+/", "shift+\\", 
+       "=", "shift+=", "-", "shift+-", "shift+8", "shift+7", "shift+6", 
+       "shift+5", "shift+4", "shift+3", "shift+2", "shift+1", "shift+`",
+       "`"]
+description = "Insert the character {symmetric_key_map[key]} at both ends of each selection"
 do.command = "selection-utilities.insertAround"
-do.args = { before = "{key}", after = "{key}"}
+do.args = { before = "{symmetric_key_map[key]}", after = "{symmetric_key_map[key]}"}
 
 
