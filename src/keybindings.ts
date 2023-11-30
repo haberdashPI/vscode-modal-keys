@@ -30,6 +30,30 @@ const bindingCommand = zod.object({
     computedArgs: zod.object({}).passthrough().optional(),
 });
 
+const ALLOWED_MODIFIERS = [ /Ctrl/i, /Shift/i, /Alt/i, /Cmd/i, /Win/i, /Meta/i ];
+const ALLOWED_KEYS = [
+    /(f[1-9])|(f1[0-9])/i, /a-z/, /0-9/,
+    "`", "-", "=", "[", "]", "\\", ";", "'", ",", ".", "/",
+    /left/i, /up/i, /right/i, /down/i, /pageup/i, /pagedown/i, /end/i, /home/i,
+    /tab/i, /enter/i, /escape/i, /space/i, /backspace/i, /delete/i,
+    /pausebreak/i, /capslock/i, /insert/i,
+    /numpad[0-9]/i, /numpad_multiply/i, /numpad_add/i, /numpad_separator/i,
+    /numpad_subtract/i, /numpad_decimal/i, /numpad_divide/i,
+    // layout independent versions
+    /(\[f[1-9]\])|(\[f1[0-9]\])/i, /\[Key[A-Z]\]/i, /\[Digit[0-9]\]/i, /\[Numpad[0-9]\]/i,
+    /\[Backquote\]/, /\[Minus\]/, /\[Equal\]/, /\[BracketLeft\]/, /\[BracketRight\]/, 
+    /\[Backslash\]/, /\[Semicolon\]/, /\[Quote\]/, /\[Comma\]/, /\[Period\]/, /\[Slash\]/,
+    /\[ArrowLeft\]/, /\[ArrowUp\]/, /\[ArrowRight\]/, /\[ArrowDown\]/, /\[PageUp\]/, 
+    /\[PageDown\]/, /\[End\]/, /\[Home\]/, /\[Tab\]/, /\[Enter\]/, /\[Escape\]/, /\[Space\]/, 
+    /\[Backspace\]/, /\[Delete\]/, /\[Pause\]/, /\[CapsLock\]/, /\[Insert\]/,
+    /\[NumpadMultiply\]/, /\[NumpadAdd\]/, /\[NumpadComma\]/, /\[NumpadSubtract\]/, 
+    /\[NumpadDecimal\]/, /\[NumpadDivide\]/,
+];
+
+function isAllowedKeybinding(key: string){
+    
+}
+
 const bindingItem = zod.object({
     name: zod.string().optional(),
     description: zod.string().optional(),
