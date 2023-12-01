@@ -123,9 +123,9 @@ name = "hold selection"
 description = """
 selection commands extend the selection
 """
-do.command = "modalkeys.flag"
-do.args.flag = "select_on"
-do.args.value = "toggle"
+do.command = "modalkeys.set"
+do.args.name = "select_on"
+do.args.value = true
 
 [bind.motion.obj]
 name = "Motions around various regex-like objects"
@@ -322,12 +322,12 @@ description = """
 Without a count: change selected region of text. With a count:
 change up to `count` lines.
 """
-when = "modalkeys.editorHasMultilineSelection"
+when = "editorHasMultilineSelection"
 do = ["deleteRight", "editor.action.insertLineBefore", "modalkeys.enterInsert"]
 
 [[bind.action.basic.items]]
 key = "c"
-when = "!modalkeys.editorHasMultilineSelection && editorHasSelection"
+when = "!editorHasMultilineSelection && editorHasSelection"
 do = ["deleteRight", "modalKeys.enterInsert"]
 
 [[bind.action.basic.items]]

@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import jsep, { Expression, Identifier, Literal, MemberExpression } from "jsep";
+import SafeExpression, { EvalFun } from 'safe-expression';
+import { mapValues } from 'lodash';
 
-export function evalExpressionsInString(str: string, values: any) {
+export function evalExpressionsInString(str: string, values: Record<string, any>) {
     let result = "";
     let r = /\{.*?key.*?\}/g;
     let match = r.exec(str);
@@ -28,47 +29,32 @@ export function evalExpressionsInString(str: string, values: any) {
     return result;
 }
 
-export function evalStr(str: string, values: any) {
-    let parsed: Expression;
-    try {
-        parsed = jsep(str);
-    } catch (e: any) {
-        vscode.window.showErrorMessage(`${e.description} at offset ${e.index} in ${str}`);
-        return str;
-    }
-    return evalExpression(str, parsed, values);
+export function reify(obj: any, ev: (str: string) => any): any {
+    return mapValues(obj, (val, prop) => {
+        if(prop === "keys"){ return undefined; }
+        if(typeof val === 'string'){ return ev(val); }
+        if(typeof val === 'number'){ return val; }
+        if(typeof val === 'boolean'){ return val; }
+        if(typeof val === 'undefined'){ return val; }
+        if(Array.isArray(val)){ return val.map(x => reify(x, ev)); }
+        return reify(val, ev);
+    });
 }
 
-function evalExpression(stre: string, exp: Expression, values: any): any {
-    if (exp.type === "MemberExpression") {
-        let mem = <MemberExpression>exp;
-        let obj = evalExpression(stre, mem.object, values);
-        if (mem.computed) {
-            let prop = evalExpression(stre, mem.property, values);
-            let val = obj[prop];
-            if (val === undefined) {
-                vscode.window.showErrorMessage(`Undefined property ${prop} in expression ${stre}.`);
-                throw new Error();
-            }
-            else { return val; }
-        } else {
-            if (mem.property.type === "Identifier") {
-                let propertyId = <Identifier>mem.property;
-                return obj[propertyId.name];
-            } else {
-                return undefined;
-            }
-        }
-    } else if (exp.type === "Literal") {
-        let lit = <Literal>exp;
-        return lit.value;
-    } else if (exp.type === "Identifier") {
-        let id = <Identifier>exp;
-        let val = values[id.name];
-        if (val === undefined) {
-            vscode.window.showErrorMessage(`Undefined identifier '${id.name}'`);
-            throw new Error();
-        }
-        else { return val; }
+const evaledExpressions: Record<string, EvalFun> = {};
+const buildEvaled = new SafeExpression();
+
+export function evalStr(str: string, values: Record<string, any>) {
+    let exec = evaledExpressions[str];
+    if(exec === undefined){
+        evaledExpressions[str] = exec = buildEvaled(str);
     }
+    let result = str;
+    try{
+        result = exec(values);
+    }catch(e: any){
+        vscode.window.showErrorMessage(`Error evaluating ${str}: ${e.message}`);
+        return undefined;
+    }
+    return result;
 }

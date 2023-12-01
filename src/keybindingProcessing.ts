@@ -3,7 +3,7 @@ import { BindingSpec, BindingTree, StrictBindingTree, BindingItem, StrictBinding
     strictBindingItem } from "./keybindingParsing";
 import * as vscode from 'vscode';
 import { uniq, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
-import { evalExpressionsInString } from './expressions';
+import { reify, evalExpressionsInString } from './expressions';
 
 // top level function (this calls everything else)
 export function processBindings(spec: BindingSpec){
@@ -74,22 +74,14 @@ function expandDefaults(bindings: BindingTree, prefix: string = "bind", default_
 
 // TODO: check in unit tests
 // invalid items (e.g. both key and keys defined) get detected
-function reifyItemKey(obj: any, k: string, definitions: any): any {
-    return mapValues(obj, (val, prop) => {
-        if(prop === "keys"){ return undefined; }
-        if(typeof val === 'string'){ return evalExpressionsInString(val, {...definitions, key: k}); }
-        if(typeof val === 'number'){ return val; }
-        if(typeof val === 'boolean'){ return val; }
-        if(typeof val === 'undefined'){ return val; }
-        if(Array.isArray(val)){ return val.map(x => reifyItemKey(x, k, definitions)); }
-        return reifyItemKey(val, k, definitions);
-    });
-}
 
 function expandBindingKeys(bindings: StrictBindingItem[], definitions: any): StrictBindingItem[] {
     return flatMap(bindings, item => {
         if(Array.isArray(item.key)){
-            return item.key.map(k => {return {...reifyItemKey(omit(item, 'key'), k, definitions), key: k};});
+            return item.key.map(k => {
+                let keyEvaled = reify(omit(item, 'key'), 
+                    str => evalExpressionsInString(str, {definitions, key: k}));
+                return {...keyEvaled, key: k};});
         }else{
             return [item];
         }
@@ -116,7 +108,7 @@ interface IConfigKeyBinding {
     description?: string,
     mode?: string,
     when?: string,
-    args: { do: string | object } | { key: string }
+    args: { do: string | object | (string | object)[] } | { key: string }
 }
 
 function itemToConfigBinding(item: StrictBindingItem): IConfigKeyBinding {

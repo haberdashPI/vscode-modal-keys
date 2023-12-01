@@ -56,6 +56,9 @@ function isAllowedKeybinding(key: string){
 const bindingKey = z.string().refine(isAllowedKeybinding, arg =>
     { return { message: `Invalid keybinding '${arg}'` }; });
 
+const doArg = z.union([z.string(), bindingCommand]);
+const doArgs = z.union([doArg, doArg.array()]);
+
 export const bindingItem = z.object({
     name: z.string().optional(),
     description: z.string().optional(),
@@ -63,21 +66,25 @@ export const bindingItem = z.object({
     when: z.string().optional(),
     mode: z.string().optional(),
     allowed_prefixes: z.string().array().optional(),
-    do: z.union([z.string(), bindingCommand, 
-        z.array(z.union([z.string(), bindingCommand]))]).optional()
+    do: doArgs.optional()
 }).strict();
 export type BindingItem = z.infer<typeof bindingItem>;
 
 // a strictBindingItem is satisfied after expanding all default fields
+const strictBindingCommand = bindingCommand.required({command: true});
+
+const strictDoArg = z.union([z.string(), strictBindingCommand]);
+const strictDoArgs = z.union([strictDoArg, strictDoArg.array()]);
 export const strictBindingItem = bindingItem.required({
     key: true,
     mode: true,
 }).extend({
     // do now requires `command` to be present when using the object form
-    do: z.union([z.string(), bindingCommand.required({command: true}),
-                 z.array(z.union([z.string(), bindingCommand.required({command: true})]))])
+    do: strictDoArgs
 });
 export type StrictBindingItem = z.infer<typeof strictBindingItem>;
+export type StrictDoArg = z.infer<typeof strictDoArg>;
+export type StrictDoArgs = z.infer<typeof strictDoArgs>;
 
 const bindingTreeBase = z.object({
     name: z.string(),
