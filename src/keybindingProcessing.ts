@@ -1,9 +1,10 @@
 import hash from 'object-hash';
+import jsep from 'jsep';
 import { BindingSpec, BindingTree, StrictBindingTree, BindingItem, StrictBindingItem, 
     strictBindingItem } from "./keybindingParsing";
 import * as vscode from 'vscode';
 import { uniq, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
-import { reify, evalExpressionsInString } from './expressions';
+import { reifyStrings, evalExpressionsInString } from './expressions';
 
 // top level function (this calls everything else)
 export function processBindings(spec: BindingSpec){
@@ -79,7 +80,7 @@ function expandBindingKeys(bindings: StrictBindingItem[], definitions: any): Str
     return flatMap(bindings, item => {
         if(Array.isArray(item.key)){
             return item.key.map(k => {
-                let keyEvaled = reify(omit(item, 'key'), 
+                let keyEvaled = reifyStrings(omit(item, 'key'), 
                     str => evalExpressionsInString(str, {definitions, key: k}));
                 return {...keyEvaled, key: k};});
         }else{
@@ -226,10 +227,6 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
     if(item.when !== undefined){ when += `(${item.when})`; }
 
     if(item.key !== undefined){
-        if(typeof item.key.trim  !== 'function'){
-            console.log("WhAT?!");
-        }
-
         let key_seq = item.key.trim().split(/\s+/);
 
         for(let key of key_seq.slice(0, -1)){
@@ -245,7 +242,9 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
             prefix += key;
 
             let prefixItem: IConfigKeyBinding = {key, command: "modalkeys.prefix", when: expandedWhen, args: {key}}; 
-            let prefixKey = hash({key, mode: item.mode, when: item.when});
+            // we parse the `when` expression so that strings that are !== but yield
+            // equivalent syntactic trees will hash identically
+            let prefixKey = hash({key, mode: item.mode, when: jsep(item.when || "")});
             prefixItems[prefixKey] = prefixItem;
         }
 

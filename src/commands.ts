@@ -1,19 +1,27 @@
 import * as vscode from 'vscode';
-import { StrictDoArgs, StrictDoArg } from './keybindingParsing';
-import { reify, evalStr } from './expressions';
+import { StrictDoArgs, StrictDoArg, strictDoArgs } from './keybindingParsing';
+import { reifyStrings, evalStr } from './expressions';
+import { fromZodError } from 'zod-validation-error';
 
 interface EvalContext{
     [k: string]: any
 }
 
-let state = {
-    evalContext: <EvalContext>{
-        prefix: '',
-        count: 0,
-        mode: 'insert'
-    },
-    transientValues: <string[]>[]
-};
+class CommandState {
+    evalContext: EvalContext = {};
+    transientValues: string[] = [];
+    constructor(){ 
+        this.setEvalContext('prefix', '');
+        this.setEvalContext('count', 0);
+        this.setEvalContext('mode', 'insert');
+    }
+    setEvalContext(key: string, value: any){
+        this.evalContext[key] = value;
+        vscode.commands.executeCommand('setContext', 'modlakeys.'+key, value);
+    }
+}
+let state = new CommandState();
+
 
 function runCommand(command: StrictDoArg){
     if(typeof command === 'string'){
@@ -22,57 +30,109 @@ function runCommand(command: StrictDoArg){
         let finalArgs: Record<string, any> = command.args || {};
         if(command.computedArgs !== undefined){
             finalArgs = {...finalArgs, 
-                        ...reify(command.computedArgs, str => evalStr(str, state.evalContext))};
+                        ...reifyStrings(command.computedArgs, str => evalStr(str, state.evalContext))};
         }
         vscode.commands.executeCommand(command.command, finalArgs);
     }
 }
 
-function runCommands(doArgs: StrictDoArgs){
-    if(Array.isArray(doArgs)){
-        for(let doArg of doArgs){
-            runCommand(doArg);
-        }
+function runCommands(args_: unknown){
+    let args_parsing = strictDoArgs.safeParse(args_);
+    if(!args_parsing.success){
+        vscode.window.showErrorMessage("Unexpected arguments to `modalkeys.do`: "+
+            fromZodError(args_parsing.error));
+    } else {
+        let args = args_parsing.data;
+        // run the commands
+        if (Array.isArray(args)) { for (let arg of args) { runCommand(arg); } }
+        else { runCommand(args); }
+
+        reset();
     }
-    // clear any relevant state
-    state.evalContext.count = 0;
-    state.evalContext.prefix = '';
-    for(let k in state.transientValues){
-        state.evalContext[k] = undefined;
-    }
-    state.transientValues = [];
 }
 
-function updateCount(args: { value: any }){
+function updateCount(args_: unknown){
     let num: number | undefined = undefined;
+    if((<any>args_).value === undefined){
+        vscode.window.showErrorMessage(`Unexpected arguments to 'modalkeys.updateCount': 
+            ${JSON.stringify(args_, null, 4)}`);
+        return;
+    }
+    let args = <{ value: any }>args_;
     if(typeof args.value === 'string'){
         num = Number(args.value);
     }else if(typeof args.value === 'number'){
         num = args.value;
     }else{
-        vscode.window.showErrorMessage(`Unexpected argument to 'modalkeys.updateCount': 
-            ${args.value}`);
+        vscode.window.showErrorMessage(`Unexpected value of argument 'value' to 
+            'modalkeys.updateCount': ${args.value}`);
         return;
     }
 
     if(num !== undefined){
-        state.evalContext.count = state.evalContext.count*10 + num;
+        state.setEvalContext('count', state.evalContext.count*10 + num);
     }
 }
 
-function prefix(args: { key: string, flag?: string }){
-    state.evalContext.prefix += " " + args.key;
+function prefix(args_: unknown){
+    if(!(<any>args_).key !== undefined){
+        vscode.window.showErrorMessage(`Expected arguments to 'modalkeys.prefix' to have 
+            a 'key' argument: ${JSON.stringify(args_, null, 4)}`);
+    }
+    let args = <{ key: unknown, flag?: unknown }> args_;
+    if(args.key === 'string'){
+        state.setEvalContext('prefix', state.evalContext.prefix + " " + args.key);
+    }else{
+        vscode.window.showErrorMessage(`Expected 'key' to be a string in 'modalkeys.prefix' 
+            but got: ${JSON.stringify(args.flag, null, 4)}`);
+        return;
+    }
     if(args.flag){
-        state.evalContext[args.flag] = true;
-        state.transientValues.push(args.flag);
+        if(typeof args.flag === 'string'){
+            state.setEvalContext(args.flag, true);
+            state.transientValues.push(args.flag);
+        }else{
+            vscode.window.showErrorMessage(`Expected 'flag' to be a string in 
+                'modalkeys.prefix' but got: ${JSON.stringify(args.flag, null, 4)}`);
+        }
     }
 }
 
-function set(args: { name: string, value: any, transient?: boolean }){
-    state.evalContext[args.name] = args.value;
-    if(args.transient){
-        state.transientValues.push(args.name);
+function set(args_: unknown){
+    if((<any>args_).name === undefined && (<any>args_).value === undefined){
+        vscode.window.showErrorMessage(`'modalkeys.set' expects a 'name' and a 'value' 
+            argument, but got the following arguments instead: 
+            ${JSON.stringify(args_, null, 4)}`)
+        return;
     }
+    let args = <{name: unknown, value: any, transient?: unknown}>args_;
+    // desired type: { name: string, value: any, transient?: boolean }
+    if(args.name === 'string'){
+        state.setEvalContext(args.name, args.value);
+    }else{
+        vscode.window.showErrorMessage(`'modalkeys.set' expects 'name' to be a string. Got
+            the following instead: ${JSON.stringify(args.name, null, 4)}`);
+        return;
+    }
+    if(args.transient !== undefined){
+        if(typeof args.transient === 'boolean'){
+            state.transientValues.push(args.name);
+        }else{
+            vscode.window.showErrorMessage(`'modalkeys.set' expects 'transient' to be a
+                boolean value. Go the following instead: 
+                ${JSON.stringify(args.name, null, 4)}`);
+        }
+    }
+}
+
+function reset(){
+    // clear any relevant state
+    state.setEvalContext('count', 0);
+    state.setEvalContext('prefix', '');
+    for (let k in state.transientValues) {
+        state.setEvalContext(k, undefined);
+    }
+    state.transientValues = [];
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -110,8 +170,11 @@ export function activate(context: vscode.ExtensionContext) {
         'modalkeys.enterNormal',
         () => set({name: 'mode', value: 'normal'})
     ));
-}
 
-// TODO: setup the various when conditions stuff here
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'modalkeys.reset',
+        reset
+    ));
+}
 
 // TODO: after getting the above working, copy over search commands, and figure out how to hook into type

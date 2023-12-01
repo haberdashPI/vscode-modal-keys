@@ -17,8 +17,6 @@ required_extensions = [
     "koalamer.labeled-bookmarks",
 ]
 
-# TODO: when implementing `modalkeys.do` we can use JSEP to parse 
-# expressions for the `computedArgs` value: https://github.com/EricSmekens/jsep
 [bind]
 name = "Larkin Key Bindings"
 description = """
@@ -35,6 +33,29 @@ selections.
 
 These bindings are named after the middle name of my first child.
 """
+
+[bind.modes]
+name = "Modes"
+description = """
+Larkin uses different modes (like vim). Insert is the default and it 
+works the same way VSCode normally does. Upon hitting escape you enter normal
+mode, wherein a variety of behaviors are available to move around and manipulate the
+text.
+
+Refer to the actions section for the various ways you can exit normal mode and
+return to insert mode.
+
+**TODO**: document the other modes
+"""
+
+[[bind.modes.items]]
+key = ["escape", "ctrl+["]
+do = ["modalkeys.enterNormal", "modalkeys.reset"]
+
+[[bind.modes.items]]
+key = ["escape", "ctrl+["]
+when = "suggsetWidgetVisible && textInuptFocus"
+do = ["modalkeys.enterNormal", "modalkeys.reset"]
 
 [bind.count]
 name = "count"

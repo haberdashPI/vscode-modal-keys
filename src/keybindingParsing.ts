@@ -74,7 +74,7 @@ export type BindingItem = z.infer<typeof bindingItem>;
 const strictBindingCommand = bindingCommand.required({command: true});
 
 const strictDoArg = z.union([z.string(), strictBindingCommand]);
-const strictDoArgs = z.union([strictDoArg, strictDoArg.array()]);
+export const strictDoArgs = z.union([strictDoArg, strictDoArg.array()]);
 export const strictBindingItem = bindingItem.required({
     key: true,
     mode: true,

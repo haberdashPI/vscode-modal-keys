@@ -17,8 +17,8 @@ export function evalExpressionsInString(str: string, values: Record<string, any>
             evaled = undefined;
         }
         if (evaled === undefined) {
-            vscode.window.showErrorMessage(`Don't know how to interpret the expression 
-                ${match[0]} in ${str}}`);
+            vscode.window.showErrorMessage(`The expression 
+                ${match[0]}, found in ${str}, could not be evaluated.`);
             evaled = match[0];
         }
         result += prefix + evaled;
@@ -29,16 +29,18 @@ export function evalExpressionsInString(str: string, values: Record<string, any>
     return result;
 }
 
-export function reify(obj: any, ev: (str: string) => any): any {
-    return mapValues(obj, (val, prop) => {
-        if(prop === "keys"){ return undefined; }
-        if(typeof val === 'string'){ return ev(val); }
-        if(typeof val === 'number'){ return val; }
-        if(typeof val === 'boolean'){ return val; }
-        if(typeof val === 'undefined'){ return val; }
-        if(Array.isArray(val)){ return val.map(x => reify(x, ev)); }
-        return reify(val, ev);
-    });
+export function reifyStrings(obj: any, ev: (str: string) => any): any {
+    if(Array.isArray(obj)){ return obj.map(x => reifyStrings(x, ev)); }
+    if(typeof obj === 'object'){
+        return mapValues(obj, (val, prop) => { return reifyStrings(val, ev); });
+    }
+    if(typeof obj === 'string'){ return ev(obj); }
+    if(typeof obj === 'number'){ return obj; }
+    if(typeof obj === 'boolean'){ return obj; }
+    if(typeof obj === 'undefined'){ return obj; }
+    if(typeof obj === 'function'){ return obj; }
+    if(typeof obj === 'bigint'){ return obj; }
+    if(typeof obj === 'symbol'){ return obj; }
 }
 
 const evaledExpressions: Record<string, EvalFun> = {};
@@ -47,10 +49,17 @@ const buildEvaled = new SafeExpression();
 export function evalStr(str: string, values: Record<string, any>) {
     let exec = evaledExpressions[str];
     if(exec === undefined){
+        if(str.match(/(?<!=)=(?!=)/)){
+            vscode.window.showErrorMessage(`Found an isolated "=" in this expression.
+                Your expressions are not permitted to set any values. You should
+                use 'modalkeys.set' to do that.`);
+            return undefined;
+        }
         evaledExpressions[str] = exec = buildEvaled(str);
     }
     let result = str;
     try{
+        // do not let the expression modify any of the `values`
         result = exec(values);
     }catch(e: any){
         vscode.window.showErrorMessage(`Error evaluating ${str}: ${e.message}`);
