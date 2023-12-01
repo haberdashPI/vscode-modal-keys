@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { StrictDoArgs, StrictDoArg, strictDoArgs } from './keybindingParsing';
 import { reifyStrings, evalStr } from './expressions';
 import { fromZodError } from 'zod-validation-error';
+import z from 'zod';
 
 interface EvalContext{
     [k: string]: any
@@ -17,7 +18,7 @@ class CommandState {
     }
     setEvalContext(key: string, value: any){
         this.evalContext[key] = value;
-        vscode.commands.executeCommand('setContext', 'modlakeys.'+key, value);
+        vscode.commands.executeCommand('setContext', 'modalkeys.'+key, value);
     }
 }
 let state = new CommandState();
@@ -37,17 +38,17 @@ function runCommand(command: StrictDoArg){
 }
 
 function runCommands(args_: unknown){
-    let args_parsing = strictDoArgs.safeParse(args_);
+    let args_parsing = z.object({ do: strictDoArgs, reset: z.boolean().default(true) }).safeParse(args_);
     if(!args_parsing.success){
         vscode.window.showErrorMessage("Unexpected arguments to `modalkeys.do`: "+
             fromZodError(args_parsing.error));
     } else {
-        let args = args_parsing.data;
+        let args = args_parsing.data.do;
         // run the commands
         if (Array.isArray(args)) { for (let arg of args) { runCommand(arg); } }
         else { runCommand(args); }
 
-        reset();
+        if(args_parsing.data.reset){ reset(); }
     }
 }
 
@@ -107,7 +108,7 @@ function set(args_: unknown){
     }
     let args = <{name: unknown, value: any, transient?: unknown}>args_;
     // desired type: { name: string, value: any, transient?: boolean }
-    if(args.name === 'string'){
+    if(typeof args.name === 'string'){
         state.setEvalContext(args.name, args.value);
     }else{
         vscode.window.showErrorMessage(`'modalkeys.set' expects 'name' to be a string. Got

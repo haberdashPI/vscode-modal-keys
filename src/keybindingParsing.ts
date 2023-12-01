@@ -77,7 +77,6 @@ const strictDoArg = z.union([z.string(), strictBindingCommand]);
 export const strictDoArgs = z.union([strictDoArg, strictDoArg.array()]);
 export const strictBindingItem = bindingItem.required({
     key: true,
-    mode: true,
 }).extend({
     // do now requires `command` to be present when using the object form
     do: strictDoArgs

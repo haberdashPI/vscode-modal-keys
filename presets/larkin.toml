@@ -50,6 +50,7 @@ return to insert mode.
 
 [[bind.modes.items]]
 key = ["escape", "ctrl+["]
+when = "textInputFocus"
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 
 [[bind.modes.items]]
@@ -63,6 +64,7 @@ description = """
 The number keys are used to update the count, which affects how many times the next 
 command is repeated, when relevant.
 """
+do.reset = false
 
 [[bind.count.items]]
 name = "Update number with {key}"
@@ -135,6 +137,7 @@ description = """
 selection commands are changed to both move start and end of a selection to surround the 
 entire object (rather than extending to specified start/end point)
 """
+do.reset = false
 do.command = "modalkeys.prefix"
 do.args = { key = "u", flag = "around_on" }
 
