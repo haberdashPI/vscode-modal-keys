@@ -7,6 +7,8 @@ import { uniq, omit, merge, cloneDeep, flatMap, values, mapValues, entries } fro
 import { reifyStrings, evalExpressionsInString } from './expressions';
 
 // top level function (this calls everything else)
+// TODO: allow defaults for when classes to exapnd into a when clause
+// (e.g. by using arrays that get merged), arrays imply AND
 export function processBindings(spec: BindingSpec){
     let expandedSpec = expandDefaults(spec.bind);
     let items = listBindings(expandedSpec);
@@ -76,13 +78,19 @@ function expandDefaults(bindings: BindingTree, prefix: string = "bind", default_
 // TODO: check in unit tests
 // invalid items (e.g. both key and keys defined) get detected
 
+function expandBindingKey(k: string, item: StrictBindingItem, definitions: any){
+    let keyEvaled = reifyStrings(omit(item, 'key'), 
+        str => evalExpressionsInString(str, {definitions, key: k}));
+    return {...keyEvaled, key: k};
+}
+
+const ALL_KEYS = "`1234567890-=qwertyuiop[]\\asdfghjkl;'zxcvbnm,./";
 function expandBindingKeys(bindings: StrictBindingItem[], definitions: any): StrictBindingItem[] {
     return flatMap(bindings, item => {
         if(Array.isArray(item.key)){
-            return item.key.map(k => {
-                let keyEvaled = reifyStrings(omit(item, 'key'), 
-                    str => evalExpressionsInString(str, {definitions, key: k}));
-                return {...keyEvaled, key: k};});
+            return item.key.map(k => expandBindingKey(k, item, definitions));
+        }else if(item.key === "<all-keys>"){
+            return Array.from(ALL_KEYS).map(k => expandBindingKey(k, item, definitions));
         }else{
             return [item];
         }
@@ -109,7 +117,8 @@ interface IConfigKeyBinding {
     description?: string,
     mode?: string,
     when?: string,
-    args: { do: string | object | (string | object)[] } | { key: string }
+    args: { do: string | object | (string | object)[], resetTransient?: boolean } | 
+        { key: string }
 }
 
 function itemToConfigBinding(item: StrictBindingItem): IConfigKeyBinding {
@@ -120,7 +129,7 @@ function itemToConfigBinding(item: StrictBindingItem): IConfigKeyBinding {
         mode: item.mode,
         when: item.when,
         command: "modalkeys.do",
-        args: { do: item.do }
+        args: { do: item.do, resetTransient: item.resetTransient }
     };
 }
 
@@ -209,13 +218,13 @@ function moveModeToWhenClause(binding: StrictBindingItem){
 function expandAllowedPrefixes(expandedWhen: string, item: BindingItem){
     // add any optionally allowed prefixes
     if(expandedWhen.length > 0){ expandedWhen += ` && `; }
-    expandedWhen += "((modalkeys.prefix == '')";
+    expandedWhen += "( ((modalkeys.prefix || '') == '')"; 
     if(item.allowed_prefixes !== undefined){
         for(let allowed of item.allowed_prefixes){
-            expandedWhen += ` || (modalkeys.prefix == '${allowed}')`;
+            expandedWhen += ` || ((modalkeys.prefix || '') == '${allowed}')`;
         }
     }
-    expandedWhen += ")";
+    expandedWhen += " )";
 
     return expandedWhen;
 }
@@ -235,7 +244,7 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
                 expandedWhen = expandAllowedPrefixes(when, item);
             }else{
                 if(expandedWhen.length > 0) { expandedWhen += " && "; }
-                expandedWhen += `(modalkeys.prefix == '${prefix}')`;
+                expandedWhen += `((modalkeys.prefix || '') == '${prefix}')`;
             }
             // track the current prefix for the next iteration of `map`
             if(prefix.length > 0){ prefix += " "; }
@@ -250,7 +259,7 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
 
         let expandedWhen = when;
         if(expandedWhen.length > 0) { expandedWhen += " && "; }
-        expandedWhen += `(modalkeys.prefix == '${prefix}')`;
+        expandedWhen += `((modalkeys.prefix || '') == '${prefix}')`;
         return {...item, when: expandedWhen, key: key_seq[key_seq.length-1]};
     }
     return item;

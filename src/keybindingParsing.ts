@@ -42,6 +42,7 @@ const ALLOWED_KEYS = [
 ];
 
 function isAllowedKeybinding(key: string){
+    if(key === "<all-keys>"){ return true; }
     for(let press of key.split(/\s+/)){
         let mods_and_press = press.split("+");
         for(let mod of mods_and_press.slice(0, -1)){
@@ -66,7 +67,8 @@ export const bindingItem = z.object({
     when: z.string().optional(),
     mode: z.string().optional(),
     allowed_prefixes: z.string().array().optional(),
-    do: doArgs.optional()
+    do: doArgs.optional(),
+    resetTransient: z.boolean().default(true).optional()
 }).strict();
 export type BindingItem = z.infer<typeof bindingItem>;
 

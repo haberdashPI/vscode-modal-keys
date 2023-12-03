@@ -9,7 +9,12 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:modalkeys.do",
+    "onCommand:modlakeys.importBindings",
+    "onCommand:modalkeys.prefix",
+    "onCommand:modalkeys.set"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [

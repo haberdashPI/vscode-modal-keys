@@ -58,19 +58,26 @@ key = ["escape", "ctrl+["]
 when = "suggsetWidgetVisible && textInuptFocus"
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 
+[[bind.modes.items]]
+# by default typing keys in a mode other than insert is simply ignored
+key = "<all-keys>"
+do.command = "modalkeys.ignore"
+mode = "!insert"
+
 [bind.count]
 name = "count"
 description = """
 The number keys are used to update the count, which affects how many times the next 
 command is repeated, when relevant.
 """
-do.reset = false
+
 
 [[bind.count.items]]
 name = "Update number with {key}"
 key = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 do.command = "modalkeys.updateCount"
 do.args.value = "{key}"
+resetTransient = false
 mode = "!insert" # number keys apply in all modes but insert
 
 [bind.motion]
@@ -137,7 +144,7 @@ description = """
 selection commands are changed to both move start and end of a selection to surround the 
 entire object (rather than extending to specified start/end point)
 """
-do.reset = false
+resetTransient = false
 do.command = "modalkeys.prefix"
 do.args = { key = "u", flag = "around_on" }
 
@@ -314,11 +321,11 @@ do.command = "selection-utilities.expandInBrackets"
 name = "Actions"
 description = "Commands that modify the document or UI"
 kind = "action"
+default.mode = "normal"
 
 [bind.action.basic]
 name = "Basic Actions"
 description = "Essential actions required to edit text"
-default.mode = "normal"
 
 [[bind.action.basic.items]]
 # TODO: add documentation to these basic editor keys
