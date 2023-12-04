@@ -39,8 +39,8 @@ function expandDefaults(bindings: BindingTree, prefix: string = "bind", default_
     let items: StrictBindingItem[] | undefined = undefined;
     if (bindings.items !== undefined) {
         let validated_items = bindings.items.map((item: BindingItem, i: number) => {
-            let expandedItem = mergeWith((cloneDeep(default_item), item, 
-                expandWhenClauseByConcatenation));
+            let expandedItem = mergeWith(cloneDeep(default_item), item,
+                expandWhenClauseByConcatenation);
             let parsing = strictBindingItem.safeParse(expandedItem);
             if(!parsing.success){
                 let issue = parsing.error.issues[0];

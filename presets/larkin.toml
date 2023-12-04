@@ -50,7 +50,6 @@ return to insert mode.
 
 [[bind.modes.items]]
 key = ["escape", "ctrl+["]
-when = "textInputFocus"
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 
 [[bind.modes.items]]

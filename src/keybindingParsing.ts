@@ -64,7 +64,7 @@ export const bindingItem = z.object({
     name: z.string().optional(),
     description: z.string().optional(),
     key: z.union([bindingKey, bindingKey.array()]).optional(),
-    when: z.string().optional(),
+    when: z.union([z.string(), z.string().array()]).optional(),
     mode: z.string().optional(),
     allowed_prefixes: z.string().array().optional(),
     do: doArgs.optional(),
