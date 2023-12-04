@@ -3,12 +3,13 @@ import jsep from 'jsep';
 import { BindingSpec, BindingTree, StrictBindingTree, BindingItem, StrictBindingItem, 
     strictBindingItem } from "./keybindingParsing";
 import * as vscode from 'vscode';
-import { uniq, omit, merge, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
+import { uniq, omit, mergeWith, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
 import { reifyStrings, evalExpressionsInString } from './expressions';
 
 // top level function (this calls everything else)
 // TODO: allow defaults for when classes to exapnd into a when clause
 // (e.g. by using arrays that get merged), arrays imply AND
+// add a default when clause to verify that we're in the text editor
 export function processBindings(spec: BindingSpec){
     let expandedSpec = expandDefaults(spec.bind);
     let items = listBindings(expandedSpec);
@@ -23,6 +24,13 @@ export function processBindings(spec: BindingSpec){
     return bindings.concat(values(prefixBindings));
 }
 
+function expandWhenClauseByConcatenation(obj_: any, src_: any, key: string){
+    if(key !== 'when'){ return; }
+    let obj: any[] = obj_ === undefined ? [] : !Array.isArray(obj_) ? [obj_] : obj_;
+    let src: any[] = src_ === undefined ? [] : !Array.isArray(src_) ? [src_] : src_;
+    return obj.concat(src);
+}
+
 function expandDefaults(bindings: BindingTree, prefix: string = "bind", default_item: BindingItem = {}): StrictBindingTree {
     if (bindings.default !== undefined) {
         default_item = { ...default_item, ...<BindingItem>bindings.default };
@@ -31,7 +39,8 @@ function expandDefaults(bindings: BindingTree, prefix: string = "bind", default_
     let items: StrictBindingItem[] | undefined = undefined;
     if (bindings.items !== undefined) {
         let validated_items = bindings.items.map((item: BindingItem, i: number) => {
-            let expandedItem = merge(cloneDeep(default_item), item);
+            let expandedItem = mergeWith((cloneDeep(default_item), item, 
+                expandWhenClauseByConcatenation));
             let parsing = strictBindingItem.safeParse(expandedItem);
             if(!parsing.success){
                 let issue = parsing.error.issues[0];
@@ -127,7 +136,7 @@ function itemToConfigBinding(item: StrictBindingItem): IConfigKeyBinding {
         name: item.name,
         description: item.description,
         mode: item.mode,
-        when: item.when,
+        when: Array.isArray(item.when) ? "(" + item.when.join(") && (") + ")" : item.when,
         command: "modalkeys.do",
         args: { do: item.do, resetTransient: item.resetTransient }
     };
@@ -198,21 +207,16 @@ function expandBindingDocsAcrossWhenClauses(items: StrictBindingItem[]): StrictB
 }
 
 function moveModeToWhenClause(binding: StrictBindingItem){
-    let expandedWhen = "";
-    if(binding.when !== undefined){
-        expandedWhen += `(${binding.when})`;
-    }
-
+    let when = binding.when ? binding.when : [];
     if(binding.mode !== undefined){
-        if(expandedWhen.length > 0){ expandedWhen += ` && `; }
         if(binding.mode.startsWith("!")){
-            expandedWhen += `(modalkeys.mode != '${binding.mode.slice(1)}')`;
+            when = when.concat(`(modalkeys.mode != '${binding.mode.slice(1)}')`);
         }else{
-            expandedWhen += `(modalkeys.mode == '${binding.mode}')`;
+            when = when.concat(`(modalkeys.mode == '${binding.mode}')`);
         }
     }
 
-    return {...binding, when: expandedWhen};
+    return {...binding, when};
 }
 
 function expandAllowedPrefixes(expandedWhen: string, item: BindingItem){
@@ -250,7 +254,12 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
             if(prefix.length > 0){ prefix += " "; }
             prefix += key;
 
-            let prefixItem: IConfigKeyBinding = {key, command: "modalkeys.prefix", when: expandedWhen, args: {key}}; 
+            let prefixItem: IConfigKeyBinding = {
+                key, 
+                command: "modalkeys.prefix", 
+                when: expandedWhen, 
+                args: {key}
+            }; 
             // we parse the `when` expression so that strings that are !== but yield
             // equivalent syntactic trees will hash identically
             let prefixKey = hash({key, mode: item.mode, when: jsep(item.when || "")});

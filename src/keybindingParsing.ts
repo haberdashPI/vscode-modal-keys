@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
 import { TextDecoder } from 'util';
-import { z } from "zod";
+import { preprocess, z } from "zod";
 
 let decoder = new TextDecoder("utf-8");
 
@@ -75,13 +75,21 @@ export type BindingItem = z.infer<typeof bindingItem>;
 // a strictBindingItem is satisfied after expanding all default fields
 const strictBindingCommand = bindingCommand.required({command: true});
 
+function preprocessWhen(x: unknown): string[] | undefined {
+    if(x === undefined){ return x; }
+    else if(Array.isArray(x)){ return x; }
+    else if(typeof x === 'string'){ return [x]; }
+    else{ return undefined; }
+}
+
 const strictDoArg = z.union([z.string(), strictBindingCommand]);
 export const strictDoArgs = z.union([strictDoArg, strictDoArg.array()]);
 export const strictBindingItem = bindingItem.required({
     key: true,
 }).extend({
     // do now requires `command` to be present when using the object form
-    do: strictDoArgs
+    do: strictDoArgs,
+    when: z.preprocess(preprocessWhen, z.string().array().optional())
 });
 export type StrictBindingItem = z.infer<typeof strictBindingItem>;
 export type StrictDoArg = z.infer<typeof strictDoArg>;

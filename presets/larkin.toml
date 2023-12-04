@@ -64,15 +64,23 @@ key = "<all-keys>"
 do.command = "modalkeys.ignore"
 mode = "!insert"
 
-[bind.count]
+[bind.edit]
+name = "Editor Commands"
+description = """
+Most commands are editing commands, they interact with the text editor, either by
+selecting text in the editor, moving around it, manipulating text in the editor, and
+so forth.
+"""
+default.when = "editorTextFocus"
+
+[bind.edit.count]
 name = "count"
 description = """
 The number keys are used to update the count, which affects how many times the next 
 command is repeated, when relevant.
 """
 
-
-[[bind.count.items]]
+[[bind.edit.count.items]]
 name = "Update number with {key}"
 key = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 do.command = "modalkeys.updateCount"
@@ -80,13 +88,13 @@ do.args.value = "{key}"
 resetTransient = false
 mode = "!insert" # number keys apply in all modes but insert
 
-[bind.motion]
+[bind.edit.motion]
 name = "Motions"
 description = "Commands that move the cursors and/or selections"
 kind = "select"
 default.mode = "normal"
 
-[bind.motion.prim]
+[bind.edit.motion.prim]
 name = "Primitive Motions"
 description = "Motions fundamental to moving around in the editor."
 default.do.command = "cursorMove"
@@ -94,50 +102,50 @@ default.do.computedArgs.value = "count"
 default.do.computedArgs.around = "around_on"
 default.do.computedArgs.select = "select_on"
 
-[[bind.motion.prim.items]]
+[[bind.edit.motion.prim.items]]
 key = "h"
 name = "←"
 description = "move left"
 do.args.to = "left"
 
-[[bind.motion.prim.items]]
+[[bind.edit.motion.prim.items]]
 key = "j"
 name = "↓"
 description = "move down"
 do.args.to = "down"
 
-[[bind.motion.prim.items]]
+[[bind.edit.motion.prim.items]]
 key = "k"
 name = "↑"
 description = "move up"
 do.args.to = "up"
 
-[[bind.motion.prim.items]]
+[[bind.edit.motion.prim.items]]
 key = "l"
 name = "→"
 description = "move right"
 do.args.to = "right"
 
-[[bind.motion.prim.items]]
+[[bind.edit.motion.prim.items]]
 key = "g j"
 name = "unwrp ↓"
 description = "down unwrapped line"
 do.args.to = "down" 
 do.args.by = "line"
 
-[[bind.motion.prim.items]]
+[[bind.edit.motion.prim.items]]
 key = "g k"
 name = "unwrp ↑"
 description = "up unwrapped line"
 do.args.to = "down" 
 do.args.by = "line"
 
-[bind.motion.mod]
+[bind.edit.motion.mod]
 name = "Modify Motion Effects"
 description = "Keys that change how other motions work"
 kind = "select"
 
-[[bind.motion.mod.items]]
+[[bind.edit.motion.mod.items]]
 key = "u"
 name = "around"
 description = """
@@ -148,7 +156,7 @@ resetTransient = false
 do.command = "modalkeys.prefix"
 do.args = { key = "u", flag = "around_on" }
 
-[[bind.motion.mod.items]]
+[[bind.edit.motion.mod.items]]
 key = "space"
 name = "hold selection"
 description = """
@@ -158,7 +166,7 @@ do.command = "modalkeys.set"
 do.args.name = "select_on"
 do.args.value = true
 
-[bind.motion.obj]
+[bind.edit.motion.obj]
 name = "Motions around various regex-like objects"
 description = """
 selection commands that move by a predefined syntactic object (e.g. word, paragraph, etc...)
@@ -169,14 +177,14 @@ default.allowed_prefixes = ["u"]
 default.do.computedArgs.select = "select_on && !around_on"
 default.do.computedArgs.selectWhole = "around_on"
 
-[[bind.motion.obj.items]]
+[[bind.edit.motion.obj.items]]
 key = "w"
 name = "subwrd →"
 description = "next subword (camel/snake case)"
 do.args.unit = "subword"
 do.computedArgs.value = "count"
 
-[[bind.motion.obj.items]]
+[[bind.edit.motion.obj.items]]
 key = "e"
 name = "subwrd end"
 description = "next subword (camel/snake case) end"
@@ -184,14 +192,14 @@ do.args.unit = "subword"
 do.computedArgs.boundary = "around_on ? 'both' : 'end'"
 do.computedArgs.value = "count"
 
-[[bind.motion.obj.items]]
+[[bind.edit.motion.obj.items]]
 key = "W"
 name = "word →"
 description = "next word"
 do.args.unit = "word"
 do.computedArgs.value = "count"
 
-[[bind.motion.obj.items]]
+[[bind.edit.motion.obj.items]]
 key = "E"
 name = "word end"
 description = "next word end"
@@ -199,27 +207,27 @@ do.args.unit = "word"
 do.computedArgs.boundary = "around_on ? 'both' : 'end'"
 do.computedArgs.value = "count"
 
-[[bind.motion.obj.items]]
+[[bind.edit.motion.obj.items]]
 key = "b"
 name = "subwrd ←"
 description = "previous subword (camel/snake case)"
 do.args.unit = "subword"
 do.computedArgs.value = "-count"
 
-[[bind.motion.obj.items]]
+[[bind.edit.motion.obj.items]]
 key = "B"
 name = "word ←"
 description = "previous word"
 do.args.unit = "word"
 do.computedArgs.value = "-count"
 
-[[bind.motion.obj.items]]
+[[bind.edit.motion.obj.items]]
 key = "u u"
 name = "smart expand"
 description = "Use VSCode's built-in smart expansion command"
 do.command = "editor.action.smartSelect.expand"
 
-[bind.motion.search]
+[bind.edit.motion.search]
 name = "Search Related Motions"
 description = "Motions related to searching for text in a document"
 default.do.command = "modalkeys.search"
@@ -228,25 +236,25 @@ default.do.args.backwards = false
 default.do.args.selectTillMatch = true
 default.do.args.wrapAround = true
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = "/"
 name = "search"
 description = "search forwards"
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = "?"
 name = "search bk"
 description = "search backwards"
 do.args.wrapAround = true
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = "f"
 name = "find char"
 description = "Find the next char (include char in selection)"
 do.args.acceptAfter = 1
 do.computedArgs.skip = "count-1"
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = "F"
 name = "find char back"
 description = "Find the previous char (include char in selection)"
@@ -254,7 +262,7 @@ do.args.acceptAfter = 1
 do.args.backwards = true
 do.computedArgs.skip = "count-1"
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = "t"
 name = "to char"
 description = "Find the next char (exclude char in selection)"
@@ -262,7 +270,7 @@ do.args.acceptAfter = 1
 do.args.offset = "start"
 do.computedArgs.skip = "count-1"
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = "T"
 name = "to char back"
 description = "Find the previous char (exclude char in selection)"
@@ -271,82 +279,82 @@ do.args.offset = "end"
 do.args.backwards = true
 do.computedArgs.skip = "count-1"
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = "s"
 name = "find char pair"
 description = "To next character pair"
 do.args.acceptAfter = 2
 do.args.offset = "start"
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = "S"
 name = "char pair back"
 description = "To previous character pair"
 do.args.acceptAfter = 2
 do.args.offset = "start"
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = ";"
 name = "→ match"
 description = "Repeat search motion forwards"
 do.command = "modalkeys.nextMatch"
 do.computedArgs.repeat = "count"
 
-[[bind.motion.search.items]]
+[[bind.edit.motion.search.items]]
 key = ":"
 name = "← match"
 description = "Repeat search motion backwards"
 do.command = "modalkeys.previousMatch"
 do.computedArgs.repeat = "count"
 
-[bind.motion.syntax]
+[bind.edit.motion.syntax]
 name = "Motions around syntactic objects (e.g. parentheses and quotes)"
 description = """
 selection commands that move by a predefined syntactic object like brackets and quotes
 """
 
-[[bind.motion.syntax.items]]
+[[bind.edit.motion.syntax.items]]
 key = "{"
 name = "arnd parens"
 description = "parens/brackets/braces and their contents"
 do.command = "selection-utilities.expandAroundBrackets"
 
-[[bind.motion.syntax.items]]
+[[bind.edit.motion.syntax.items]]
 key = "["
 name = "in parens"
 description = "text inside parens/brackets/braces"
 do.command = "selection-utilities.expandInBrackets"
 
-[bind.action]
+[bind.edit.action]
 name = "Actions"
 description = "Commands that modify the document or UI"
 kind = "action"
 default.mode = "normal"
 
-[bind.action.basic]
+[bind.edit.action.basic]
 name = "Basic Actions"
 description = "Essential actions required to edit text"
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 # TODO: add documentation to these basic editor keys
 key = "i"
 name = "insert"
 description = "Switch to insert mode (right before character)"
 do = ["modalkeys.shrinkSelections", "modalkeys.enterInsert"]
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "a"
 name = "append"
 description = "Switch to insert mode (right after character)"
 do = ["modalkeys.shrinkSelections", "modalkeys.enterInsert"]
 when = "editorHasSelection"
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "a"
 do = ["modalkeys.shrinkSelections", "cursorRight", "modalkeys.enterInsert"]
 when = "!editorHasSelection"
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "c"
 name = "change"
 description = """
@@ -356,18 +364,18 @@ change up to `count` lines.
 when = "editorHasMultilineSelection"
 do = ["deleteRight", "editor.action.insertLineBefore", "modalkeys.enterInsert"]
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "c"
 when = "!editorHasMultilineSelection && editorHasSelection"
 do = ["deleteRight", "modalKeys.enterInsert"]
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "c"
 when = "!editorHashSelection && modalkeys.count <= 1"
 do = ["expandLineSelection", "deleteRight", "editor.action.insertLineBefore", 
             "modalkeys.enterInsert" ]
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "c"
 when = "!editorHasSelection && modalkeys.count > 1"
 do = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}},
@@ -375,7 +383,7 @@ do = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}},
             "editor.action.insertLineBefore",
             "modalkeys.enterInsert"]
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "C"
 name = "change to/back"
 description = """Without a count: change from current char to end of line. With a count: 
@@ -384,25 +392,25 @@ change the previous `count` lines.
 when = "!modalkeys.count <= 1"
 do = ["modalkeys.shrinkSelections", "deleteAllRight", "modalkeys.enterInsert"]
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "C"
 when = "!modalkeys.count > 1"
 
-[[bind.action.basic.items.do]]
+[[bind.edit.action.basic.items.do]]
 command = "modalkeys.selectLines"
 computedArgs.value = "count"
 args.dir = "up"
 
-[[bind.action.basic.items.do]]
+[[bind.edit.action.basic.items.do]]
 command = "deleteRight"
 
-[[bind.action.basic.items.do]]
+[[bind.edit.action.basic.items.do]]
 command = "editor.actions.insertLineBefore"
 
-[[bind.action.basic.items.do]]
+[[bind.edit.action.basic.items.do]]
 command = "modalkeys.enterInsert"
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "d"
 name = "delete"
 description = """
@@ -414,19 +422,19 @@ do = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}},
              "editor.action.clipboardCutAction",
             {command = "modalkeys.enterMode", args = {value = "normal"}}]
 
-[[bind.action.basic.items]]
+[[bind.edit.action.basic.items]]
 key = "d"
 when = "editorHasSelection"
 do = ["editor.action.clipboardCutAction",
             {command = "modalkeys.enterMode", args = {value = "normal"}}]
 
-[bind.action.symmetric]
+[bind.edit.action.symmetric]
 name = "Symmetric Operations"
 description = "Operations that occur at both ends of a selection"
 kind = "select"
 default.mode = "syminsert"
 
-[[bind.action.symmetric.items]]
+[[bind.edit.action.symmetric.items]]
 name = "Symmetric Insert Mode"
 description = """
 In this mode all commands and character insertions happen at both ends of 
@@ -437,7 +445,7 @@ key = "g '"
 do.command = "modalkeys.enterMode"
 do.args.mode = "syminsert"
 
-[[bind.action.symmetric.items]]
+[[bind.edit.action.symmetric.items]]
 name = "Normal"
 description = "Return to normal model"
 key = ["enter", "g '"]
@@ -469,7 +477,7 @@ do.args.mode = "normal"
 "-" = "-"
 "`" = "`"
 
-[[bind.action.symmetric.items]]
+[[bind.edit.action.symmetric.items]]
 key = ["shift+;", ";", "'", "shift+'", ",", ".", "/", "shift+/", "shift+\\", 
        "=", "shift+=", "-", "shift+-", "shift+8", "shift+7", "shift+6", 
        "shift+5", "shift+4", "shift+3", "shift+2", "shift+1", "shift+`",
