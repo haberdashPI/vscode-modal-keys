@@ -62,6 +62,7 @@ do = ["modalkeys.enterNormal", "modalkeys.reset"]
 key = "<all-keys>"
 do.command = "modalkeys.ignore"
 mode = "!insert"
+when = "editorTextFocus"
 
 [bind.edit]
 name = "Editor Commands"
