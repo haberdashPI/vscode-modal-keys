@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { StrictDoArg, strictDoArgs } from './keybindingParsing';
-import { reifyStrings, evalStr } from './expressions';
+import { reifyStrings, EvalContext } from './expressions';
 import { fromZodError } from 'zod-validation-error';
 import z from 'zod';
 import { UnderlyingByteSource } from 'stream/web';
@@ -8,31 +8,32 @@ import { UnderlyingByteSource } from 'stream/web';
 let modeStatusBar: vscode.StatusBarItem | undefined = undefined;
 let keyStatusBar: vscode.StatusBarItem | undefined = undefined;
 let countStatusBar: vscode.StatusBarItem | undefined = undefined;
+let evalContext = new EvalContext();
 
 function updateStatusBar(){
     if(modeStatusBar !== undefined && keyStatusBar !== undefined && 
        countStatusBar !== undefined){
-        modeStatusBar.text = state.evalContext.mode || 'insert';
-        keyStatusBar.text = state.evalContext.prefix || '';
-        countStatusBar.text = state.evalContext.count ?
-            state.evalContext.count + "×" : '';
+        modeStatusBar.text = state.keyContext.mode || 'insert';
+        keyStatusBar.text = state.keyContext.prefix || '';
+        countStatusBar.text = state.keyContext.count ?
+            state.keyContext.count + "×" : '';
     }
 }
 
-interface EvalContext{
+interface KeyContext{
     [k: string]: any
 }
 
 class CommandState {
-    evalContext: EvalContext = {};
+    keyContext: KeyContext = {};
     transientValues: string[] = [];
     constructor(){ 
-        this.setEvalContext('prefix', '');
-        this.setEvalContext('count', 0);
-        this.setEvalContext('mode', 'insert');
+        this.setKeyContext('prefix', '');
+        this.setKeyContext('count', 0);
+        this.setKeyContext('mode', 'insert');
     }
-    setEvalContext(key: string, value: any){
-        this.evalContext[key] = value;
+    setKeyContext(key: string, value: any){
+        this.keyContext[key] = value;
         vscode.commands.executeCommand('setContext', 'modalkeys.'+key, value);
         updateStatusBar();
     }
@@ -47,7 +48,7 @@ async function runCommand(command: StrictDoArg){
         let finalArgs: Record<string, any> = command.args || {};
         if(command.computedArgs !== undefined){
             finalArgs = {...finalArgs, 
-                        ...reifyStrings(command.computedArgs, str => evalStr(str, state.evalContext))};
+                        ...reifyStrings(command.computedArgs, str => evalContext.evalStr(str, state.keyContext))};
         }
         await vscode.commands.executeCommand(command.command, finalArgs);
     }
@@ -78,6 +79,7 @@ async function runCommands(args_: unknown){
         else { await runCommand(args.do); }
 
         if(args.resetTransient){ reset(); }
+        evalContext.reportErrors();
     }
 }
 
@@ -88,7 +90,7 @@ const updateCountArgs = z.object({
 function updateCount(args_: unknown){
     let args = validateInput('modalkeys.updateCount', args_, updateCountArgs);
     if(args !== undefined){
-        state.setEvalContext('count', state.evalContext.count*10 + args.value);
+        state.setKeyContext('count', state.keyContext.count*10 + args.value);
     }
 }
 
@@ -100,9 +102,9 @@ const prefixArgs = z.object({
 function prefix(args_: unknown){
     let args = validateInput('modalkeys.prefix', args_, prefixArgs);
     if(args !== undefined){
-        state.setEvalContext('prefix', state.evalContext.prefix + " " + args.key);
+        state.setKeyContext('prefix', state.keyContext.prefix + " " + args.key);
         if(args.flag){
-            state.setEvalContext(args.flag, true);
+            state.setKeyContext(args.flag, true);
             state.transientValues.push(args.flag);
         }
     }
@@ -117,17 +119,17 @@ const setArgs = z.object({
 function set(args_: unknown){
     let args = validateInput('modalkeys.set', args_, setArgs);
     if(args){
-        state.setEvalContext(args.name, args.value);
+        state.setKeyContext(args.name, args.value);
         if(args.transient){ state.transientValues.push(args.name); }
     }
 }
 
 function reset(){
     // clear any relevant state
-    state.setEvalContext('count', 0);
-    state.setEvalContext('prefix', '');
+    state.setKeyContext('count', 0);
+    state.setKeyContext('prefix', '');
     for (let k in state.transientValues) {
-        state.setEvalContext(k, undefined);
+        state.setKeyContext(k, undefined);
     }
     state.transientValues = [];
 }

@@ -236,16 +236,26 @@ function moveModeToWhenClause(binding: StrictBindingItem){
 
 function expandAllowedPrefixes(expandedWhen: string, item: BindingItem){
     // add any optionally allowed prefixes
-    if(expandedWhen.length > 0){ expandedWhen += ` && `; }
-    expandedWhen += "( ((modalkeys.prefix || '') == '')"; 
+    if(expandedWhen.length > 0){ expandedWhen += ` && (`; }
+    expandedWhen += "!(modelkeys.prefix =~ /.+/)"; 
     if(item.allowed_prefixes !== undefined){
         for(let allowed of item.allowed_prefixes){
-            expandedWhen += ` || ((modalkeys.prefix || '') == '${allowed}')`;
+            expandedWhen += ` || modelkeys.prefix == '${allowed}'`;
         }
     }
     expandedWhen += " )";
 
     return expandedWhen;
+}
+
+function expandWhenPrefixes(when: string, prefix: string, item: BindingItem){
+    if(prefix === ""){
+        when = expandAllowedPrefixes(when, item);
+    }else{
+        if(when.length > 0) { when += " && "; }
+        when += `(modalkeys.prefix == '${prefix})`;
+    }
+    return when;
 }
 
 type BindingMap = { [key: string]: IConfigKeyBinding };
@@ -258,13 +268,8 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
         let key_seq = item.key.trim().split(/\s+/);
 
         for(let key of key_seq.slice(0, -1)){
-            let expandedWhen = "";
-            if(prefix === ""){
-                expandedWhen = expandAllowedPrefixes(when, item);
-            }else{
-                if(expandedWhen.length > 0) { expandedWhen += " && "; }
-                expandedWhen += `(modalkeys.prefix == '${prefix})`;
-            }
+            let expandedWhen = expandWhenPrefixes(item.when || "", prefix, item);
+            
             // track the current prefix for the next iteration of `map`
             if(prefix.length > 0){ prefix += " "; }
             prefix += key;
@@ -281,13 +286,7 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
             prefixItems[prefixKey] = prefixItem;
         }
 
-        let expandedWhen = when;
-        if(expandedWhen.length > 0) { expandedWhen += " && "; }
-        if(prefix === ""){
-            expandedWhen += `(modalkeys.prefix == '' || modelkeys.prefix == undefined)`;
-        }else{
-            expandedWhen += `(modalkeys.prefix == ${prefix})`;
-        }
+        let expandedWhen = expandWhenPrefixes(item.when || "", prefix, item);
         return {...item, when: expandedWhen, key: key_seq[key_seq.length-1]};
     }
     return item;

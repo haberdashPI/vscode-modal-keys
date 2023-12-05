@@ -10,8 +10,9 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
+				"--profile-temp",
 				"--disable-extensions",
-				"--extensionDevelopmentPath=${workspaceFolder}"
+				"--extensionDevelopmentPath=${workspaceFolder}",
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
