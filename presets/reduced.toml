@@ -1,0 +1,43 @@
+[header]
+version = "1.0"
+
+[bind]
+name = "Larkin Key Bindings"
+description = "foobar"
+
+[bind.edit]
+name = "Editor Commands"
+description = """
+Most commands are editing commands, they interact with the text editor, either by
+selecting text in the editor, moving around it, manipulating text in the editor, and
+so forth.
+"""
+default.when = "editorTextFocus"
+
+[bind.edit.count]
+name = "count"
+description = """
+The number keys are used to update the count, which affects how many times the next 
+command is repeated, when relevant.
+"""
+
+[bind.edit.motion]
+name = "Motions"
+description = "Commands that move the cursors and/or selections"
+kind = "select"
+default.mode = "normal"
+
+[bind.edit.motion.prim]
+name = "Primitive Motions"
+description = "Motions fundamental to moving around in the editor."
+default.do.command = "cursorMove"
+default.do.computedArgs.value = "count"
+default.do.computedArgs.around = "around_on"
+default.do.computedArgs.select = "select_on"
+
+[[bind.edit.motion.prim.items]]
+key = "h"
+name = "←"
+description = "move left"
+do.args.to = "left"
+

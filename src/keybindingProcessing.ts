@@ -4,7 +4,16 @@ import { BindingSpec, BindingTree, StrictBindingTree, BindingItem, StrictBinding
     strictBindingItem } from "./keybindingParsing";
 import * as vscode from 'vscode';
 import { uniq, omit, mergeWith, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
-import { reifyStrings, evalExpressionsInString } from './expressions';
+import { reifyStrings, EvalContext } from './expressions';
+
+// BUGS: 
+// - ":" is being accepted as a key, even though I thought we validated against that
+// - there's something wonky about the syntax of the when clauses; when VSCode doesn't like
+//   them it silently treats it as having no when clause; manually editing them reveals that 
+//   that something about how the when clause was written is wrong
+// - there's some ongoing evaluation error that pops up for certain keybindings
+
+// TODO: we need to eliminate any ignore's that aren't needed
 
 // top level function (this calls everything else)
 // TODO: allow defaults for when classes to exapnd into a when clause
@@ -87,23 +96,28 @@ function expandDefaults(bindings: BindingTree, prefix: string = "bind", default_
 // TODO: check in unit tests
 // invalid items (e.g. both key and keys defined) get detected
 
-function expandBindingKey(k: string, item: StrictBindingItem, definitions: any){
+function expandBindingKey(k: string, item: StrictBindingItem, context: EvalContext, 
+    definitions: any){
+
     let keyEvaled = reifyStrings(omit(item, 'key'), 
-        str => evalExpressionsInString(str, {definitions, key: k}));
+        str => context.evalExpressionsInString(str, {...definitions, key: k}));
     return {...keyEvaled, key: k};
 }
 
 const ALL_KEYS = "`1234567890-=qwertyuiop[]\\asdfghjkl;'zxcvbnm,./";
 function expandBindingKeys(bindings: StrictBindingItem[], definitions: any): StrictBindingItem[] {
-    return flatMap(bindings, item => {
+    let context = new EvalContext();
+    let result = flatMap(bindings, item => {
         if(Array.isArray(item.key)){
-            return item.key.map(k => expandBindingKey(k, item, definitions));
+            return item.key.map(k => expandBindingKey(k, item, context, definitions));
         }else if(item.key === "<all-keys>"){
-            return Array.from(ALL_KEYS).map(k => expandBindingKey(k, item, definitions));
+            return Array.from(ALL_KEYS).map(k => expandBindingKey(k, item, context, definitions));
         }else{
             return [item];
         }
     });
+    context.reportErrors();
+    return result;
 }
 
 function listBindings(bindings: StrictBindingTree): StrictBindingItem[] {
@@ -171,6 +185,7 @@ function validateUniqueForBinding(vals: (string | undefined)[], name: string, it
 function expandBindingDocsAcrossWhenClauses(items: StrictBindingItem[]): StrictBindingItem[] {
     let sharedBindings: { [key: string]: any[] } = {};
     for (let item of items) {
+        if(item.do === "modalkeys.ignore" || (<{command?: string}>item.do)?.command === "modalkeys.ignore"){ continue; }
         let k = hash({ key: item.key, mode: item.mode });
         if (sharedBindings[k] === undefined) {
             sharedBindings[k] = [item];
@@ -248,7 +263,7 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
                 expandedWhen = expandAllowedPrefixes(when, item);
             }else{
                 if(expandedWhen.length > 0) { expandedWhen += " && "; }
-                expandedWhen += `((modalkeys.prefix || '') == '${prefix}')`;
+                expandedWhen += `(modalkeys.prefix == '${prefix})`;
             }
             // track the current prefix for the next iteration of `map`
             if(prefix.length > 0){ prefix += " "; }
@@ -268,7 +283,11 @@ function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap 
 
         let expandedWhen = when;
         if(expandedWhen.length > 0) { expandedWhen += " && "; }
-        expandedWhen += `((modalkeys.prefix || '') == '${prefix}')`;
+        if(prefix === ""){
+            expandedWhen += `(modalkeys.prefix == '' || modelkeys.prefix == undefined)`;
+        }else{
+            expandedWhen += `(modalkeys.prefix == ${prefix})`;
+        }
         return {...item, when: expandedWhen, key: key_seq[key_seq.length-1]};
     }
     return item;

@@ -49,6 +49,8 @@ return to insert mode.
 """
 
 [[bind.modes.items]]
+name = "normal"
+description = "Enter normal mode"
 key = ["escape", "ctrl+["]
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 
@@ -59,6 +61,8 @@ do = ["modalkeys.enterNormal", "modalkeys.reset"]
 
 [[bind.modes.items]]
 # by default typing keys in a mode other than insert is simply ignored
+name = "ignore"
+description = "this key does nothing"
 key = "<all-keys>"
 do.command = "modalkeys.ignore"
 mode = "!insert"
