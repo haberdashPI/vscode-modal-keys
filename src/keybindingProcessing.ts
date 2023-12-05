@@ -253,7 +253,7 @@ function expandWhenPrefixes(when: string, prefix: string, item: BindingItem){
         when = expandAllowedPrefixes(when, item);
     }else{
         if(when.length > 0) { when += " && "; }
-        when += `(modalkeys.prefix == '${prefix})`;
+        when += `(modalkeys.prefix == '${prefix}')`;
     }
     return when;
 }
