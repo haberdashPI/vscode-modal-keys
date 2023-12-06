@@ -8,10 +8,6 @@ import { reifyStrings, EvalContext } from './expressions';
 
 // BUGS: 
 // - ":" is being accepted as a key, even though I thought we validated against that
-// - there's something wonky about the syntax of the when clauses; when VSCode doesn't like
-//   them it silently treats it as having no when clause; manually editing them reveals that 
-//   that something about how the when clause was written is wrong
-// - there's some ongoing evaluation error that pops up for certain keybindings
 
 // TODO: we need to eliminate any ignore's that aren't needed
 
@@ -237,7 +233,7 @@ function moveModeToWhenClause(binding: StrictBindingItem){
 function expandAllowedPrefixes(expandedWhen: string, item: BindingItem){
     // add any optionally allowed prefixes
     if(expandedWhen.length > 0){ expandedWhen += ` && (`; }
-    expandedWhen += "!(modelkeys.prefix =~ /.+/)"; 
+    expandedWhen += "modalkeys.prefix == ''"; 
     if(item.allowed_prefixes !== undefined){
         for(let allowed of item.allowed_prefixes){
             expandedWhen += ` || modelkeys.prefix == '${allowed}'`;
