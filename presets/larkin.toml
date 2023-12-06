@@ -53,10 +53,11 @@ name = "normal"
 description = "Enter normal mode"
 key = ["escape", "ctrl+["]
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
+when = "!findWidgetVisible"
 
 [[bind.modes.items]]
 key = ["escape", "ctrl+["]
-when = "suggsetWidgetVisible && textInuptFocus"
+when = "suggsetWidgetVisible && editorTextFocus && !findWidgetVisible"
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 
 # [[bind.modes.items]]
@@ -75,7 +76,7 @@ Most commands are editing commands, they interact with the text editor, either b
 selecting text in the editor, moving around it, manipulating text in the editor, and
 so forth.
 """
-default.when = "editorTextFocus"
+default.when = "editorTextFocus && !findWidgetVisible"
 
 [bind.edit.count]
 name = "count"
@@ -197,14 +198,14 @@ do.computedArgs.boundary = "around_on ? 'both' : 'end'"
 do.computedArgs.value = "count"
 
 [[bind.edit.motion.obj.items]]
-key = "W"
+key = "shift+w"
 name = "word →"
 description = "next word"
 do.args.unit = "word"
 do.computedArgs.value = "count"
 
 [[bind.edit.motion.obj.items]]
-key = "E"
+key = "shift+e"
 name = "word end"
 description = "next word end"
 do.args.unit = "word"
@@ -219,7 +220,7 @@ do.args.unit = "subword"
 do.computedArgs.value = "-count"
 
 [[bind.edit.motion.obj.items]]
-key = "B"
+key = "shift+b"
 name = "word ←"
 description = "previous word"
 do.args.unit = "word"
@@ -246,7 +247,7 @@ name = "search"
 description = "search forwards"
 
 [[bind.edit.motion.search.items]]
-key = "?"
+key = "shift+/"
 name = "search bk"
 description = "search backwards"
 do.args.wrapAround = true
@@ -259,7 +260,7 @@ do.args.acceptAfter = 1
 do.computedArgs.skip = "count-1"
 
 [[bind.edit.motion.search.items]]
-key = "F"
+key = "shift+f"
 name = "find char back"
 description = "Find the previous char (include char in selection)"
 do.args.acceptAfter = 1
@@ -275,7 +276,7 @@ do.args.offset = "start"
 do.computedArgs.skip = "count-1"
 
 [[bind.edit.motion.search.items]]
-key = "T"
+key = "shift+t"
 name = "to char back"
 description = "Find the previous char (exclude char in selection)"
 do.args.acceptAfter = 1
@@ -291,7 +292,7 @@ do.args.acceptAfter = 2
 do.args.offset = "start"
 
 [[bind.edit.motion.search.items]]
-key = "S"
+key = "shift+s"
 name = "char pair back"
 description = "To previous character pair"
 do.args.acceptAfter = 2
@@ -305,7 +306,7 @@ do.command = "modalkeys.nextMatch"
 do.computedArgs.repeat = "count"
 
 [[bind.edit.motion.search.items]]
-key = ":"
+key = "shift+;"
 name = "← match"
 description = "Repeat search motion backwards"
 do.command = "modalkeys.previousMatch"
@@ -318,7 +319,7 @@ selection commands that move by a predefined syntactic object like brackets and 
 """
 
 [[bind.edit.motion.syntax.items]]
-key = "{"
+key = "shift+["
 name = "arnd parens"
 description = "parens/brackets/braces and their contents"
 do.command = "selection-utilities.expandAroundBrackets"
@@ -388,7 +389,7 @@ do = [{command = "modalkeys.selectLines", computedArgs = {value = "count"}},
             "modalkeys.enterInsert"]
 
 [[bind.edit.action.basic.items]]
-key = "C"
+key = "shift+c"
 name = "change to/back"
 description = """Without a count: change from current char to end of line. With a count: 
 change the previous `count` lines.
@@ -397,7 +398,7 @@ when = "!modalkeys.count <= 1"
 do = ["modalkeys.shrinkSelections", "deleteAllRight", "modalkeys.enterInsert"]
 
 [[bind.edit.action.basic.items]]
-key = "C"
+key = "shift+c"
 when = "!modalkeys.count > 1"
 
 [[bind.edit.action.basic.items.do]]

@@ -1,9 +1,72 @@
 [header]
 version = "1.0"
+required_extensions = [
+    "dbankier.vscode-quick-select",
+    "haberdashPI.vscode-select-by-indent",
+    "haberdashPI.selection-utilities",
+    "haberdashPI.move-cursor-by-argument",
+    "pustelto.bracketeer",
+    "wmaurer.change-case",
+    "pranshuagrawal.toggle-case",
+    "albymor.increment-selection",
+    "pkief.markdown-checkbox",
+    "edgardmessias.clipboard-manager",
+    "stkb.rewrap",
+    "haberdashPI.terminal-polyglot",
+    "jack89ita.open-file-from-path",
+    "koalamer.labeled-bookmarks",
+]
 
 [bind]
 name = "Larkin Key Bindings"
-description = "foobar"
+description = """
+This set of keybindings provides a comprehensive and well tested set of
+bindings that I use in my daily work. It serves as an example of a fully
+customized set of keybindings, and demonstrates the full capabilities of
+ModalKeys.
+
+The basic logic of these commands follow that of Kakoune: motions generally
+cause some region of text to be selected, and then actions modify these
+selections. This is the inverse of vim's motions (`wd` instead of `dw`). This
+integrates well with many of the existing VSCode extensions which operate on
+selections. 
+
+These bindings are named after the middle name of my first child.
+"""
+
+[bind.modes]
+name = "Modes"
+description = """
+Larkin uses different modes (like vim). Insert is the default and it 
+works the same way VSCode normally does. Upon hitting escape you enter normal
+mode, wherein a variety of behaviors are available to move around and manipulate the
+text.
+
+Refer to the actions section for the various ways you can exit normal mode and
+return to insert mode.
+
+**TODO**: document the other modes
+"""
+
+[[bind.modes.items]]
+name = "normal"
+description = "Enter normal mode"
+key = ["escape", "ctrl+["]
+do = ["modalkeys.enterNormal", "modalkeys.reset"]
+
+[[bind.modes.items]]
+key = ["escape", "ctrl+["]
+when = "suggsetWidgetVisible && textInuptFocus"
+do = ["modalkeys.enterNormal", "modalkeys.reset"]
+
+# [[bind.modes.items]]
+# # by default typing keys in a mode other than insert is simply ignored
+# name = "ignore"
+# description = "this key does nothing"
+# key = "<all-keys>"
+# do.command = "modalkeys.ignore"
+# mode = "!insert"
+# when = "editorTextFocus"
 
 [bind.edit]
 name = "Editor Commands"
@@ -13,13 +76,6 @@ selecting text in the editor, moving around it, manipulating text in the editor,
 so forth.
 """
 default.when = "editorTextFocus"
-
-[bind.edit.count]
-name = "count"
-description = """
-The number keys are used to update the count, which affects how many times the next 
-command is repeated, when relevant.
-"""
 
 [bind.edit.motion]
 name = "Motions"
@@ -40,4 +96,36 @@ key = "h"
 name = "←"
 description = "move left"
 do.args.to = "left"
+
+[[bind.edit.motion.prim.items]]
+key = "j"
+name = "↓"
+description = "move down"
+do.args.to = "down"
+
+[[bind.edit.motion.prim.items]]
+key = "k"
+name = "↑"
+description = "move up"
+do.args.to = "up"
+
+[[bind.edit.motion.prim.items]]
+key = "l"
+name = "→"
+description = "move right"
+do.args.to = "right"
+
+# [[bind.edit.motion.prim.items]]
+# key = "g j"
+# name = "unwrp ↓"
+# description = "down unwrapped line"
+# do.args.to = "down" 
+# do.args.by = "line"
+
+# [[bind.edit.motion.prim.items]]
+# key = "g k"
+# name = "unwrp ↑"
+# description = "up unwrapped line"
+# do.args.to = "down" 
+# do.args.by = "line"
 
