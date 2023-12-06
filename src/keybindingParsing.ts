@@ -23,8 +23,8 @@ const bindingCommand = z.object({
 
 const ALLOWED_MODIFIERS = /Ctrl|Shift|Alt|Cmd|Win|Meta/i;
 const ALLOWED_KEYS = [
-    /(f[1-9])|(f1[0-9])/i, /a-z/, /0-9/,
-    /`/, /-/, /=/, /\[/, /\]/, /\\/, /;/, /'/, /,/, /./, /\//,
+    /(f[1-9])|(f1[0-9])/i, /[a-z]/, /[0-9]/,
+    /`/, /-/, /=/, /\[/, /\]/, /\\/, /;/, /'/, /,/, /\./, /\//,
     /left/i, /up/i, /right/i, /down/i, /pageup/i, /pagedown/i, /end/i, /home/i,
     /tab/i, /enter/i, /escape/i, /space/i, /backspace/i, /delete/i,
     /pausebreak/i, /capslock/i, /insert/i,
@@ -54,8 +54,11 @@ function isAllowedKeybinding(key: string){
     return true;
 }
 
-const bindingKey = z.string().refine(isAllowedKeybinding, arg =>
-    { return { message: `Invalid keybinding '${arg}'` }; });
+// TODO: some way to convert the link to a button users can clink
+// when it is presented as an error message
+const bindingKey = z.string().
+    refine(isAllowedKeybinding, arg => { return { message: `Invalid keybinding '${arg}'. Refer to https://code.visualstudio.com/docs/getstarted/keybindings` }; }).
+    transform((x: string) => x.toLowerCase());
 
 const doArg = z.union([z.string(), bindingCommand]);
 const doArgs = z.union([doArg, doArg.array()]);
@@ -121,7 +124,7 @@ export type StrictBindingTree = z.infer<typeof strictBindingTree> & OtherKeys;
 export const bindingSpec = z.object({
     header: bindingHeader,
     bind: bindingTree,
-    define: z.object({}).passthrough()
+    define: z.object({}).passthrough().optional()
 });
 export type BindingSpec = z.infer<typeof bindingSpec>;
 
