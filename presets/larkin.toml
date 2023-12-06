@@ -60,14 +60,14 @@ key = ["escape", "ctrl+["]
 when = "suggsetWidgetVisible && editorTextFocus && !findWidgetVisible"
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 
-# [[bind.modes.items]]
-# # by default typing keys in a mode other than insert is simply ignored
-# name = "ignore"
-# description = "this key does nothing"
-# key = "<all-keys>"
-# do.command = "modalkeys.ignore"
-# mode = "!insert"
-# when = "editorTextFocus"
+[[bind.modes.items]]
+# by default typing keys in a mode other than insert is simply ignored
+name = "ignore"
+description = "this key does nothing"
+key = "<all-keys>"
+do.command = "modalkeys.ignore"
+mode = "!insert"
+when = "editorTextFocus"
 
 [bind.edit]
 name = "Editor Commands"

@@ -6,15 +6,14 @@ import * as vscode from 'vscode';
 import { uniq, omit, mergeWith, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
 import { reifyStrings, EvalContext } from './expressions';
 
-// BUGS: 
-// - ":" is being accepted as a key, even though I thought we validated against that
+// NEXT STEPS:
+// - we need to make it possible for `escape` and friends to work even
+//   when there is a prefix (e.g. something like allowed_prefixes = "<any>")
+// - we need to make it so that moving around preserves the selection if it
+//   is already enabled (e.g. by checking if there is a selection)
+// - we need to debug the `c` command (when clauses aren't working as expected)
+// - we need to enable additional extensions and start testing out other keybindings
 
-// TODO: we need to eliminate any ignore's that aren't needed
-
-// top level function (this calls everything else)
-// TODO: allow defaults for when classes to exapnd into a when clause
-// (e.g. by using arrays that get merged), arrays imply AND
-// add a default when clause to verify that we're in the text editor
 export function processBindings(spec: BindingSpec){
     let expandedSpec = expandDefaults(spec.bind);
     let items = listBindings(expandedSpec);
