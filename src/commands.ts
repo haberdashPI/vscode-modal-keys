@@ -102,7 +102,11 @@ const prefixArgs = z.object({
 function prefix(args_: unknown){
     let args = validateInput('modalkeys.prefix', args_, prefixArgs);
     if(args !== undefined){
-        state.setKeyContext('prefix', state.keyContext.prefix + " " + args.key);
+        if(state.keyContext.prefix.length > 0){
+            state.setKeyContext('prefix', state.keyContext.prefix + " " + args.key);
+        }else{
+            state.setKeyContext('prefix', args.key);
+        }
         if(args.flag){
             state.setKeyContext(args.flag, true);
             state.transientValues.push(args.flag);
