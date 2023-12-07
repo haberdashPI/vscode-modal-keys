@@ -193,5 +193,3 @@ export function activate(context: vscode.ExtensionContext) {
         () => undefined,
     ));
 }
-
-// TODO: after getting the above working, copy over search commands, and figure out how to hook into type

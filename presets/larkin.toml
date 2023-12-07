@@ -68,7 +68,7 @@ name = "ignore"
 description = "this key does nothing"
 key = "<all-keys>"
 do.command = "modalkeys.ignore"
-allowed_prefixes = "<all=prefixes>"
+allowed_prefixes = "<all-prefixes>"
 mode = "!insert"
 when = "editorTextFocus"
 

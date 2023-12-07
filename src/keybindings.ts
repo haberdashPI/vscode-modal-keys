@@ -50,7 +50,6 @@ function formatBindings(file: vscode.Uri, items: BindingItem[]){
             comment += item.description;
         }
 
-        // TODO: fix find replace
         json += comment.replaceAll(/^\s*(?=\S+)/mg, "    // ")+"\n";
         json += JSON.stringify(pick(item, ['key', 'when', 'command', 'args']), 
             null, 4).replaceAll(/^/mg, "    ");

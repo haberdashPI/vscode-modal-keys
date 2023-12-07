@@ -6,13 +6,6 @@ import * as vscode from 'vscode';
 import { uniq, omit, mergeWith, cloneDeep, flatMap, values, entries } from 'lodash';
 import { reifyStrings, EvalContext } from './expressions';
 
-// NEXT STEPS:
-// - we need to make it possible for `escape` and friends to work even
-//   when there is a prefix (e.g. something like allowed_prefixes = "<any>")
-// - we need to make it so that moving around preserves the selection if it
-//   is already enabled (e.g. by checking if there is a selection)
-// - we need to debug the `c` command (when clauses aren't working as expected)
-// - we need to enable additional extensions and start testing out other keybindings
 
 export function processBindings(spec: BindingSpec){
     let expandedSpec = expandDefaults(spec.bind);
@@ -175,7 +168,6 @@ function validateUniqueForBinding(vals: (string | undefined)[], name: string, it
 // TODO: the obvious unit test is to have non-unique documentation
 // and blank documentation for some when clauses
 
-// TODO: debug this function
 function expandBindingDocsAcrossWhenClauses(items: StrictBindingItem[]): StrictBindingItem[] {
     let sharedBindings: { [key: string]: any[] } = {};
     for (let item of items) {
