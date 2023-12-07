@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { searchMatches } from './searching';
-import { fromZodIssue } from 'zod-validation-error';
-import { BindingItem, parseBindingFile } from './keybindingParsing';
+import { BindingItem, parseBindingFile, showParseError } from './keybindingParsing';
 import { processBindings } from './keybindingProcessing';
 import { pick } from 'lodash';
 
@@ -143,8 +142,7 @@ async function importBindings() {
         insertKeybindingsIntoConfig(file, bindings);
     }else{
         for (let issue of parsedBindings.error.issues.slice(0, 3)) {
-            vscode.window.showErrorMessage(`Parsing of bindings failed. 
-                ${fromZodIssue(issue)}`);
+            showParseError("Parsing of bindings failed: ", issue);
         }
     }
 }

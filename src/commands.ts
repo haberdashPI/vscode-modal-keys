@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
-import { StrictDoArg, strictDoArgs } from './keybindingParsing';
+import { StrictDoArg, strictDoArgs, showParseError } from './keybindingParsing';
 import { reifyStrings, EvalContext } from './expressions';
-import { fromZodError } from 'zod-validation-error';
 import z from 'zod';
-import { UnderlyingByteSource } from 'stream/web';
 
 let modeStatusBar: vscode.StatusBarItem | undefined = undefined;
 let keyStatusBar: vscode.StatusBarItem | undefined = undefined;
@@ -59,8 +57,7 @@ function validateInput<T extends z.ZodRawShape>(command: string, args_: unknown,
 
     let result = using.safeParse(args_);
     if(!result.success){
-        vscode.window.showErrorMessage(`Unexpected arguments to '${command}': 
-            ${fromZodError(result.error)}`);
+        showParseError(`Unexpected arguments to '${command}':`, result.error);
         return;
     }
     return result.data;

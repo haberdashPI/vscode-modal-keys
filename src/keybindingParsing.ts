@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import * as TOML from 'js-toml';
 import * as semver from 'semver';
 import { TextDecoder } from 'util';
-import { preprocess, z } from "zod";
+import { ZodIssue, preprocess, z } from "zod";
+import { ZodError, fromZodError, fromZodIssue } from 'zod-validation-error';
 
 let decoder = new TextDecoder("utf-8");
 
@@ -54,10 +55,29 @@ function isAllowedKeybinding(key: string){
     return true;
 }
 
-// TODO: some way to convert the link to a button users can clink
-// when it is presented as an error message
+export async function showParseError(prefix: string, error: ZodError | ZodIssue){
+    let suffix = "";
+    if((<ZodIssue>error).code === undefined){ // code is always defined on issues and undefined on errors
+        suffix = fromZodError(<ZodError>error).message;
+    }else{
+        suffix = fromZodIssue(<ZodIssue>error).message;
+    }
+    var buttonPattern = /\s+\{button: "(.+)(?<!\\)", link:(.+)\}/;
+    let match = suffix.match(buttonPattern);
+    if(match !== null && match.index !== undefined && match[1] !== undefined && 
+       match[2] !== undefined){
+        suffix = suffix.slice(0, match.index) + suffix.slice(match.index + match[0].length, -1);
+        let button = match[1];
+        let link = match[2];
+        let pressed = await vscode.window.showErrorMessage(prefix + suffix, button);
+        if(button === pressed){
+            vscode.env.openExternal(vscode.Uri.parse(link));
+        }
+    }
+}
+
 const bindingKey = z.string().
-    refine(isAllowedKeybinding, arg => { return { message: `Invalid keybinding '${arg}'. Refer to https://code.visualstudio.com/docs/getstarted/keybindings` }; }).
+    refine(isAllowedKeybinding, arg => { return { message: `Invalid keybinding '${arg}'. Tip: capital letters are represented using e.g. "shift+a". {button: "Keybinding Docs", link:https://code.visualstudio.com/docs/getstarted/keybindings#_accepted-keys}` }; }).
     transform((x: string) => x.toLowerCase());
 
 const doArg = z.union([z.string(), bindingCommand]);
@@ -69,7 +89,10 @@ export const bindingItem = z.object({
     key: z.union([bindingKey, bindingKey.array()]).optional(),
     when: z.union([z.string(), z.string().array()]).optional(),
     mode: z.string().optional(),
-    allowed_prefixes: z.string().array().optional(),
+    allowed_prefixes: z.union([
+        z.string().refine(x => x === "<all-prefixes>"), 
+        z.union([bindingKey, z.string().max(0)]).array()
+    ]).optional(),
     do: doArgs.optional(),
     resetTransient: z.boolean().default(true).optional()
 }).strict();

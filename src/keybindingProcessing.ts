@@ -3,7 +3,7 @@ import jsep from 'jsep';
 import { BindingSpec, BindingTree, StrictBindingTree, BindingItem, StrictBindingItem, 
     strictBindingItem } from "./keybindingParsing";
 import * as vscode from 'vscode';
-import { uniq, omit, mergeWith, cloneDeep, flatMap, values, mapValues, entries } from 'lodash';
+import { uniq, omit, mergeWith, cloneDeep, flatMap, values, entries } from 'lodash';
 import { reifyStrings, EvalContext } from './expressions';
 
 // NEXT STEPS:
@@ -16,16 +16,15 @@ import { reifyStrings, EvalContext } from './expressions';
 
 export function processBindings(spec: BindingSpec){
     let expandedSpec = expandDefaults(spec.bind);
-    let items = listBindings(expandedSpec);
+    let items: StrictBindingItem[] = listBindings(expandedSpec);
     items = expandBindingKeys(items, spec.define);
     items = expandBindingDocsAcrossWhenClauses(items);
-    let bindings = items.map(item => {
-        item = moveModeToWhenClause(item);
-        return itemToConfigBinding(item);
-    });
-    let prefixBindings: BindingMap = {};
-    bindings = bindings.map(b => extractPrefixBindings(b, prefixBindings));
-    return bindings.concat(values(prefixBindings));
+    items = items.map( moveModeToWhenClause);
+    let prefixItems: BindingMap = {};
+    items = items.map(i => extractPrefixBindings(i, prefixItems));
+    let bindings = items.map(itemToConfigBinding);
+    let prefixBindings = values(prefixItems).map(itemToConfigBinding);
+    return bindings.concat(prefixBindings);
 }
 
 function expandWhenClauseByConcatenation(obj_: any, src_: any, key: string){
@@ -229,60 +228,59 @@ function moveModeToWhenClause(binding: StrictBindingItem){
     return {...binding, when};
 }
 
-function expandAllowedPrefixes(expandedWhen: string, item: BindingItem){
-    // add any optionally allowed prefixes
-    if(expandedWhen.length > 0){ expandedWhen += ` && (`; }
-    expandedWhen += "modalkeys.prefix == ''"; 
-    if(item.allowed_prefixes !== undefined){
-        for(let allowed of item.allowed_prefixes){
-            expandedWhen += ` || modelkeys.prefix == '${allowed}'`;
-        }
+function expandAllowedPrefixes(when: string[], item: BindingItem){
+    if(Array.isArray(item.allowed_prefixes)){
+        let allowed = item.allowed_prefixes.map(a => `modalkeys.prefix == '${a}'`).join(' || ');
+        when.push(allowed);
     }
-    expandedWhen += " )";
-
-    return expandedWhen;
-}
-
-function expandWhenPrefixes(when: string, prefix: string, item: BindingItem){
-    if(prefix === ""){
-        when = expandAllowedPrefixes(when, item);
-    }else{
-        if(when.length > 0) { when += " && "; }
-        when += `(modalkeys.prefix == '${prefix}')`;
+    if(item.allowed_prefixes !== "<all-prefixes>"){
+        when.push("modalkeys.prefix == ''");
     }
     return when;
 }
 
-type BindingMap = { [key: string]: IConfigKeyBinding };
-function extractPrefixBindings(item: IConfigKeyBinding, prefixItems: BindingMap = {}){
-    let when = "";
-    let prefix = "";
-    if(item.when !== undefined){ when += `(${item.when})`; }
+function expandWhenPrefixes(when_: string[] | string | undefined, prefix: string, item: BindingItem){
+    // TODO: this doesn't properly handle the default of just a single `[""]` allowed
+    // prefix
+    let when = when_ ? (Array.isArray(when_) ? when_ : [when_]) : [];
+    when = cloneDeep(when);
+    if(prefix === ""){ when = expandAllowedPrefixes(when, item);
+    }else{ when.push(`(modalkeys.prefix == '${prefix}')`); }
+    return when;
+}
 
-    if(item.key !== undefined){
+type BindingMap = { [key: string]: StrictBindingItem };
+function extractPrefixBindings(item: StrictBindingItem, prefixItems: BindingMap = {}): StrictBindingItem{
+    let prefix = "";
+
+    if(item.key !== undefined && !Array.isArray(item.key)){
         let key_seq = item.key.trim().split(/\s+/);
 
         for(let key of key_seq.slice(0, -1)){
-            let expandedWhen = expandWhenPrefixes(item.when || "", prefix, item);
+            let expandedWhen = expandWhenPrefixes(item.when, prefix, item);
             
             // track the current prefix for the next iteration of `map`
             if(prefix.length > 0){ prefix += " "; }
             prefix += key;
 
-            let prefixItem: IConfigKeyBinding = {
+            let prefixItem: StrictBindingItem = {
                 key, 
-                command: "modalkeys.prefix", 
+                do: {command: "modalkeys.prefix", args: {key}},
                 when: expandedWhen, 
-                args: {key}
+                resetTransient: false
             }; 
-            // we parse the `when` expression so that strings that are !== but yield
-            // equivalent syntactic trees will hash identically
-            let prefixKey = hash({key, mode: item.mode, when: jsep(item.when || "")});
+            // we parse the `when` expression so that there is a better chance
+            // that equivalent conditiosn hash to the same value
+            let parsedWhen = expandedWhen.map(jsep);
+            let prefixKey = hash({key, mode: item.mode, when: parsedWhen});
             prefixItems[prefixKey] = prefixItem;
         }
 
-        let expandedWhen = expandWhenPrefixes(item.when || "", prefix, item);
-        return {...item, when: expandedWhen, key: key_seq[key_seq.length-1]};
+        return {
+            ...item, 
+            when: expandWhenPrefixes(item.when, prefix, item), 
+            key: key_seq[key_seq.length-1]
+        };
     }
     return item;
 }

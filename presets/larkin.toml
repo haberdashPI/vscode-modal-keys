@@ -54,11 +54,13 @@ description = "Enter normal mode"
 key = ["escape", "ctrl+["]
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 when = "!findWidgetVisible"
+allowed_prefixes = "<all-prefixes>"
 
 [[bind.modes.items]]
 key = ["escape", "ctrl+["]
 when = "suggsetWidgetVisible && editorTextFocus && !findWidgetVisible"
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
+allowed_prefixes = "<all-prefixes>"
 
 [[bind.modes.items]]
 # by default typing keys in a mode other than insert is simply ignored
@@ -66,6 +68,7 @@ name = "ignore"
 description = "this key does nothing"
 key = "<all-keys>"
 do.command = "modalkeys.ignore"
+allowed_prefixes = "<all=prefixes>"
 mode = "!insert"
 when = "editorTextFocus"
 
@@ -178,7 +181,7 @@ selection commands that move by a predefined syntactic object (e.g. word, paragr
 """
 default.do.command = "selection-utilities.moveBy"
 default.do.args.boundary = "start"
-default.allowed_prefixes = ["u"]
+default.allowed_prefixes = ["", "u"]
 default.do.computedArgs.select = "select_on && !around_on"
 default.do.computedArgs.selectWhole = "around_on"
 
@@ -372,11 +375,11 @@ do = ["deleteRight", "editor.action.insertLineBefore", "modalkeys.enterInsert"]
 [[bind.edit.action.basic.items]]
 key = "c"
 when = "!editorHasMultilineSelection && editorHasSelection"
-do = ["deleteRight", "modalKeys.enterInsert"]
+do = ["deleteRight", "modalkeys.enterInsert"]
 
 [[bind.edit.action.basic.items]]
 key = "c"
-when = "!editorHashSelection && modalkeys.count <= 1"
+when = "!editorHasSelection && modalkeys.count <= 1"
 do = ["expandLineSelection", "deleteRight", "editor.action.insertLineBefore", 
             "modalkeys.enterInsert" ]
 
