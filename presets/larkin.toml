@@ -54,7 +54,7 @@ description = "Enter normal mode"
 key = ["escape", "ctrl+["]
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 when = "!findWidgetVisible"
-allowed_prefixes = "<all=prefixes>"
+allowed_prefixes = "<all-prefixes>"
 
 [[bind.modes.items]]
 key = ["escape", "ctrl+["]
@@ -174,6 +174,14 @@ do.command = "modalkeys.set"
 do.args.name = "select_on"
 do.args.value = true
 
+[[bind.edit.motion.mod.items]]
+key = "r"
+name = "shrink selection"
+description = """
+reduce all selections to length zero
+"""
+do = "selection-utilities.shrinkSelection"
+
 [bind.edit.motion.obj]
 name = "Motions around various regex-like objects"
 description = """
@@ -182,7 +190,7 @@ selection commands that move by a predefined syntactic object (e.g. word, paragr
 default.do.command = "selection-utilities.moveBy"
 default.do.args.boundary = "start"
 default.allowed_prefixes = ["", "u"]
-default.do.computedArgs.select = "select_on && !around_on"
+default.do.computedArgs.select = "(select_on || editorHasSelection) && !around_on"
 default.do.computedArgs.selectWhole = "around_on"
 
 [[bind.edit.motion.obj.items]]
