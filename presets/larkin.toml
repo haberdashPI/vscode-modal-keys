@@ -54,7 +54,7 @@ description = "Enter normal mode"
 key = ["escape", "ctrl+["]
 do = ["modalkeys.enterNormal", "modalkeys.reset"]
 when = "!findWidgetVisible"
-allowed_prefixes = "<all-prefixes>"
+allowed_prefixes = "<all=prefixes>"
 
 [[bind.modes.items]]
 key = ["escape", "ctrl+["]

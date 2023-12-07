@@ -73,15 +73,30 @@ export async function showParseError(prefix: string, error: ZodError | ZodIssue)
         if(button === pressed){
             vscode.env.openExternal(vscode.Uri.parse(link));
         }
+    }else{
+        vscode.window.showErrorMessage(prefix + suffix);
     }
 }
 
-const bindingKey = z.string().
-    refine(isAllowedKeybinding, arg => { return { message: `Invalid keybinding '${arg}'. Tip: capital letters are represented using e.g. "shift+a". {button: "Keybinding Docs", link:https://code.visualstudio.com/docs/getstarted/keybindings#_accepted-keys}` }; }).
+function keybindingError(arg: string){
+    return { 
+        message: `Invalid keybinding '${arg}'. Tip: capital letters are represented 
+        using e.g. "shift+a". {button: "Keybinding Docs", 
+        link:https://code.visualstudio.com/docs/getstarted/keybindings#_accepted-keys}` 
+    };
+}
+const bindingKey = z.string().refine(isAllowedKeybinding, keybindingError).
     transform((x: string) => x.toLowerCase());
 
 const doArg = z.union([z.string(), bindingCommand]);
 const doArgs = z.union([doArg, doArg.array()]);
+
+function prefixError(arg: string){
+    return { 
+        message: `Expected either an array of kebydinings or the string '<all-prefixes>', 
+        but got '${arg}' instead`
+    };
+}
 
 export const bindingItem = z.object({
     name: z.string().optional(),
@@ -90,7 +105,9 @@ export const bindingItem = z.object({
     when: z.union([z.string(), z.string().array()]).optional(),
     mode: z.string().optional(),
     allowed_prefixes: z.union([
-        z.string().refine(x => x === "<all-prefixes>"), 
+        z.string().refine(x => {
+            return x === "<all-prefixes>"
+        }, prefixError), 
         z.union([bindingKey, z.string().max(0)]).array()
     ]).optional(),
     do: doArgs.optional(),
