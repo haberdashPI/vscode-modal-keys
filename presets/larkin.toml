@@ -356,18 +356,18 @@ description = "Essential actions required to edit text"
 key = "i"
 name = "insert"
 description = "Switch to insert mode (right before character)"
-do = ["modalkeys.shrinkSelections", "modalkeys.enterInsert"]
+do = ["selection-utilities.shrinkToActive", "modalkeys.enterInsert"]
 
 [[bind.edit.action.basic.items]]
 key = "a"
 name = "append"
 description = "Switch to insert mode (right after character)"
-do = ["modalkeys.shrinkSelections", "modalkeys.enterInsert"]
+do = ["selection-utilities.shrinkToActive", "modalkeys.enterInsert"]
 when = "editorHasSelection"
 
 [[bind.edit.action.basic.items]]
 key = "a"
-do = ["modalkeys.shrinkSelections", "cursorRight", "modalkeys.enterInsert"]
+do = ["selection-utilities.shrinkToActive", "cursorRight", "modalkeys.enterInsert"]
 when = "!editorHasSelection"
 
 [[bind.edit.action.basic.items]]
@@ -406,7 +406,7 @@ description = """Without a count: change from current char to end of line. With 
 change the previous `count` lines.
 """
 when = "!modalkeys.count <= 1"
-do = ["modalkeys.shrinkSelections", "deleteAllRight", "modalkeys.enterInsert"]
+do = ["selection-utilities.shrinkToActive", "deleteAllRight", "modalkeys.enterInsert"]
 
 [[bind.edit.action.basic.items]]
 key = "shift+c"

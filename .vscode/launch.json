@@ -11,7 +11,7 @@
 			"request": "launch",
 			"args": [
 				"--profile-temp",
-				"--disable-extensions",
+				"--install-extension haberdashPI.selection-utilities",
 				"--extensionDevelopmentPath=${workspaceFolder}",
 			],
 			"outFiles": [
