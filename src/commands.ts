@@ -9,7 +9,7 @@
 
 //#region -c commands.ts imports
 import * as vscode from 'vscode'
-import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, getStartMode, Command, expandOneCommand, IKeyRecording, log as actionLog } from './actions'
+import { KeyState, getSearchStyles, getInsertStyles, getNormalStyles, getSelectStyles, Command, expandOneCommand, IKeyRecording, log as actionLog } from './actions'
 import { IHash } from './util'
 import { TextDecoder } from 'text-encoding'
 import { DocViewProvider } from './keymap'
@@ -598,7 +598,7 @@ export async function enterMode(args: string | EnterModeArgs) {
 
 export async function restoreEditorMode(editor: vscode.TextEditor | undefined){
     if(editor){
-        let newMode = editorModes[editor.document.uri.toString()] || getStartMode()
+        let newMode = editorModes[editor.document.uri.toString()] || Normal
         handleTypeSubscription(newMode)
         if(newMode === Visual){
             keyMode = Normal
