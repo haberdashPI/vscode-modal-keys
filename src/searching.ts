@@ -1,20 +1,26 @@
 import * as vscode from 'vscode';
+import z from 'zod';
+import { validateInput } from './utils';
 
-export interface SearchArgs {
-    backwards?: boolean
-    caseSensitive?: boolean
-    wrapAround?: boolean
-    acceptAfter?: number
-    selectTillMatch?: boolean
-    highlightMatches?: boolean
-    offset?: string
-    text?: string
-    regex?: boolean
-    register?: string
-}
+export const searchArgs = z.object({
+    backwards: z.boolean().optional(),
+    caseSensitive: z.boolean().optional(),
+    wrapAround: z.boolean().optional(),
+    acceptAfter: z.number().optional(),
+    selectTillMatch: z.number().optional(),
+    highlightMatches: z.boolean().optional(),
+    offset: z.enum(["inclusive", "exclusive"]),
+    text: z.string().min(1),
+    regex: z.boolean().optional(),
+    register: z.string()
+});
+export type SearchArgs = z.infer<typeof searchArgs>;
 
 export function* searchMatches(doc: vscode.TextDocument, start: vscode.Position, 
-    end: vscode.Position | undefined, target: string, args: SearchArgs) {
+    end: vscode.Position | undefined, target: string, args_: unknown) {
+    let parsedArgs = validateInput('modalkeys.search', args_, searchArgs);
+    if(!parsedArgs){ return; }
+    let args = parsedArgs!;
 
     let matchesFn: (line: string, offset: number | undefined) => Generator<[number, number]>;
     if (args.regex) {
