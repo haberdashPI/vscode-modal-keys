@@ -3,19 +3,24 @@ import { StrictDoArg, strictDoArgs } from './keybindingParsing';
 import { reifyStrings, EvalContext } from './expressions';
 import { validateInput } from './utils';
 import z from 'zod';
+import { searchMatches } from './searching';
 
 let modeStatusBar: vscode.StatusBarItem | undefined = undefined;
 let keyStatusBar: vscode.StatusBarItem | undefined = undefined;
 let countStatusBar: vscode.StatusBarItem | undefined = undefined;
+let searchStatusBar: vscode.StatusBarItem | undefined = undefined;
 let evalContext = new EvalContext();
+
+let commands: Record<string, ((x: unknown) => any) | (() => any)> = {};
 
 function updateStatusBar(){
     if(modeStatusBar !== undefined && keyStatusBar !== undefined && 
-       countStatusBar !== undefined){
+       countStatusBar !== undefined && searchStatusBar !== undefined){
         modeStatusBar.text = state.keyContext.mode || 'insert';
         keyStatusBar.text = state.keyContext.prefix || '';
         countStatusBar.text = state.keyContext.count ?
             state.keyContext.count + "×" : '';
+        searchStatusBar.text = state.keyContext.search || '';
     }
 }
 
@@ -30,6 +35,7 @@ class CommandState {
         this.setKeyContext('prefix', '');
         this.setKeyContext('count', 0);
         this.setKeyContext('mode', 'insert');
+        this.setKeyContext('search', '');
     }
     setKeyContext(key: string, value: any){
         this.keyContext[key] = value;
@@ -38,7 +44,6 @@ class CommandState {
     }
 }
 let state = new CommandState();
-
 
 async function runCommand(command: StrictDoArg){
     if(typeof command === 'string'){
@@ -69,6 +74,7 @@ async function runCommands(args_: unknown){
         evalContext.reportErrors();
     }
 }
+commands['modalkeys.do'] = runCommands;
 
 const updateCountArgs = z.object({
     value: z.coerce.number()
@@ -80,6 +86,7 @@ function updateCount(args_: unknown){
         state.setKeyContext('count', state.keyContext.count*10 + args.value);
     }
 }
+commands['modalkeys.updateCount'] = updateCount;
 
 const prefixArgs = z.object({
     key: z.string(),
@@ -100,20 +107,27 @@ function prefix(args_: unknown){
         }
     }
 }
+commands['modalkeys.prefix'] = prefix;
 
+// TODO: there needs to be more data validation for the standard state values; only
+// arbitrary values should be free to be any value
 const setArgs = z.object({
     name: z.string(),
     value: z.any(),
     transient: z.boolean().default(false)
 });
 
-function set(args_: unknown){
+export function set(args_: unknown){
     let args = validateInput('modalkeys.set', args_, setArgs);
     if(args){
         state.setKeyContext(args.name, args.value);
         if(args.transient){ state.transientValues.push(args.name); }
     }
 }
+commands['modalkeys.set'] = set;
+commands['modalkeys.setMode'] = (x) => set({name: 'mode', value: 'insert'});
+commands['modalkeys.enterInsert'] = (x) => set({name: 'mode', value: 'insert'});
+commands['modalkeys.enterNormal'] = (x) => set({name: 'mode', value: 'normal'});
 
 function reset(){
     // clear any relevant state
@@ -124,6 +138,9 @@ function reset(){
     }
     state.transientValues = [];
 }
+commands['modalkeys.reset'] = reset;
+
+commands['modalkeys.ignore'] = () => undefined;
 
 export function activate(context: vscode.ExtensionContext) {
     modeStatusBar = vscode.window.createStatusBarItem('mode', vscode.StatusBarAlignment.Left);
@@ -138,48 +155,11 @@ export function activate(context: vscode.ExtensionContext) {
     keyStatusBar.accessibilityInformation = { label: "Keys Typed" };
     keyStatusBar.show();
 
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.do',
-        runCommands
-    ));
+    searchStatusBar = vscode.window.createStatusBarItem('search', vscode.StatusBarAlignment.Left);
+    searchStatusBar.accessibilityInformation = { label: "Search Text" };
+    searchStatusBar.show();
 
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.updateCount',
-        updateCount
-    ));
-
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.prefix',
-        prefix
-    ));
-
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.set',
-        set
-    ));
-
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.setMode',
-        (x) => set({name: 'mode', value: x})
-    ));
-
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.enterInsert',
-        () => set({name: 'mode', value: 'insert'})
-    ));
-
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.enterNormal',
-        () => set({name: 'mode', value: 'normal'})
-    ));
-
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.reset',
-        reset
-    ));
-
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'modalkeys.ignore',
-        () => undefined,
-    ));
+    for (let [name, fn] of Object.entries(commands)) {
+        context.subscriptions.push(vscode.commands.registerCommand(name, fn));
+    }
 }
