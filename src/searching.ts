@@ -10,10 +10,10 @@ export const searchArgs = z.object({
     caseSensitive: z.boolean().optional(),
     wrapAround: z.boolean().optional(),
     acceptAfter: z.number().min(1).optional(),
-    selectTillMatch: z.number().optional(),
+    selectTillMatch: z.boolean().optional(),
     highlightMatches: z.boolean().optional(),
     offset: z.enum(["inclusive", "exclusive", "start", "end"]).default("exclusive"),
-    text: z.string().min(1),
+    text: z.string().min(1).optional(),
     regex: z.boolean().optional(),
     register: z.string().default("default"),
     doAfter: strictDoArgs.optional(),
@@ -149,7 +149,7 @@ async function search(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, ar
     currentSearch = args.register;
     let state = getSearchState(editor, currentSearch);
     state.args = args;
-    state.text = args.text;
+    state.text = args.text || "";
     state.searchFrom = editor.selections;
 
     if(state.text.length > 0){
@@ -161,6 +161,7 @@ async function search(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, ar
     setKeyContext({name: 'mode', value: 'search', transient: false});
     // when there are a fixed number of keys use `type` command
     if(state.args.acceptAfter){
+        let acceptAfter = state.args.acceptAfter;
         if(!typeSubscription){
             try{
                 typeSubscription = vscode.commands.registerCommand('type', onType);
@@ -171,28 +172,31 @@ async function search(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, ar
             }
         }
         onTypeFn = async (text: string) => { 
-            if(text === "\n"){
+            if(text === "\n" || state.text.length >= acceptAfter){
                 acceptSearch(editor, edit, state);
             }else{
                 state.text += text; 
+                highlightMatches(state.text, editor, state.searchFrom, state);
             }
         };
+    }else{
+        // if there are not a fixed number use a UX element that makes the keys visible
+        let inputBox = vscode.window.createInputBox();
+        inputBox.prompt = "Enter search text";
+        inputBox.title = "Search";
+        inputBox.onDidChangeValue((str: string) => {
+            state.text = str;
+            highlightMatches(state.text, editor, state.searchFrom, state);
+        });
+        inputBox.onDidAccept(() => {
+            acceptSearch(editor, edit, state);
+            inputBox.dispose();
+        });
+        inputBox.onDidHide(() => {
+            cancelSearch(editor, edit);
+        });
+        inputBox.show();
     }
-    // if there are not a fixed number use a UX element that makes the keys visible
-    let inputBox = vscode.window.createInputBox();
-    inputBox.prompt = "Enter search text";
-    inputBox.title = "Search"
-    inputBox.onDidChangeValue((str: string) => {
-        state.text = str;
-    });
-    inputBox.onDidAccept(() => {
-        acceptSearch(editor, edit, state);
-    });
-    inputBox.onDidHide(() => {
-        cancelSearch(editor, edit);
-    });
-    inputBox.show();
-    return;
 }
 
 async function acceptSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, state: SearchState) {
@@ -249,7 +253,7 @@ async function cancelSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEd
 
 function deleteLastSearchCharacter(editor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
     let state = getSearchState(editor, currentSearch);
-    state.text = state.text.slice(0, -1)
+    state.text = state.text.slice(0, -1);
     highlightMatches(state.text, editor, state.searchFrom, state);
 }
 
@@ -301,7 +305,7 @@ let highlightsChanged: boolean = false;
  */
 function highlightMatches(text: string, editor: vscode.TextEditor,
     selections: readonly vscode.Selection[], state: SearchState) {
-    matchStatusText = ""
+    matchStatusText = "";
     if (state.text === ""){
         /**
          * If search string is empty, we return to the start positions.
@@ -326,12 +330,12 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
             while(!result.done){
                 let [active, anchor] = state.args.backwards ?
                     [result.value.start, result.value.end] :
-                    [result.value.end, result.value.start]
+                    [result.value.end, result.value.start];
                 newSel = adjustSearchPosition(new vscode.Selection(anchor, active), doc,
                     result.value.end.character - result.value.start.character, 
-                    state.args)
+                    state.args);
                 if (state.args.selectTillMatch){
-                    newSel = new vscode.Selection(sel.anchor, newSel.active)
+                    newSel = new vscode.Selection(sel.anchor, newSel.active);
                 } 
 
                 if(!newSel.start.isEqual(sel.start) || !newSel.end.isEqual(sel.end)) { break; }
@@ -361,7 +365,7 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
             let searchOtherRanges: vscode.Range[] = [];
             editor.visibleRanges.forEach(range => {
                 let matches = searchMatches(doc, range.start, range.end, text,
-                    {...state.args, backwards: false})
+                    {...state.args, backwards: false});
                 for(const matchRange of matches){
                     if(!searchRanges.find(x =>
                         x.start.isEqual(matchRange.start) && x.end.isEqual(matchRange.end))){
@@ -415,7 +419,7 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
 
 function adjustSearchPosition(sel: vscode.Selection, doc: vscode.TextDocument, len: number, args: SearchArgs){
     let offset = 0;
-    let forward = !args.backwards
+    let forward = !args.backwards;
     if(args.offset === 'exclusive'){
         offset = forward ? -len : len;
         if(!args.selectTillMatch) { offset += forward ? -1 : 0; }

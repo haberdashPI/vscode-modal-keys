@@ -66,16 +66,15 @@ type RunCommandsArgs = z.infer<typeof runCommandArgs>;
 
 async function runCommandsCmd(args_: unknown){
     let args = validateInput('modalkeys.do', args_, runCommandArgs);
-    if(args){ return runCommands(args); }
+    if(args){ return await runCommands(args); }
 }
 export async function runCommands(args: RunCommandsArgs){
-        // run the commands
-        if (Array.isArray(args.do)) { for (let arg of args.do) { await runCommand(arg); } }
-        else { await runCommand(args.do); }
+    // run the commands
+    if (Array.isArray(args.do)) { for (let arg of args.do) { await runCommand(arg); } }
+    else { await runCommand(args.do); }
 
-        if(args.resetTransient){ reset(); }
-        evalContext.reportErrors();
-    }
+    if(args.resetTransient){ reset(); }
+    evalContext.reportErrors();
 }
 commands['modalkeys.do'] = runCommandsCmd;
 

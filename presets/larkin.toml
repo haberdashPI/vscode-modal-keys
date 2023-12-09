@@ -69,7 +69,7 @@ description = "this key does nothing"
 key = "<all-keys>"
 do.command = "modalkeys.ignore"
 allowed_prefixes = "<all-prefixes>"
-mode = "!insert"
+mode = ["!insert", "!search"]
 when = "editorTextFocus"
 
 [bind.edit]
