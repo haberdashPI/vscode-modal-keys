@@ -43,7 +43,7 @@ class CommandState {
         updateStatusBar();
     }
 }
-let state = new CommandState();
+export let state = new CommandState();
 
 async function runCommand(command: StrictDoArg){
     if(typeof command === 'string'){
@@ -62,10 +62,13 @@ const runCommandArgs = z.object({
     do: strictDoArgs, 
     resetTransient: z.boolean().default(true) 
 });
+type RunCommandsArgs = z.infer<typeof runCommandArgs>;
 
-async function runCommands(args_: unknown){
+async function runCommandsCmd(args_: unknown){
     let args = validateInput('modalkeys.do', args_, runCommandArgs);
-    if(args){
+    if(args){ return runCommands(args); }
+}
+export async function runCommands(args: RunCommandsArgs){
         // run the commands
         if (Array.isArray(args.do)) { for (let arg of args.do) { await runCommand(arg); } }
         else { await runCommand(args.do); }
@@ -74,7 +77,7 @@ async function runCommands(args_: unknown){
         evalContext.reportErrors();
     }
 }
-commands['modalkeys.do'] = runCommands;
+commands['modalkeys.do'] = runCommandsCmd;
 
 const updateCountArgs = z.object({
     value: z.coerce.number()
@@ -116,18 +119,20 @@ const setArgs = z.object({
     value: z.any(),
     transient: z.boolean().default(false)
 });
+type SetArgs = z.infer<typeof setArgs>;
 
-export function set(args_: unknown){
+function setCmd(args_: unknown){
     let args = validateInput('modalkeys.set', args_, setArgs);
-    if(args){
-        state.setKeyContext(args.name, args.value);
-        if(args.transient){ state.transientValues.push(args.name); }
-    }
+    if(args){ setKeyContext(args); }
 }
-commands['modalkeys.set'] = set;
-commands['modalkeys.setMode'] = (x) => set({name: 'mode', value: 'insert'});
-commands['modalkeys.enterInsert'] = (x) => set({name: 'mode', value: 'insert'});
-commands['modalkeys.enterNormal'] = (x) => set({name: 'mode', value: 'normal'});
+export function setKeyContext(args: SetArgs){
+    state.setKeyContext(args.name, args.value);
+    if(args.transient){ state.transientValues.push(args.name); }
+}
+commands['modalkeys.set'] = setCmd;
+commands['modalkeys.setMode'] = (x) => setKeyContext({name: 'mode', value: 'insert', transient: false});
+commands['modalkeys.enterInsert'] = (x) => setKeyContext({name: 'mode', value: 'insert', transient: false});
+commands['modalkeys.enterNormal'] = (x) => setKeyContext({name: 'mode', value: 'normal', transient: false});
 
 function reset(){
     // clear any relevant state

@@ -1,18 +1,22 @@
 import * as vscode from 'vscode';
 import z from 'zod';
 import { validateInput } from './utils';
+import { setKeyContext, runCommands, state as keyState } from "./commands";
+import { strictDoArgs } from './keybindingParsing';
+import { wrappedTranslate } from './utils';
 
 export const searchArgs = z.object({
     backwards: z.boolean().optional(),
     caseSensitive: z.boolean().optional(),
     wrapAround: z.boolean().optional(),
-    acceptAfter: z.number().optional(),
+    acceptAfter: z.number().min(1).optional(),
     selectTillMatch: z.number().optional(),
     highlightMatches: z.boolean().optional(),
-    offset: z.enum(["inclusive", "exclusive"]).default("exclusive"),
+    offset: z.enum(["inclusive", "exclusive", "start", "end"]).default("exclusive"),
     text: z.string().min(1),
     regex: z.boolean().optional(),
-    register: z.string().default("default")
+    register: z.string().default("default"),
+    doAfter: strictDoArgs.optional(),
 });
 export type SearchArgs = z.infer<typeof searchArgs>;
 
@@ -103,14 +107,114 @@ function* stringMatches(matcher: string, matchCase: boolean, line: string, forwa
     }
 }
 
-// TODO: setup search state
-// searchState
-function search(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: any[]){
+interface SearchState{
+    args: SearchArgs;
+    text: string;
+    searchFrom: readonly vscode.Selection[];
+    oldMode: string;
+}
 
+let searchStates: Map<vscode.TextEditor, Record<string, SearchState>> = new Map();
+let currentSearch: string = "default";
+function getSearchState(editor: vscode.TextEditor, register: string): SearchState{
+    let statesForEditor = searchStates.get(editor);
+    statesForEditor = statesForEditor ? statesForEditor : {};
+    if(!statesForEditor[register]){
+        let searchState: SearchState = {
+            args: searchArgs.parse({}), 
+            text: "", 
+            searchFrom: [],
+            oldMode: keyState.keyContext.mode
+        };
+        statesForEditor[register] = searchState;
+        searchStates.set(editor, statesForEditor);
+        return searchState;
+    }else{
+        return statesForEditor[register];
+    }
+}
+
+let typeSubscription: vscode.Disposable | undefined;
+let onTypeFn: (text: string) => Promise<void> = async function(text: string){
+    return;
+};
+async function onType(event: {text: string}){
+    return onTypeFn(event.text);
+}
+
+async function search(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args_: any[]){
+    let args = validateInput('modalkeys.search', args_, searchArgs);
+    if(!args){ return; }
+
+    currentSearch = args.register;
+    let state = getSearchState(editor, currentSearch);
+    state.args = args;
+    state.text = args.text;
+    state.searchFrom = editor.selections;
+
+    if(state.text.length > 0){
+        highlightMatches(state.text, editor, state.searchFrom, state)
+        await acceptSearch(editor, edit, state);
+        return;
+    }
+
+    setKeyContext({name: 'mode', value: 'search', transient: false});
+    // when there are a fixed number of keys use `type` command
+    if(state.args.acceptAfter){
+        if(!typeSubscription){
+            try{
+                typeSubscription = vscode.commands.registerCommand('type', onType);
+            }catch(e){
+                vscode.window.showErrorMessage(`Failed to capture keyboard input. You 
+                    might have an extension that is already listing to type events 
+                    installed (e.g. vscodevim).`);
+            }
+        }
+        onTypeFn = async (text: string) => { 
+            if(text === "\n"){
+                acceptSearch(editor, edit, state);
+            }else{
+                state.text += text; 
+            }
+        };
+    }
+    // if there are not a fixed number use a UX element that makes the keys visible
+    let inputBox = vscode.window.createInputBox();
+    inputBox.prompt = "Enter search text";
+    inputBox.title = "Search"
+    inputBox.onDidChangeValue((str: string) => {
+        state.text = str;
+    });
+    inputBox.onDidAccept(() => {
+        acceptSearch(editor, edit, state);
+    });
+    inputBox.onDidHide(() => {
+        cancelSearch(editor, edit);
+    });
+    inputBox.show();
+    return;
+}
+
+async function acceptSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, state: SearchState) {
+    if(state.args.doAfter){
+        await runCommands({do: state.args.doAfter, resetTransient: true});
+    }
+    if(typeSubscription){
+        typeSubscription.dispose();
+        typeSubscription = undefined;
+    }
+    await setKeyContext({name: 'mode', value: state.oldMode, transient: false});
 }
 
 export function activate(context: vscode.ExtensionContext){
     context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.search', search));
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.acceptSearch', acceptSearch));
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.cancelSearch', cancelSearch));
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.deleteLastSearchChar', deleteLastSearchCharacter));
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.nextMatch', nextMatch));
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.previousMatch', previousMatch));
+    updateSearchHighlights();
+    vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
 }
 
 /**
@@ -118,67 +222,70 @@ export function activate(context: vscode.ExtensionContext){
  * the key presses when search is active. That is why its argument is defined
  * as an union type. 
  */
-async function oldsearch(args: unknown): Promise<void> {
-    let editor_ = vscode.window.activeTextEditor;
-    if (!editor_) { return; }
-    let editor = editor_!;
-
-    if (!args)
-        args = {}
-    if (typeof args == 'object') {
-        /**
-         * If we get an object as argument, we start a new search. We switch
-         * to normal mode, if necessary. Then we initialize the search string
-         * to empty, and store the current selections in the
-         * `searchStartSelections` array. We need an array as the command also
-         * works with multiple cursors. Finally we store the search arguments
-         * in the module level variables.
-         */
-        enterMode(Search)
-        
-        currentSearch = args?.register || "default"
-        let state = searchState(currentSearch)
-        let text = args.text || ""
-        state.string = text
-        state.startSelections = editor.selections
-        state.args.backwards = args.backwards || false
-        state.args.caseSensitive = args.caseSensitive || false
-        state.args.wrapAround = args.wrapAround || false
-        state.args.acceptAfter = args.acceptAfter || Number.POSITIVE_INFINITY
-        state.args.selectTillMatch = args.selectTillMatch || false
-        state.args.offset = args.offset || 'inclusive'
-        state.args.executeAfter = args.executeAfter
-        state.args.regex = args.regex || false
-        state.args.highlightMatches = args.highlightMatches === undefined ? true : args.highlightMatches
-
-        /**
-         * If we've been passed text to search as part of the command, immediately find
-         * and accept the matches
-         */
-        if(text.length > 0){
-            highlightMatches(text, editor, state.startSelections || editor.selections, state)
-            await acceptSearch(editor, state)
-        }
-    }
-    else if (args == "\n")
-        /**
-         * If we get an enter character we accept the search.
-         */
-        await acceptSearch(editor, searchState(currentSearch))
-    else {
-        /**
-         * Otherwise we just add the character to the search string and find
-         * the next match. If `acceptAfter` argument is given, and we have a
-         * sufficiently long search string, we accept the search automatically.
-         */
-        let state = searchState(currentSearch)
-        let text = (state.string || "") + args
-        state.string = text
-        highlightMatches(text, editor, state.startSelections || editor.selections, state)
-        if (!state.args.acceptAfter || state.string.length >= state.args.acceptAfter)
-            await acceptSearch(editor, state)
+async function appendSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, str: string){
+    let state = getSearchState(editor, currentSearch);
+    state.text += str;
+    highlightMatches(state.text, editor, state.searchFrom, state);
+    if (!state.args.acceptAfter || state.text.length >= state.args.acceptAfter){
+        await acceptSearch(editor, edit, state);
     }
 }
+
+async function cancelSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
+    let state = getSearchState(editor, currentSearch);
+    if (keyState.keyContext.mode === 'search'){
+        setKeyContext({name: 'mode', value: state.oldMode, transient: false});
+        let editor = vscode.window.activeTextEditor;
+        if (editor) {
+            if(state.searchFrom){ editor.selections = state.searchFrom; }
+            revealActive(editor);
+        }
+    }
+    if(typeSubscription){
+        typeSubscription.dispose();
+        typeSubscription = undefined;
+    }
+}
+
+function deleteLastSearchCharacter(editor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
+    let state = getSearchState(editor, currentSearch);
+    state.text = state.text.slice(0, -1)
+    highlightMatches(state.text, editor, state.searchFrom, state);
+}
+
+
+export function revealActive(editor: vscode.TextEditor){
+    let act = new vscode.Range(editor.selection.active, editor.selection.active);
+    editor.revealRange(act);
+}
+
+const matchStepArgs = z.object({register: z.string().default("default")});
+async function nextMatch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args_: unknown){
+    let args = validateInput('modalkeys.nextMatch', args_, matchStepArgs);
+    if(!args) { return; }
+    let state = getSearchState(editor, args!.register);
+    if (state.text) {
+        highlightMatches(state.text, editor, editor.selections, state);
+        revealActive(editor);
+    }
+}
+
+async function previousMatch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args_: unknown){
+    let args = validateInput('modalkeys.previousMatch', args_, matchStepArgs);
+    if(!args) { return; }
+    let state = getSearchState(editor, args!.register);
+    if (state.text) {
+        state.args.backwards = !state.args.backwards;
+        highlightMatches(state.text, editor, editor.selections, state);
+        revealActive(editor);
+        state.args.backwards = !state.args.backwards;
+    }
+}
+
+let matchStatusText: string = "";
+let searchDecorator: vscode.TextEditorDecorationType;
+let searchOtherDecorator: vscode.TextEditorDecorationType;
+let highlightsChanged: boolean = false;
 
 /**
  * The actual search functionality is located in this helper function. It is
@@ -195,20 +302,16 @@ async function oldsearch(args: unknown): Promise<void> {
 function highlightMatches(text: string, editor: vscode.TextEditor,
     selections: readonly vscode.Selection[], state: SearchState) {
     matchStatusText = ""
-    if (state.string == ""){
+    if (state.text === ""){
         /**
          * If search string is empty, we return to the start positions.
-         * (cleaering the deceorators)
+         * (clearing the decorators)
          */
-        if(state.startSelections) editor.selections = state.startSelections
+        if(state.searchFrom) { editor.selections = state.searchFrom; }
         editor.setDecorations(searchDecorator, []);
         editor.setDecorations(searchOtherDecorator, []);
     }else {
-        /**
-         * We get the text of the active editor as string. If we have
-         * case-insensitive search, we transform the text to lower case.
-         */
-        let doc = editor.document
+        let doc = editor.document;
 
         /**
          * searchRanges keeps track of where the searches land
@@ -217,33 +320,34 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
         let searchRanges: vscode.Range[] = [];
 
         editor.selections = selections.map(sel => {
-            let matches = searchMatches(doc, sel.active, undefined, text, state.args)
-            let result = matches.next()
-            let newsel = sel
+            let matches = searchMatches(doc, sel.active, undefined, text, state.args);
+            let result = matches.next();
+            let newSel = sel;
             while(!result.done){
                 let [active, anchor] = state.args.backwards ?
                     [result.value.start, result.value.end] :
                     [result.value.end, result.value.start]
-                newsel = positionSearch(new vscode.Selection(anchor, active), doc,
+                newSel = adjustSearchPosition(new vscode.Selection(anchor, active), doc,
                     result.value.end.character - result.value.start.character, 
                     state.args)
                 if (state.args.selectTillMatch){
-                    newsel = new vscode.Selection(sel.anchor, newsel.active)
+                    newSel = new vscode.Selection(sel.anchor, newSel.active)
                 } 
 
-                if(!newsel.start.isEqual(sel.start) || !newsel.end.isEqual(sel.end)) break
+                if(!newSel.start.isEqual(sel.start) || !newSel.end.isEqual(sel.end)) { break; }
 
-                result = matches.next()
+                result = matches.next();
             }
             if(result.done){
-                matchStatusText = "Pattern not found"
-                return sel
+                // TODO: have a discreted place to say "Pattern not found"
+                // this is what gets called when there is no match
+                return sel;
             }else{
-                searchRanges.push(result.value)
+                searchRanges.push(result.value);
 
-                return newsel
+                return newSel;
             }
-        })
+        });
 
         revealActive(editor);
 
@@ -279,18 +383,17 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
 /**
  * ### Search Decorations
  *
- * We determine how searches are higlighted whenever the configuration changes by callin
+ * We determine how searches are highlighted whenever the configuration changes by callin
  * this function; searches are highlighted by default using the same colors as used for
  * built-in search commands.
  */
 function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
     if(!event || event.affectsConfiguration('modalkeys')){
-        let config = vscode.workspace.getConfiguration('modalkeys')
+        let config = vscode.workspace.getConfiguration('modalkeys');
         let matchBackground = config.get<string>('searchMatchBackground');
         let matchBorder = config.get<string>('searchMatchBorder');
         let highlightBackground = config.get<string>('searchOtherMatchesBackground');
         let highlightBorder = config.get<string>('searchOtherMatchesBorder');
-        let bookmarkColor = config.get<string>('bookmarkColor')
 
         searchDecorator = vscode.window.createTextEditorDecorationType({
             backgroundColor: matchBackground ||
@@ -307,144 +410,29 @@ function updateSearchHighlights(event?: vscode.ConfigurationChangeEvent){
                 new vscode.ThemeColor('editor.findMatchHighlightBorder'),
             borderStyle: "solid"
         });
-
-        bookMarkDecorator = vscode.window.createTextEditorDecorationType({
-            backgroundColor: bookmarkColor || "rgba(0,0,150,0.5)",
-            isWholeLine: true
-        })
     }
 }
 
-function positionSearch(sel: vscode.Selection, doc: vscode.TextDocument, len: number, args: SearchArgs){
+function adjustSearchPosition(sel: vscode.Selection, doc: vscode.TextDocument, len: number, args: SearchArgs){
     let offset = 0;
     let forward = !args.backwards
     if(args.offset === 'exclusive'){
-        offset = forward ? -len : len
-        if(!args.selectTillMatch) offset += forward ? -1 : 0
+        offset = forward ? -len : len;
+        if(!args.selectTillMatch) { offset += forward ? -1 : 0; }
     }else if(args.offset === 'start'){
-        if(forward){ offset = -len }
+        if(forward){ offset = -len; }
     }else if(args.offset === 'end'){
-        if(!forward){ offset = len }
+        if(!forward){ offset = len; }
     }else{ // args.offset === 'inclusive' (default)
         if(!args.selectTillMatch){
-            offset += forward ? -1 : 0
+            offset += forward ? -1 : 0;
         }
     }
 
     if(offset !== 0){
-        let newpos = wrappedTranslate(sel.active, doc, offset)
-        return new vscode.Selection(args.selectTillMatch ? sel.anchor : newpos, newpos)
+        let newpos = wrappedTranslate(sel.active, doc, offset);
+        return new vscode.Selection(args.selectTillMatch ? sel.anchor : newpos, newpos);
     }
-    return sel
+    return sel;
 }
 
-/**
- * ### Accepting Search
- *
- * Accepting the search resets the mode variables. Additionally, if
- * `typeAfterAccept` argument is set we run the given normal mode commands.
- */
-async function acceptSearch(editor: vscode.TextEditor, state: SearchState) {
-    if(state.args.executeAfter){
-        let command = expandOneCommand(state.args.executeAfter)
-        if(command){
-            keyState.execute(command, state.oldMode || Normal, state.string)
-        }
-    }
-
-    await enterMode(state.oldMode || Normal)
-}
-
-/**
- * ### Canceling Search
- *
- * Canceling search just resets state, and moves the cursor back to the starting
- * position.
- */
-async function cancelSearch(): Promise<void> {
-    let state = searchState(currentSearch)
-    if (keyMode == Search) {
-        await enterMode(state.oldMode || Normal)
-        let editor = vscode.window.activeTextEditor
-        if (editor) {
-            if(state.startSelections) editor.selections = state.startSelections
-            revealActive(editor);
-        }
-    }
-}
-/**
- * ### Modifying Search String
- *
- * Since we cannot capture the backspace character in normal mode, we have to
- * hook it some other way. We define a command `modalkeys.deleteCharFromSearch`
- * which deletes the last character from the search string. This command can
- * then be bound to backspace using the standard keybindings. We only run the
- * command, if the `modalkeys.searching` context is set. Below is an excerpt
- * of the default keybindings defined in `package.json`.
- * ```js
- * {
- *    "key": "Backspace",
- *    "command": "modalkeys.deleteCharFromSearch",
- *    "when": "editorTextFocus && modalkeys.searching"
- * }
- * ```
- * Note that we need to also update the status bar to show the modified search
- * string. The `onType` callback that normally handles this is not getting
- * called when this command is invoked.
- */
-function deleteCharFromSearch() {
-    let editor = vscode.window.activeTextEditor
-    let state = searchState(currentSearch)
-    let text = (state.string || "")
-    if (editor && keyMode === Search && text.length > 0) {
-        state.string = text.slice(0, text.length - 1)
-        keyState.deleteSearchChar()
-        highlightMatches(text, editor, state.startSelections || editor.selections, state)
-        updateCursorAndStatusBar(editor)
-    }
-}
-
-function searchState(register: string | undefined): SearchState{
-    let val = register || "default"
-    if(!searchStates[val]){
-        let state = {args: {}}
-        searchStates[val] = state
-        return state
-    }else{
-        return searchStates[val]
-    }
-}
-
-/**
- * ### Finding Previous and Next Match
- *
- * Using the `highlightMatches` function finding next and previous match is a
- * relatively simple task. We basically just restart the search from
- * the current cursor position(s).
- *
- * We also check whether the search parameters include `typeBeforeNextMatch` or
- * `typeAfterNextMatch` argument. If so, we invoke the user-specified commands
- * before and/or after we jump to the next match.
- */
-async function nextMatch(args: {register?: string}): Promise<void> {
-    let editor = vscode.window.activeTextEditor
-    let state = searchState(args?.register)
-    if (editor && state.string) {
-        highlightMatches(state.string, editor, editor.selections, state)
-        revealActive(editor);
-    }
-}
-/**
- * When finding the previous match we flip the search direction but otherwise do
- * the same routine as in the previous function.
- */
-async function previousMatch(args: {register?: string}): Promise<void> {
-    let editor = vscode.window.activeTextEditor
-    let state = searchState(args?.register)
-    if (editor && state.string) {
-        state.args.backwards = !state.args.backwards
-        highlightMatches(state.string, editor, editor.selections, state)
-        revealActive(editor);
-        state.args.backwards = !state.args.backwards
-    }
-}
