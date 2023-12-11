@@ -166,10 +166,16 @@ export type StrictBindingTree = z.infer<typeof strictBindingTree> & OtherKeys;
 // TODO: unit test - verify that zod recursively validates all 
 // elements of the binding tree
 
+export const validModes = z.string().array().refine((ms: string[]) => ms.some(m => m === 'insert'),
+    ms => {
+        let modes = ms.join(', ');
+        return { message: "The 'insert' mode is required, but the only modes were: " + modes };
+    });
+
 export const bindingSpec = z.object({
     header: bindingHeader,
     bind: bindingTree,
-    define: z.object({}).passthrough().optional()
+    define: z.object({ validModes: validModes }).passthrough().optional()
 });
 export type BindingSpec = z.infer<typeof bindingSpec>;
 

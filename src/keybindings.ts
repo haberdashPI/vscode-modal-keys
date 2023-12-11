@@ -139,6 +139,11 @@ async function importBindings() {
     if(parsedBindings.success){
         let bindings = processBindings(parsedBindings.data);
         insertKeybindingsIntoConfig(file, bindings);
+        let newValidModes = parsedBindings.data.define?.validModes;
+        if(newValidModes){
+            let config = vscode.workspace.getConfiguration('modalkeys');
+            config.update('validModes', newValidModes, vscode.ConfigurationTarget.Global);
+        }
     }else{
         for (let issue of parsedBindings.error.issues.slice(0, 3)) {
             showParseError("Parsing of bindings failed: ", issue);

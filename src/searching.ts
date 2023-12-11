@@ -60,14 +60,14 @@ function* mapIter<T, R>(iter: Iterable<T>, fn: (x: T) => R){
 function* linesOf(doc: vscode.TextDocument, pos: vscode.Position,
     wrap: boolean, forward: boolean): Generator<[string, number]>{
 
-    yield [doc.lineAt(pos).text, pos.line]
-    let line = pos.line + (forward ? 1 : -1)
+    yield [doc.lineAt(pos).text, pos.line];
+    let line = pos.line + (forward ? 1 : -1);
     while(forward ? line < doc.lineCount : line >= 0){
-        yield [doc.lineAt(line).text, line]
-        line += (forward ? 1 : -1)
+        yield [doc.lineAt(line).text, line];
+        line += (forward ? 1 : -1);
     }
     if(wrap){
-        line = forward ? 0 : doc.lineCount - 1
+        line = forward ? 0 : doc.lineCount - 1;
         while(forward ? line < doc.lineCount : line > 0){
             yield [doc.lineAt(line).text, line];
             line += (forward ? 1 : -1);
@@ -128,7 +128,7 @@ function getSearchState(editor: vscode.TextEditor, register: string = currentSea
             args: searchArgs.parse({}), 
             text: "", 
             searchFrom: [],
-            oldMode: keyState.keyContext.mode
+            oldMode: keyState.values.mode
         };
         statesForEditor[register] = searchState;
         searchStates.set(editor, statesForEditor);
@@ -227,7 +227,7 @@ export function activate(context: vscode.ExtensionContext){
 
 async function cancelSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
     let state = getSearchState(editor);
-    if (keyState.keyContext.mode === 'search'){
+    if (keyState.values.mode === 'search'){
         setKeyContext({name: 'mode', value: state.oldMode, transient: false});
         let editor = vscode.window.activeTextEditor;
         if (editor) {

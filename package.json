@@ -23,22 +23,35 @@
         "title": "ModalKeys: Insert Keybinding Configuration"
       }
     ],
-    "properties": {
-      "modalkeys.searchMatchBackground": {
-        "type": "string",
-        "description": "A html format color styling to highlight the current search match(if left blank defaults to built-in search style)."
-      },
-      "modalkeys.searchMatchBorder": {
-        "type": "string",
-        "description": "A html format color styling for the border of the current search match (if left blank defaults to built-in search style)."
-      },
-      "modalkeys.searchOtherMatchesBackground": {
-        "type": "string",
-        "description": "A html format color styling to highlight other search matches (if left blank defaults to built-in search style)."
-      },
-      "modalkeys.searchOtherMatchesBorder": {
-        "type": "string",
-        "description": "A html format color styling for the border of other search matches (if left blank defaults to built-in search style)."
+    "configuration": {
+      "properties": {
+        "modalkeys.validModes": {
+          "title": "Valid Modes",
+          "type": "array",
+          "description": "Lists all valid key modes used by ModalKeys.",
+          "uniqueItems": true,
+          "default": ["insert"]
+        },
+        "modalkeys.searchMatchBackground": {
+          "title": "Background of current search match",
+          "type": "string",
+          "description": "A html format color styling to highlight the current search match(if left blank defaults to built-in search style)."
+        },
+        "modalkeys.searchMatchBorder": {
+          "title": "Border of current search match",
+          "type": "string",
+          "description": "A html format color styling for the border of the current search match (if left blank defaults to built-in search style)."
+        },
+        "modalkeys.searchOtherMatchesBackground": {
+          "title": "Background of non-current search matches",
+          "type": "string",
+          "description": "A html format color styling to highlight other search matches (if left blank defaults to built-in search style)."
+        },
+        "modalkeys.searchOtherMatchesBorder": {
+          "title": "Border of non-current search matches",
+          "type": "string",
+          "description": "A html format color styling for the border of other search matches (if left blank defaults to built-in search style)."
+        }
       }
     }
   },

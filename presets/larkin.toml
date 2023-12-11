@@ -35,8 +35,7 @@ These bindings are named after the middle name of my first child.
 """
 
 [define]
-
-modes = []
+validModes = ["insert", "normal", "syminsert"]
 
 [bind.modes]
 name = "Modes"

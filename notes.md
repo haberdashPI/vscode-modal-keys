@@ -1,10 +1,5 @@
 Current issues I'm working on:
 
-TODO: validate mode specification (should have all negative or all positive)
-
-For keybinding validation: we should requir eusers to indicate what their custom modes
-are named, to avoid typos.
-
 4. figure out how to enable additional extensions (maybe we have to do this manually for debugging...)
     - for some reasons we can't seem to install the selection utilities extension in the
     debug session 
@@ -33,3 +28,5 @@ unit tests: keybinding insertion (with weird file states)
 unit tests: set key state (+validation)
 unit tests: expected display of state
 unit tests: macro replay
+
+NOTE: ages from now I want to make config import work for both global and workspace settings
