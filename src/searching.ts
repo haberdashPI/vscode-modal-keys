@@ -11,7 +11,7 @@ export const searchArgs = z.object({
     wrapAround: z.boolean().optional(),
     acceptAfter: z.number().min(1).optional(),
     selectTillMatch: z.boolean().optional(),
-    highlightMatches: z.boolean().optional(),
+    highlightMatches: z.boolean().default(true).optional(),
     offset: z.enum(["inclusive", "exclusive", "start", "end"]).default("exclusive"),
     text: z.string().min(1).optional(),
     regex: z.boolean().optional(),
@@ -116,7 +116,11 @@ interface SearchState{
 
 let searchStates: Map<vscode.TextEditor, Record<string, SearchState>> = new Map();
 let currentSearch: string = "default";
-function getSearchState(editor: vscode.TextEditor, register: string): SearchState{
+let searchStateUsed = false;
+export function trackSearchUsage(){ searchStateUsed = false; }
+export function wasSearchUsed(){ return searchStateUsed; }
+function getSearchState(editor: vscode.TextEditor, register: string = currentSearch): SearchState{
+    searchStateUsed = true;
     let statesForEditor = searchStates.get(editor);
     statesForEditor = statesForEditor ? statesForEditor : {};
     if(!statesForEditor[register]){
@@ -147,13 +151,13 @@ async function search(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, ar
     if(!args){ return; }
 
     currentSearch = args.register;
-    let state = getSearchState(editor, currentSearch);
+    let state = getSearchState(editor);
     state.args = args;
     state.text = args.text || "";
     state.searchFrom = editor.selections;
 
     if(state.text.length > 0){
-        highlightMatches(state.text, editor, state.searchFrom, state)
+        navigateTo(state, editor);
         await acceptSearch(editor, edit, state);
         return;
     }
@@ -172,12 +176,10 @@ async function search(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, ar
             }
         }
         onTypeFn = async (text: string) => { 
-            if(text === "\n" || state.text.length >= acceptAfter){
-                acceptSearch(editor, edit, state);
-            }else{
-                state.text += text; 
-                highlightMatches(state.text, editor, state.searchFrom, state);
-            }
+            if(text === "\n") { acceptSearch(editor, edit, state); }
+            state.text += text; 
+            navigateTo(state, editor, false);
+            if(state.text.length >= acceptAfter){ acceptSearch(editor, edit, state); }
         };
     }else{
         // if there are not a fixed number use a UX element that makes the keys visible
@@ -186,7 +188,7 @@ async function search(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, ar
         inputBox.title = "Search";
         inputBox.onDidChangeValue((str: string) => {
             state.text = str;
-            highlightMatches(state.text, editor, state.searchFrom, state);
+            navigateTo(state, editor, false);
         });
         inputBox.onDidAccept(() => {
             acceptSearch(editor, edit, state);
@@ -207,6 +209,7 @@ async function acceptSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEd
         typeSubscription.dispose();
         typeSubscription = undefined;
     }
+    state.searchFrom = editor.selections;
     await setKeyContext({name: 'mode', value: state.oldMode, transient: false});
 }
 
@@ -217,26 +220,13 @@ export function activate(context: vscode.ExtensionContext){
     context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.deleteLastSearchChar', deleteLastSearchCharacter));
     context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.nextMatch', nextMatch));
     context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.previousMatch', previousMatch));
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand('modalkeys.clearSearchDecorations', clearSearchDecorations));
     updateSearchHighlights();
     vscode.workspace.onDidChangeConfiguration(updateSearchHighlights);
 }
 
-/**
- * This is the main command that not only initiates the search, but also handles
- * the key presses when search is active. That is why its argument is defined
- * as an union type. 
- */
-async function appendSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit, str: string){
-    let state = getSearchState(editor, currentSearch);
-    state.text += str;
-    highlightMatches(state.text, editor, state.searchFrom, state);
-    if (!state.args.acceptAfter || state.text.length >= state.args.acceptAfter){
-        await acceptSearch(editor, edit, state);
-    }
-}
-
 async function cancelSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
-    let state = getSearchState(editor, currentSearch);
+    let state = getSearchState(editor);
     if (keyState.keyContext.mode === 'search'){
         setKeyContext({name: 'mode', value: state.oldMode, transient: false});
         let editor = vscode.window.activeTextEditor;
@@ -252,9 +242,9 @@ async function cancelSearch(editor: vscode.TextEditor, edit: vscode.TextEditorEd
 }
 
 function deleteLastSearchCharacter(editor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
-    let state = getSearchState(editor, currentSearch);
+    let state = getSearchState(editor);
     state.text = state.text.slice(0, -1);
-    highlightMatches(state.text, editor, state.searchFrom, state);
+    navigateTo(state, editor);
 }
 
 
@@ -269,7 +259,7 @@ async function nextMatch(editor: vscode.TextEditor, edit: vscode.TextEditorEdit,
     if(!args) { return; }
     let state = getSearchState(editor, args!.register);
     if (state.text) {
-        highlightMatches(state.text, editor, editor.selections, state);
+        navigateTo(state, editor);
         revealActive(editor);
     }
 }
@@ -280,16 +270,14 @@ async function previousMatch(editor: vscode.TextEditor, edit: vscode.TextEditorE
     let state = getSearchState(editor, args!.register);
     if (state.text) {
         state.args.backwards = !state.args.backwards;
-        highlightMatches(state.text, editor, editor.selections, state);
+        navigateTo(state, editor);
         revealActive(editor);
         state.args.backwards = !state.args.backwards;
     }
 }
 
-let matchStatusText: string = "";
 let searchDecorator: vscode.TextEditorDecorationType;
 let searchOtherDecorator: vscode.TextEditorDecorationType;
-let highlightsChanged: boolean = false;
 
 /**
  * The actual search functionality is located in this helper function. It is
@@ -303,15 +291,13 @@ let highlightsChanged: boolean = false;
  * matches are unique. In case the matches overlap, the number of selections
  * will decrease.
  */
-function highlightMatches(text: string, editor: vscode.TextEditor,
-    selections: readonly vscode.Selection[], state: SearchState) {
-    matchStatusText = "";
+function navigateTo(state: SearchState, editor: vscode.TextEditor, updateSearchFrom: boolean = true) {
     if (state.text === ""){
         /**
          * If search string is empty, we return to the start positions.
          * (clearing the decorators)
          */
-        if(state.searchFrom) { editor.selections = state.searchFrom; }
+        editor.selections = state.searchFrom;
         editor.setDecorations(searchDecorator, []);
         editor.setDecorations(searchOtherDecorator, []);
     }else {
@@ -323,8 +309,8 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
          */
         let searchRanges: vscode.Range[] = [];
 
-        editor.selections = selections.map(sel => {
-            let matches = searchMatches(doc, sel.active, undefined, text, state.args);
+        editor.selections = state.searchFrom.map(sel => {
+            let matches = searchMatches(doc, sel.active, undefined, state.text, state.args);
             let result = matches.next();
             let newSel = sel;
             while(!result.done){
@@ -352,6 +338,9 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
                 return newSel;
             }
         });
+        if(updateSearchFrom){
+            state.searchFrom = editor.selections;
+        }
 
         revealActive(editor);
 
@@ -361,10 +350,10 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
          * them; we want to mark those that aren't a "current" match (found above)
          * differently so we make sure that they are not part of `searchRanges`
          */
-         if(state.args.highlightMatches){
+         if(state.args.highlightMatches !== false){
             let searchOtherRanges: vscode.Range[] = [];
             editor.visibleRanges.forEach(range => {
-                let matches = searchMatches(doc, range.start, range.end, text,
+                let matches = searchMatches(doc, range.start, range.end, state.text,
                     {...state.args, backwards: false});
                 for(const matchRange of matches){
                     if(!searchRanges.find(x =>
@@ -380,7 +369,6 @@ function highlightMatches(text: string, editor: vscode.TextEditor,
             editor.setDecorations(searchDecorator, searchRanges);
             editor.setDecorations(searchOtherDecorator, searchOtherRanges);
         }
-        highlightsChanged = true;
     }
 }
 
@@ -440,3 +428,7 @@ function adjustSearchPosition(sel: vscode.Selection, doc: vscode.TextDocument, l
     return sel;
 }
 
+export function clearSearchDecorations(editor: vscode.TextEditor){
+    editor.setDecorations(searchDecorator, []);
+    editor.setDecorations(searchOtherDecorator, []);
+}

@@ -22,7 +22,25 @@
         "command": "modalkeys.importBindings",
         "title": "ModalKeys: Insert Keybinding Configuration"
       }
-    ]
+    ],
+    "properties": {
+      "modalkeys.searchMatchBackground": {
+        "type": "string",
+        "description": "A html format color styling to highlight the current search match(if left blank defaults to built-in search style)."
+      },
+      "modalkeys.searchMatchBorder": {
+        "type": "string",
+        "description": "A html format color styling for the border of the current search match (if left blank defaults to built-in search style)."
+      },
+      "modalkeys.searchOtherMatchesBackground": {
+        "type": "string",
+        "description": "A html format color styling to highlight other search matches (if left blank defaults to built-in search style)."
+      },
+      "modalkeys.searchOtherMatchesBorder": {
+        "type": "string",
+        "description": "A html format color styling for the border of other search matches (if left blank defaults to built-in search style)."
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

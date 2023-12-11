@@ -34,6 +34,10 @@ selections.
 These bindings are named after the middle name of my first child.
 """
 
+[define]
+
+modes = []
+
 [bind.modes]
 name = "Modes"
 description = """
@@ -66,7 +70,7 @@ allowed_prefixes = "<all-prefixes>"
 # by default typing keys in a mode other than insert is simply ignored
 name = "ignore"
 description = "this key does nothing"
-key = "<all-keys>"
+key = ["<all-keys>", "shift+<all-keys>"]
 do.command = "modalkeys.ignore"
 allowed_prefixes = "<all-prefixes>"
 mode = ["!insert", "!search"]
@@ -256,12 +260,27 @@ default.do.args.wrapAround = true
 key = "/"
 name = "search"
 description = "search forwards"
+do.args.register = "search"
 
 [[bind.edit.motion.search.items]]
 key = "shift+/"
 name = "search bk"
 description = "search backwards"
-do.args.wrapAround = true
+do.args.register = "search"
+
+[[bind.edit.motion.search.items]]
+key = "n"
+name = "→ search"
+description = "Go to the next match of the search query"
+do.command = "modalkeys.nextMatch"
+do.args.register = "search"
+
+[[bind.edit.motion.search.items]]
+key = "shift+n"
+name = "← search"
+description = "Go to the previous match of the search query"
+do.command = "modalkeys.previousMatch"
+do.args.register = "search"
 
 [[bind.edit.motion.search.items]]
 key = "f"

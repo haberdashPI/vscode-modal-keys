@@ -12,7 +12,7 @@ export function processBindings(spec: BindingSpec){
     let items: StrictBindingItem[] = listBindings(expandedSpec);
     items = expandBindingKeys(items, spec.define);
     items = expandBindingDocsAcrossWhenClauses(items);
-    items = items.map( moveModeToWhenClause);
+    items = items.map(moveModeToWhenClause);
     let prefixItems: BindingMap = {};
     items = items.map(i => extractPrefixBindings(i, prefixItems));
     let bindings = items.map(itemToConfigBinding);
@@ -84,11 +84,22 @@ function expandDefaults(bindings: BindingTree, prefix: string = "bind", default_
 // invalid items (e.g. both key and keys defined) get detected
 
 function expandBindingKey(k: string, item: StrictBindingItem, context: EvalContext, 
-    definitions: any){
+    definitions: any): StrictBindingItem[] {
 
+    let match: RegExpMatchArray | null = null;
+    if((match = /((.*)\+)?<all-keys>/.exec(k)) !== null){
+        if(match[2] !== undefined){
+            let mod = match[2];
+            return flatMap(Array.from(ALL_KEYS), k => 
+                expandBindingKey(`${mod}+${k}`, item, context, definitions));
+        }else{
+            return flatMap(Array.from(ALL_KEYS), k => 
+                expandBindingKey(k, item, context, definitions));
+        }
+    }
     let keyEvaled = reifyStrings(omit(item, 'key'), 
         str => context.evalExpressionsInString(str, {...definitions, key: k}));
-    return {...keyEvaled, key: k};
+    return [{...keyEvaled, key: k}];
 }
 
 const ALL_KEYS = "`1234567890-=qwertyuiop[]\\asdfghjkl;'zxcvbnm,./";
@@ -96,9 +107,7 @@ function expandBindingKeys(bindings: StrictBindingItem[], definitions: any): Str
     let context = new EvalContext();
     let result = flatMap(bindings, item => {
         if(Array.isArray(item.key)){
-            return item.key.map(k => expandBindingKey(k, item, context, definitions));
-        }else if(item.key === "<all-keys>"){
-            return Array.from(ALL_KEYS).map(k => expandBindingKey(k, item, context, definitions));
+            return flatMap(item.key, k => expandBindingKey(k, item, context, definitions));
         }else{
             return [item];
         }
@@ -125,7 +134,7 @@ interface IConfigKeyBinding {
     command: "modalkeys.do" | "modalkeys.prefix"
     name?: string,
     description?: string,
-    mode?: string,
+    mode?: string[],
     when?: string,
     args: { do: string | object | (string | object)[], resetTransient?: boolean } | 
         { key: string }
@@ -136,7 +145,9 @@ function itemToConfigBinding(item: StrictBindingItem): IConfigKeyBinding {
         key: <string>item.key,
         name: item.name,
         description: item.description,
-        mode: item.mode,
+        mode: item.mode === undefined ? item.mode : 
+              Array.isArray(item.mode) ? item.mode : 
+              [item.mode],
         when: Array.isArray(item.when) ? "(" + item.when.join(") && (") + ")" : item.when,
         command: "modalkeys.do",
         args: { do: item.do, resetTransient: item.resetTransient }
@@ -147,7 +158,7 @@ function validateUniqueForBinding(vals: (string | undefined)[], name: string, it
     let uvals = uniq(vals.filter(v => v !== undefined));
     if(uvals.length > 1){
         vscode.window.showErrorMessage(`Multiple values of \`${name}\` for idenictal 
-            binding \`${item.key}\` in mode "${item.mode}". Update the bindings file
+            binding \`${item.key}\` in mode "${item.mode.join(' or ')}". Update the bindings file
             to use only one name for this binding regardless of its \`when\` clause
             You can also safely leave all but one of these bindings with a \`${name}\`
             field.`);
@@ -155,7 +166,7 @@ function validateUniqueForBinding(vals: (string | undefined)[], name: string, it
     }
     if(uvals.length === 0){
         vscode.window.showErrorMessage(`No \`${name}\` provided for binding \`${item.key}\`
-            in mode "${item.mode}".`);
+            in mode "${item.mode.join(' or ')}".`);
         return;
     }
     return uvals[0];
@@ -210,10 +221,22 @@ function expandBindingDocsAcrossWhenClauses(items: StrictBindingItem[]): StrictB
 function moveModeToWhenClause(binding: StrictBindingItem){
     let when = binding.when ? binding.when : [];
     if(binding.mode !== undefined){
-        if(binding.mode.startsWith("!")){
-            when = when.concat(`(modalkeys.mode != '${binding.mode.slice(1)}')`);
+        let modes = Array.isArray(binding.mode) ? binding.mode : [binding.mode];
+        let negative = false;
+        let whenClause = modes.map(m => {
+            if(m.startsWith("!")){
+                negative = true;
+                return `(modalkeys.mode != '${m.slice(1)}')`;
+            }else{
+                return `(modalkeys.mode == '${m}')`;
+            }
+        });
+        // NOTE: parsing validation should ensure that only negative or only
+        // positive mode specifications occur in one list
+        if(negative){
+            when = when.concat("("+whenClause.join(') && (')+")");
         }else{
-            when = when.concat(`(modalkeys.mode == '${binding.mode}')`);
+            when = when.concat("("+whenClause.join(') || (')+")");
         }
     }
 

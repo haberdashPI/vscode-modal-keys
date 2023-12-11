@@ -3,7 +3,7 @@ import z from 'zod';
 import { showParseError } from './keybindingParsing';
 
 export function validateInput<T extends z.ZodRawShape>(command: string, args_: unknown, 
-    using: z.ZodObject<T>) {
+    using: z.ZodObject<T> | z.ZodString) {
 
     let result = using.safeParse(args_);
     if(!result.success){

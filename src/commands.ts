@@ -3,7 +3,7 @@ import { StrictDoArg, strictDoArgs } from './keybindingParsing';
 import { reifyStrings, EvalContext } from './expressions';
 import { validateInput } from './utils';
 import z from 'zod';
-import { searchMatches } from './searching';
+import { clearSearchDecorations, trackSearchUsage, wasSearchUsed } from './searching';
 
 let modeStatusBar: vscode.StatusBarItem | undefined = undefined;
 let keyStatusBar: vscode.StatusBarItem | undefined = undefined;
@@ -24,22 +24,40 @@ function updateStatusBar(){
     }
 }
 
-interface KeyContext{
-    [k: string]: any
-}
+const keyContext = z.object({
+    prefix: z.string(),
+    count: z.number(),
+    mode: z.string(),
+    search: z.string(),
+    // require 'insert' and 'normal'? (or maybe only insert)
+    validModes: z.string().array()
+}).passthrough();
+type KeyContext = z.infer<typeof keyContext>;
+
+const keyContextKey = z.string().regex(/[a-zA-Z_]+[0-9a-zA-Z_]*/);
 
 class CommandState {
-    keyContext: KeyContext = {};
+    values: KeyContext = {
+        prefix: '',
+        count: 0,
+        mode: 'insert',
+        search: '',
+        validModes: ['insert', 'normal']
+    };
     transientValues: string[] = [];
     constructor(){ 
-        this.setKeyContext('prefix', '');
-        this.setKeyContext('count', 0);
-        this.setKeyContext('mode', 'insert');
-        this.setKeyContext('search', '');
+        for(let [k, v] of Object.entries(this.values)){
+            vscode.commands.executeCommand('setContext', 'modalkeys.'+k, v);
+        }
+        updateStatusBar();
     }
     setKeyContext(key: string, value: any){
-        this.keyContext[key] = value;
+        validateInput('modalkeys.set', key, keyContextKey);
+        // TODO: stopped here
+        validateInput('modalkeys.set', value, keyContext.shape[key]);
+        this.values[key] = value;
         vscode.commands.executeCommand('setContext', 'modalkeys.'+key, value);
+        validateInput('modalkeys.set', this.values, keyContext);
         updateStatusBar();
     }
 }
@@ -70,10 +88,16 @@ async function runCommandsCmd(args_: unknown){
 }
 export async function runCommands(args: RunCommandsArgs){
     // run the commands
+    trackSearchUsage();
     if (Array.isArray(args.do)) { for (let arg of args.do) { await runCommand(arg); } }
     else { await runCommand(args.do); }
 
-    if(args.resetTransient){ reset(); }
+    if(args.resetTransient){ 
+        reset(); 
+        if(!wasSearchUsed() && vscode.window.activeTextEditor){ 
+            clearSearchDecorations(vscode.window.activeTextEditor) ;
+        }
+    }
     evalContext.reportErrors();
 }
 commands['modalkeys.do'] = runCommandsCmd;

@@ -24,7 +24,7 @@ const bindingCommand = z.object({
 
 const ALLOWED_MODIFIERS = /Ctrl|Shift|Alt|Cmd|Win|Meta/i;
 const ALLOWED_KEYS = [
-    /(f[1-9])|(f1[0-9])/i, /[a-z]/, /[0-9]/,
+    /<all-keys>/, /(f[1-9])|(f1[0-9])/i, /[a-z]/, /[0-9]/,
     /`/, /-/, /=/, /\[/, /\]/, /\\/, /;/, /'/, /,/, /\./, /\//,
     /left/i, /up/i, /right/i, /down/i, /pageup/i, /pagedown/i, /end/i, /home/i,
     /tab/i, /enter/i, /escape/i, /space/i, /backspace/i, /delete/i,
@@ -42,15 +42,20 @@ const ALLOWED_KEYS = [
     /\[NumpadDecimal\]/, /\[NumpadDivide\]/,
 ];
 
+function fullMatch(x: string, ex: RegExp){
+    let m = x.match(ex);
+    if(m === null){ return false; }
+    return m[0].length === x.length;
+}
+
 function isAllowedKeybinding(key: string){
-    if(key === "<all-keys>"){ return true; }
     for(let press of key.split(/\s+/)){
         let mods_and_press = press.split("+");
         for(let mod of mods_and_press.slice(0, -1)){
             if(!ALLOWED_MODIFIERS.test(mod)){ return false; }
         }
         let unmod_press = mods_and_press[mods_and_press.length-1];
-        if(ALLOWED_KEYS.every(a => !a.test(unmod_press))){ return false; }
+        if(ALLOWED_KEYS.every(a => !fullMatch(unmod_press, a))){ return false; }
     }
     return true;
 }
@@ -62,7 +67,7 @@ export async function showParseError(prefix: string, error: ZodError | ZodIssue)
     }else{
         suffix = fromZodIssue(<ZodIssue>error).message;
     }
-    var buttonPattern = /\s+\{button: "(.+)(?<!\\)", link:(.+)\}/;
+    var buttonPattern = /\s+\{button:\s*"(.+)(?<!\\)",\s*link:(.+)\}/;
     let match = suffix.match(buttonPattern);
     if(match !== null && match.index !== undefined && match[1] !== undefined && 
        match[2] !== undefined){
@@ -103,7 +108,7 @@ export const bindingItem = z.object({
     description: z.string().optional(),
     key: z.union([bindingKey, bindingKey.array()]).optional(),
     when: z.union([z.string(), z.string().array()]).optional(),
-    mode: z.string().optional(),
+    mode: z.union([z.string(), z.string().array()]).optional(),
     allowed_prefixes: z.union([
         z.string().refine(x => {
             return x === "<all-prefixes>"
