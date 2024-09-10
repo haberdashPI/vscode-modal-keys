@@ -2,6 +2,9 @@
 
 All notable changes to the ModalKeys extension will be documented in this file.
 
+# Version 0.10.5
+- **End of Life**: declare this as the final version of Modal Keys: all future effort will be directed towards [Master Key](https://github.com/haberdashPI/vscode-master-key).
+
 # Version 0.10.4
 - **Bugfix**: fix bug in 'd' command in `larkin.js` caused by recent fixes to
 `modalkeys.enterNormal`.
@@ -36,7 +39,7 @@ All notable changes to the ModalKeys extension will be documented in this file.
 - **Fix**: Some issues with readme/changelog, 0.8.0 was published early.
 
 # Version 0.8.0
-- **Feature**: New commands `toggleKeymap` and `showKeymap` which can be used to display a  visual documentation of the current modal keybindings in the panel. 
+- **Feature**: New commands `toggleKeymap` and `showKeymap` which can be used to display a  visual documentation of the current modal keybindings in the panel.
 - **Feature**: Your own keybindings can support the visual docummentation using `::doc::` entries (see extension documentation).
 - **Feature**: A new keybinding preset called [Larkin](https://haberdashpi.github.io/vscode-modal-keys/stable/presets/larkin.html), that uses a Kakoune-style format.
 
@@ -71,7 +74,7 @@ All notable changes to the ModalKeys extension will be documented in this file.
 - **Bugfix**: `executeAfter` behavior for search command
 
 ## Version 0.5.0
-- **Feature**: Export presets 
+- **Feature**: Export presets
 - **Bugfix**: Improved keybinding import error message
 - **Bugfix**: Edge case for infinite loop in `selectBetween` / `search`
 
@@ -101,7 +104,7 @@ All notable changes to the ModalKeys extension will be documented in this file.
 
 - **Bugfix**: `repeatLastUsedSelection` failed to properly record commands
 that invovled capturing keys (e.g. `search` and `captureChars`).
-- **Docfix**: A few outdated commands in the tutorial. 
+- **Docfix**: A few outdated commands in the tutorial.
 - **Docfix**: Revised motivation
 - **Docfix**: Fixed some broken links
 

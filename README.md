@@ -1,14 +1,17 @@
 # Modal Keybindings in VS Code
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/Project%20Status-Active-green)](https://www.repostatus.org/#active)
+
+[![Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it. A new maintainer may be desired.](https://img.shields.io/badge/Project%20Status-Unsupported-gainsboro)](https://www.repostatus.org/#unsupported)
 [![Project Documentation](https://img.shields.io/badge/docs-stable-blue)](https://haberdashpi.github.io/vscode-modal-keys/stable/doc_index.html)
-[![Project Documentation](https://img.shields.io/badge/docs-dev-blue)](https://haberdashpi.github.io/vscode-modal-keys/dev/doc_index.html)
+
+> [!WARNING]
+> This extension is no longer supported by its author. All effort has moved towards [Master Key](https://github.com/haberdashPI/vscode-master-key), which is the successor to Modal Keys.
 
 ModalKeys is an extension for defining modal keybindings in VSCode. [Vim](https://www.vim.org/) is probably the most well known [modal
 editor](https://unix.stackexchange.com/questions/57705/modeless-vs-modal-editors)
 and ModalKeys includes
 [presets](https://haberdashpi.github.io/vscode-modal-keys/stable/preset_index.html)
-that resemble Vim. 
+that resemble Vim.
 
 ![visual display of vim keybindings](https://github.com/haberdashPI/vscode-modal-keys/blob/feat-doc-display/doc_binding_example.png?raw=true)
 
